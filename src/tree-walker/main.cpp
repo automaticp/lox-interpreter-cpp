@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <cxxopts.hpp>
 
+#include "ErrorReporter.hpp"
 
 void run(const std::string& text) {}
 
