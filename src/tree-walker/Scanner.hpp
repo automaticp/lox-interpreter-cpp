@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <cassert>
+#include <utility>
 #include "Token.hpp"
 #include "ErrorReporter.hpp"
 
@@ -31,6 +32,8 @@ private:
         bool is_end() const noexcept { return cur_ == end_; }
 
         iter_t current() const noexcept { return cur_; }
+
+        iter_t token_begin() const noexcept { return token_beg_; }
 
         char peek() const noexcept {
             assert(!is_end());
@@ -113,6 +116,10 @@ public:
             case '\n':
                 state_.add_line();
                 break;
+            case '"':
+                add_string_literal_token();
+                break;
+
 
             default: err_.error(state_.line(), std::string("Unexpected character: ") + c); break;
         }
@@ -121,6 +128,33 @@ public:
 
     void add_token(TokenType type) {
         tokens_.emplace_back(type, state_.lexeme(), state_.line());
+    }
+
+    void add_token(TokenType type, LiteralValue&& literal) {
+        tokens_.emplace_back(type, lexeme, state_.line(), std::move(literal));
+    }
+
+    void add_string_literal_token() {
+        while (!state_.is_end() && state_.peek() != '"') {
+            if (state_.peek() == '\n') state_.add_line();
+            state_.advance();
+        }
+
+        if (state_.is_end()) {
+            err_.error(state_.line(), "Unterminated string literal.")
+            return;
+        }
+
+        state_.advance(); // past the closing "
+
+        std::string_view quoted_literal = state_.lexeme();
+
+        add_token(
+            TokenType::string,
+            std::string(quoted_literal.substr(1, quoted_literal.size() - 2))
+        );
+
+
     }
 
     ErrorReporter& get_error_reporter() noexcept {

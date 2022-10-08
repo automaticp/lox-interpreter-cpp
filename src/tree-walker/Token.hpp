@@ -1,5 +1,7 @@
 #pragma once
 #include "TokenType.hpp"
+#include "LiteralValue.hpp"
+#include <optional>
 #include <string>
 #include <sstream>
 
@@ -8,6 +10,7 @@ public:
     TokenType type;
     std::string lexeme;
     size_t line;
+    std::optional<LiteralValue> literal{ std::nullopt };
 
     std::string info() const {
         std::stringstream ss;
