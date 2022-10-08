@@ -136,6 +136,8 @@ public:
             default:
                 if (is_digit(c)) {
                     add_number_literal_token();
+                } else if (is_alpha(c)) {
+                    add_identifier_token();
                 } else {
                     report_error(std::string("Unexpected character: ") + c);
                 }
@@ -200,6 +202,19 @@ public:
         );
     }
 
+    void add_identifier_token() {
+        while (!state_.is_end() && is_alphanum(state_.peek())) {
+            state_.advance();
+        }
+
+        auto it = detail::keyword_map.find(state_.lexeme());
+        if (it != detail::keyword_map.end()) {
+            add_token(it->second);
+        } else {
+            add_token(TokenType::identifier);
+        }
+    }
+
     void report_error(std::string_view message) {
         err_.error(state_.line(), message);
     }
@@ -212,6 +227,18 @@ public:
 private:
     static bool is_digit(char c) noexcept {
         return c >= '0' && c <= '9';
+    }
+
+    static bool is_alpha(char c) noexcept {
+        return (
+            (c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c == '_')
+        );
+    }
+
+    static bool is_alphanum(char c) noexcept {
+        return is_alpha(c) || is_digit(c);
     }
 
 };

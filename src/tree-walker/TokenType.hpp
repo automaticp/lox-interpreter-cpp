@@ -3,6 +3,8 @@
 #include <iostream>
 #include <array>
 #include <type_traits>
+#include <string>
+#include <unordered_map>
 
 enum class TokenType : size_t {
 
@@ -55,6 +57,25 @@ std::array token_type_names{
     "kw_true", "kw_var", "kw_while",
 
     "eof"
+};
+
+const std::unordered_map<std::string, TokenType> keyword_map{
+    {"and",     TokenType::kw_and},
+    {"class",   TokenType::kw_class},
+    {"else",    TokenType::kw_else},
+    {"false",   TokenType::kw_false},
+    {"fun",     TokenType::kw_fun},
+    {"for",     TokenType::kw_for},
+    {"if",      TokenType::kw_if},
+    {"nil",     TokenType::kw_nil},
+    {"or",      TokenType::kw_or},
+    {"print",   TokenType::kw_print},
+    {"return",  TokenType::kw_return},
+    {"super",   TokenType::kw_super},
+    {"this",    TokenType::kw_this},
+    {"true",    TokenType::kw_true},
+    {"var",     TokenType::kw_var},
+    {"while",   TokenType::kw_while},
 };
 
 } // namespace detail
