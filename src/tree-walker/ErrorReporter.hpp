@@ -13,7 +13,7 @@ public:
 
     bool had_error() const noexcept { return had_error_; }
 
-    void error(size_t line, const std::string& message, const std::string& hint) noexcept {
+    void error(size_t line, const std::string& message, const std::string& hint = "") noexcept {
         report(line, message, hint);
         had_error_ = true;
     }
