@@ -31,6 +31,12 @@ private:
 
         bool is_end() const noexcept { return cur_ == end_; }
 
+        bool is_next_end() const noexcept { return cur_ + 1 == end_; }
+
+        iter_t begin() const noexcept { return beg_; }
+
+        iter_t end() const noexcept { return end_; }
+
         iter_t current() const noexcept { return cur_; }
 
         iter_t token_begin() const noexcept { return token_beg_; }
@@ -39,6 +45,13 @@ private:
             assert(!is_end());
             return *cur_;
         }
+
+        char peek_next() const noexcept {
+            assert(!is_end());
+            assert(current() + 1 != end_);
+            return *(current() + 1);
+        }
+
         char advance() noexcept {
             assert(!is_end());
             return *cur_++;
@@ -120,8 +133,13 @@ public:
                 add_string_literal_token();
                 break;
 
-
-            default: err_.error(state_.line(), std::string("Unexpected character: ") + c); break;
+            default:
+                if (is_digit(c)) {
+                    add_number_literal_token();
+                } else {
+                    report_error(std::string("Unexpected character: ") + c);
+                }
+                break;
         }
 
     }
@@ -141,7 +159,7 @@ public:
         }
 
         if (state_.is_end()) {
-            err_.error(state_.line(), "Unterminated string literal.")
+            report_error("Unterminated string literal.")
             return;
         }
 
@@ -153,12 +171,47 @@ public:
             TokenType::string,
             std::string(quoted_literal.substr(1, quoted_literal.size() - 2))
         );
-
-
     }
+
+
+    void add_number_literal_token() {
+        while (!state_.is_end() && is_digit(state_.peek())) {
+            state_.advance();
+        }
+
+        if (!state_.is_end() && state_.peek() == '.' &&
+            !state_.is_next_end()) {
+
+            if (is_digit(state_.peek_next())) {
+                state_.advance(); // past the .
+
+                while (!state_.is_end() && is_digit(state_.peek())) {
+                    state_.advance();
+                }
+            } else {
+                report_error("Unterminated number literal.");
+                return;
+            }
+        }
+
+        add_token(
+            TokenType::number,
+            std::stod(state_.lexeme())
+        );
+    }
+
+    void report_error(std::string_view message) {
+        err_.error(state_.line(), message);
+    }
+
 
     ErrorReporter& get_error_reporter() noexcept {
         return err_;
+    }
+
+private:
+    static bool is_digit(char c) noexcept {
+        return c >= '0' && c <= '9';
     }
 
 };
