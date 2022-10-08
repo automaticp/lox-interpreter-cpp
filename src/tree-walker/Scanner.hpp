@@ -80,7 +80,7 @@ private:
 
     };
 
-    ScannerState state_{ source_.cbegin(), source_.cend() };
+    ScannerState state_{ source_.cbegin(), source_.cend(), 0 };
 
 public:
     Scanner(std::string_view source, ErrorReporter& err) : source_{ source }, err_{ err } {}
@@ -91,9 +91,11 @@ public:
             state_.new_token();
             scan_token();
         }
+
+        return tokens_;
     }
 
-    std::string::const_iterator scan_token() noexcept {
+    void scan_token() noexcept {
 
         using enum TokenType;
 
@@ -151,7 +153,7 @@ public:
     }
 
     void add_token(TokenType type, LiteralValue&& literal) {
-        tokens_.emplace_back(type, lexeme, state_.line(), std::move(literal));
+        tokens_.emplace_back(type, state_.lexeme(), state_.line(), std::move(literal));
     }
 
     void add_string_literal_token() {
@@ -161,7 +163,7 @@ public:
         }
 
         if (state_.is_end()) {
-            report_error("Unterminated string literal.")
+            report_error("Unterminated string literal.");
             return;
         }
 
@@ -198,7 +200,7 @@ public:
 
         add_token(
             TokenType::number,
-            std::stod(state_.lexeme())
+            std::stod(std::string(state_.lexeme()))
         );
     }
 
@@ -207,7 +209,7 @@ public:
             state_.advance();
         }
 
-        auto it = detail::keyword_map.find(state_.lexeme());
+        auto it = detail::keyword_map.find(std::string(state_.lexeme()));
         if (it != detail::keyword_map.end()) {
             add_token(it->second);
         } else {

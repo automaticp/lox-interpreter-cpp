@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
-
+#include <string_view>
 
 class ErrorReporter {
 private:
@@ -13,7 +13,7 @@ public:
 
     bool had_error() const noexcept { return had_error_; }
 
-    void error(size_t line, const std::string& message, const std::string& hint = "") noexcept {
+    void error(size_t line, std::string_view message, std::string_view hint = "") noexcept {
         report(line, message, hint);
         had_error_ = true;
     }
@@ -21,7 +21,7 @@ public:
     virtual ~ErrorReporter() = default;
 
 protected:
-    virtual void report(size_t line, const std::string& message, const std::string& hint) = 0;
+    virtual void report(size_t line, std::string_view message, std::string_view hint) = 0;
 
 };
 
@@ -33,7 +33,7 @@ public:
     StreamErrorReporter(std::ostream& os) : os_{ os } {}
 
 protected:
-    void report(size_t line, const std::string& message, const std::string& hint) override {
+    void report(size_t line, std::string_view message, std::string_view hint) override {
         os_ << "[Error] at line " << line << ": "
             << hint << '\n' << message << std::endl;
     }
