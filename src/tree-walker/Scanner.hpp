@@ -119,9 +119,9 @@ private:
             case '>': add_token(state_.match('=') ? greater_eq : greater); break;
             case '/':
                 if (state_.match('/')) {
-                    while (!state_.is_end() && state_.peek() != '\n') {
-                        state_.advance();
-                    }
+                    skip_singleline_comment();
+                } else if (state_.match('*')) {
+                    skip_multiline_comment();
                 } else {
                     add_token(slash);
                 }
@@ -149,6 +149,37 @@ private:
         }
 
     }
+
+    void skip_singleline_comment() {
+        while (!state_.is_end() && state_.peek() != '\n') {
+            state_.advance();
+        }
+    }
+
+    void skip_multiline_comment() {
+        while(!state_.is_end()) {
+
+            switch (state_.advance()) {
+                case '/':
+                    if (state_.match('*')) {
+                        skip_multiline_comment();
+                    }
+                    break;
+                case '*':
+                    if (state_.match('/')) {
+                        return;
+                    }
+                    break;
+                case '\n':
+                    state_.add_line();
+                    break;
+                default:
+                    break;
+            }
+
+        }
+    }
+
 
     void add_token(TokenType type) {
         tokens_.emplace_back(type, state_.lexeme(), state_.line());
