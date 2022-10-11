@@ -95,6 +95,8 @@ public:
         return tokens_;
     }
 
+
+private:
     void scan_token() noexcept {
 
         using enum TokenType;
