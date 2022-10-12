@@ -6,6 +6,10 @@
 #include "Token.hpp"
 
 
+class LiteralExpr;
+class UnaryExpr;
+class BinaryExpr;
+class GroupedExpr;
 
 struct ExprInterpretVisitor {
     // FIXME: later
@@ -13,6 +17,7 @@ struct ExprInterpretVisitor {
     return_type operator()(const LiteralExpr& expr) const;
     return_type operator()(const UnaryExpr& expr) const;
     return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
 };
 
 struct ExprResolveVisitor {
@@ -21,6 +26,7 @@ struct ExprResolveVisitor {
     return_type operator()(const LiteralExpr& expr) const;
     return_type operator()(const UnaryExpr& expr) const;
     return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
 };
 
 struct ExprAnalyzeVisitor {
@@ -29,6 +35,7 @@ struct ExprAnalyzeVisitor {
     return_type operator()(const LiteralExpr& expr) const;
     return_type operator()(const UnaryExpr& expr) const;
     return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
 };
 
 
