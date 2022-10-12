@@ -28,4 +28,17 @@ public:
         }
         return result;
     }
+
+    bool operator==(const Token& other) const noexcept {
+        bool is_eq{
+            type == other.type &&
+            lexeme == other.lexeme &&
+            line == other.line
+        };
+        return is_eq;
+    }
+
+    bool operator!=(const Token& other) const noexcept {
+        return !(*this == other);
+    }
 };

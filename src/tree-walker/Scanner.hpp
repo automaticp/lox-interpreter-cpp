@@ -80,7 +80,7 @@ private:
 
     };
 
-    ScannerState state_{ source_.cbegin(), source_.cend(), 0 };
+    ScannerState state_{ source_.cbegin(), source_.cend(), 1 };
 
 public:
     Scanner(std::string_view source, ErrorReporter& err) : source_{ source }, err_{ err } {}
