@@ -10,3 +10,7 @@ struct LiteralToStringVisitor {
     std::string operator()(const bool& val) { return { val ? "true" : "false" }; }
     std::string operator()(const nullptr_t& val) { return { "nil" }; }
 };
+
+std::string to_string(const LiteralValue& literal) {
+    return std::visit(LiteralToStringVisitor{}, literal);
+}
