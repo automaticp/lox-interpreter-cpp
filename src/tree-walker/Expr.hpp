@@ -3,10 +3,12 @@
 #include <utility>
 #include <memory>
 #include <string>
-#include "LiteralValue.hpp"
-#include "Token.hpp"
 #include <sstream>
 #include <concepts>
+#include "LiteralValue.hpp"
+#include "Token.hpp"
+#include "Visitable.hpp"
+
 
 class Expr;
 class LiteralExpr;
@@ -61,77 +63,15 @@ struct ExprAnalyzeVisitor {
 };
 
 
-// If inherited from, the following classes
-// add accept() overloads
-// for all the visitors listed in ...Visitors
-// with the correct return types
-
-// IVisitableExpr adds pure vurtual interfaces
-
-template<typename CRTP, typename ...Visitors>
-struct IVisitableExpr;
-
-template<typename CRTP, typename Visitor, typename ...OtherVisitors>
-struct IVisitableExpr<CRTP, Visitor, OtherVisitors...> :
-    IVisitableExpr<CRTP, OtherVisitors...> {
-
-    using IVisitableExpr<CRTP, OtherVisitors...>::accept;
-
-    virtual typename Visitor::return_type accept(const Visitor& visitor) const = 0;
-
-};
-
-template<typename CRTP, typename LastVisitor>
-struct IVisitableExpr<CRTP, LastVisitor> {
-
-    virtual typename LastVisitor::return_type accept(const LastVisitor& visitor) const = 0;
-
-};
-
-
-
-
-// VisitableExpr adds implementations
-
-template<typename CRTP, typename ...Visitors>
-struct VisitableExpr;
-
-template<typename CRTP, typename Visitor, typename ...OtherVisitors>
-struct VisitableExpr<CRTP, Visitor, OtherVisitors...> :
-    VisitableExpr<CRTP, OtherVisitors...> {
-
-    using VisitableExpr<CRTP, OtherVisitors...>::accept;
-
-    virtual typename Visitor::return_type accept(const Visitor& visitor) const {
-        return visitor(static_cast<const CRTP&>(*this));
-    }
-
-    friend Visitor;
-
-};
-
-
-template<typename CRTP, typename LastVisitor>
-struct VisitableExpr<CRTP, LastVisitor> {
-
-    virtual typename LastVisitor::return_type accept(const LastVisitor& visitor) const {
-        return visitor(static_cast<const CRTP&>(*this));
-    }
-
-    friend LastVisitor;
-
-};
-
-
 
 // Extend these two lists to add more visitors
 template<typename CRTP>
-using FullyVisitableExpr = VisitableExpr<
+using FullyVisitableExpr = Visitable<
     CRTP, ExprInterpretVisitor, ExprResolveVisitor, ExprAnalyzeVisitor, ExprASTPrinterVisitor
 >;
 
 template<typename CRTP>
-using FullyVisitableExprInterface = IVisitableExpr<
+using FullyVisitableExprInterface = IVisitable<
     CRTP, ExprInterpretVisitor, ExprResolveVisitor, ExprAnalyzeVisitor, ExprASTPrinterVisitor
 >;
 
