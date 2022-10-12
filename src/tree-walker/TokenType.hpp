@@ -37,7 +37,7 @@ enum class TokenType : size_t {
 
 namespace detail {
 
-std::array token_type_names{
+inline std::array token_type_names{
 
     "lparen", "rparen", "lbrace", "rbrace",
     "comma", "dot", "semicolon",
@@ -81,7 +81,7 @@ const std::unordered_map<std::string, TokenType> keyword_map{
 } // namespace detail
 
 
-std::ostream& operator<<(std::ostream& os, TokenType type) {
+inline std::ostream& operator<<(std::ostream& os, TokenType type) {
     os << detail::token_type_names[
         static_cast<std::underlying_type_t<TokenType>>(type)
     ];
