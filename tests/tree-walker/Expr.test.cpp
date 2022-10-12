@@ -73,4 +73,25 @@ TEST_CASE("group") {
 
 }
 
+TEST_CASE("compound") {
+
+    BinaryExpr c{
+        TokenType::star,
+        std::make_unique<UnaryExpr>(
+            TokenType::minus,
+            std::make_unique<LiteralExpr>(123.0)
+        ),
+        std::make_unique<GroupedExpr>(
+            std::make_unique<LiteralExpr>(45.67)
+        )
+    };
+
+    CHECK(print(c) == "(* (- 123.000000) (group 45.670000))");
+
+}
+
+
+
+
+
 }
