@@ -2,14 +2,36 @@
 #include <variant>
 #include <utility>
 #include <memory>
+#include <string>
 #include "LiteralValue.hpp"
 #include "Token.hpp"
+#include <sstream>
+#include <concepts>
 
-
+class Expr;
 class LiteralExpr;
 class UnaryExpr;
 class BinaryExpr;
 class GroupedExpr;
+
+struct ExprASTPrinterVisitor {
+    using return_type = std::string;
+    return_type operator()(const LiteralExpr& expr) const;
+    return_type operator()(const UnaryExpr& expr) const;
+    return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
+
+private:
+    template<std::derived_from<Expr> ...Es>
+    static std::string parenthesize(std::string_view name, const Es&... exprs) {
+        std::stringstream ss;
+        ss << '(' << name;
+        (ss << ... << ((std::stringstream{} << ' ') << exprs.accept(ExprASTPrinterVisitor{})));
+        ss << ')';
+        return ss.str();
+    }
+};
+
 
 struct ExprInterpretVisitor {
     // FIXME: later
@@ -53,7 +75,7 @@ template<typename CRTP, typename Visitor, typename ...OtherVisitors>
 struct IVisitableExpr<CRTP, Visitor, OtherVisitors...> :
     IVisitableExpr<CRTP, OtherVisitors...> {
 
-    virtual typename Visitor::return_type accept(Visitor& visitor) = 0;
+    virtual typename Visitor::return_type accept(const Visitor& visitor) = 0;
 
 };
 
@@ -70,7 +92,7 @@ template<typename CRTP, typename Visitor, typename ...OtherVisitors>
 struct VisitableExpr<CRTP, Visitor, OtherVisitors...> :
     VisitableExpr<CRTP, OtherVisitors...> {
 
-    virtual typename Visitor::return_type accept(Visitor& visitor) {
+    virtual typename Visitor::return_type accept(const Visitor& visitor) {
         return visitor(static_cast<CRTP&>(*this));
     }
 
@@ -104,39 +126,39 @@ public:
 
 
 struct LiteralExpr : Expr, FullyVisitableExpr<LiteralExpr> {
-private:
-    LiteralValue value_;
 public:
+    LiteralValue value;
+
     LiteralExpr(LiteralValue value) :
-        value_{ std::move(value) } {}
+        value{ std::move(value) } {}
 };
 
 
 struct UnaryExpr : Expr, FullyVisitableExpr<UnaryExpr> {
-private:
-    TokenType op_;
-    std::unique_ptr<Expr> operand_;
 public:
+    TokenType op;
+    std::unique_ptr<Expr> operand;
+
     UnaryExpr(TokenType op, std::unique_ptr<Expr> expr) :
-        op_{ op }, operand_{ std::move(expr) } {}
+        op{ op }, operand{ std::move(expr) } {}
 };
 
 
 struct BinaryExpr : Expr, FullyVisitableExpr<BinaryExpr> {
-private:
-    TokenType op_;
-    std::unique_ptr<Expr> lhs_;
-    std::unique_ptr<Expr> rhs_;
 public:
+    TokenType op;
+    std::unique_ptr<Expr> lhs;
+    std::unique_ptr<Expr> rhs;
+
     BinaryExpr(TokenType op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs) :
-        op_{ op }, lhs_{ std::move(lhs) }, rhs_{ std::move(rhs) } {}
+        op{ op }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
 };
 
 
 struct GroupedExpr : Expr, FullyVisitableExpr<GroupedExpr> {
-private:
-    std::unique_ptr<Expr> expr_;
 public:
+    std::unique_ptr<Expr> expr;
+
     GroupedExpr(std::unique_ptr<Expr> expr) :
-        expr_{ std::move(expr) } {}
+        expr{ std::move(expr) } {}
 };
