@@ -26,7 +26,7 @@ private:
     static std::string parenthesize(std::string_view name, const Es&... exprs) {
         std::stringstream ss;
         ss << '(' << name;
-        (ss << ... << ((std::stringstream{} << ' ') << exprs.accept(ExprASTPrinterVisitor{})));
+        (ss << ... << (std::string(" ") + exprs.accept(ExprASTPrinterVisitor{})));
         ss << ')';
         return ss.str();
     }
@@ -75,12 +75,20 @@ template<typename CRTP, typename Visitor, typename ...OtherVisitors>
 struct IVisitableExpr<CRTP, Visitor, OtherVisitors...> :
     IVisitableExpr<CRTP, OtherVisitors...> {
 
-    virtual typename Visitor::return_type accept(const Visitor& visitor) = 0;
+    using IVisitableExpr<CRTP, OtherVisitors...>::accept;
+
+    virtual typename Visitor::return_type accept(const Visitor& visitor) const = 0;
 
 };
 
-template<typename CRTP>
-struct IVisitableExpr<CRTP> {};
+template<typename CRTP, typename LastVisitor>
+struct IVisitableExpr<CRTP, LastVisitor> {
+
+    virtual typename LastVisitor::return_type accept(const LastVisitor& visitor) const = 0;
+
+};
+
+
 
 
 // VisitableExpr adds implementations
@@ -92,27 +100,39 @@ template<typename CRTP, typename Visitor, typename ...OtherVisitors>
 struct VisitableExpr<CRTP, Visitor, OtherVisitors...> :
     VisitableExpr<CRTP, OtherVisitors...> {
 
-    virtual typename Visitor::return_type accept(const Visitor& visitor) {
-        return visitor(static_cast<CRTP&>(*this));
+    using VisitableExpr<CRTP, OtherVisitors...>::accept;
+
+    virtual typename Visitor::return_type accept(const Visitor& visitor) const {
+        return visitor(static_cast<const CRTP&>(*this));
     }
 
     friend Visitor;
 
 };
 
-template<typename CRTP>
-struct VisitableExpr<CRTP> {};
+
+template<typename CRTP, typename LastVisitor>
+struct VisitableExpr<CRTP, LastVisitor> {
+
+    virtual typename LastVisitor::return_type accept(const LastVisitor& visitor) const {
+        return visitor(static_cast<const CRTP&>(*this));
+    }
+
+    friend LastVisitor;
+
+};
+
 
 
 // Extend these two lists to add more visitors
 template<typename CRTP>
 using FullyVisitableExpr = VisitableExpr<
-    CRTP, ExprInterpretVisitor, ExprResolveVisitor, ExprAnalyzeVisitor
+    CRTP, ExprInterpretVisitor, ExprResolveVisitor, ExprAnalyzeVisitor, ExprASTPrinterVisitor
 >;
 
 template<typename CRTP>
 using FullyVisitableExprInterface = IVisitableExpr<
-    CRTP, ExprInterpretVisitor, ExprResolveVisitor, ExprAnalyzeVisitor
+    CRTP, ExprInterpretVisitor, ExprResolveVisitor, ExprAnalyzeVisitor, ExprASTPrinterVisitor
 >;
 
 
