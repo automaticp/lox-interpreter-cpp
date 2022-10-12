@@ -106,7 +106,7 @@ template<typename CRTP, typename Visitor, typename ...OtherVisitors>
 struct Visitable<CRTP, Visitor, OtherVisitors...> :
     Visitable<CRTP, OtherVisitors...> {
 
-    /* virtual */ typename Visitor::return_type accept(const Visitor& visitor) const {
+    virtual typename Visitor::return_type accept(const Visitor& visitor) const {
         return visitor(static_cast<const CRTP&>(*this));
     }
 
@@ -119,7 +119,7 @@ struct Visitable<CRTP, Visitor, OtherVisitors...> :
 template<typename CRTP, typename LastVisitor>
 struct Visitable<CRTP, LastVisitor> : IExpr {
 
-    /* virtual */ typename LastVisitor::return_type accept(const LastVisitor& visitor) const {
+    virtual typename LastVisitor::return_type accept(const LastVisitor& visitor) const {
         return visitor(static_cast<const CRTP&>(*this));
     }
 
