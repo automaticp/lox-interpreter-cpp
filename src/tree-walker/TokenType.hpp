@@ -82,7 +82,7 @@ inline constexpr std::array token_type_lexemes{
 };
 
 
-const std::unordered_map<std::string, TokenType> keyword_map{
+inline const std::unordered_map<std::string, TokenType> keyword_map{
     {"and",     TokenType::kw_and},
     {"class",   TokenType::kw_class},
     {"else",    TokenType::kw_else},
