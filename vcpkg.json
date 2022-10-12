@@ -2,6 +2,7 @@
     "name": "lox-interpreter-cpp",
     "version": "0.1",
     "dependencies": [
-        "cxxopts"
+        "cxxopts",
+        "doctest"
     ]
 }
