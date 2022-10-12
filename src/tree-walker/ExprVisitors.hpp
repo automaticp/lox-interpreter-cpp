@@ -3,7 +3,7 @@
 #include <sstream>
 #include <concepts>
 
-class Expr;
+class IExpr;
 class LiteralExpr;
 class UnaryExpr;
 class BinaryExpr;
@@ -17,7 +17,7 @@ struct ExprASTPrinterVisitor {
     return_type operator()(const GroupedExpr& expr) const;
 
 private:
-    template<std::derived_from<Expr> ...Es>
+    template<std::derived_from<IExpr> ...Es>
     static std::string parenthesize(std::string_view name, const Es&... exprs) {
         std::stringstream ss;
         ss << '(' << name;
@@ -31,27 +31,27 @@ private:
 struct ExprInterpretVisitor {
     // FIXME: later
     using return_type = void;
-    return_type operator()(const LiteralExpr& expr) const;
-    return_type operator()(const UnaryExpr& expr) const;
-    return_type operator()(const BinaryExpr& expr) const;
-    return_type operator()(const GroupedExpr& expr) const;
+    return_type operator()(const LiteralExpr& expr) const {}
+    return_type operator()(const UnaryExpr& expr) const {}
+    return_type operator()(const BinaryExpr& expr) const {}
+    return_type operator()(const GroupedExpr& expr) const {}
 };
 
 struct ExprResolveVisitor {
     // FIXME: later
     using return_type = void;
-    return_type operator()(const LiteralExpr& expr) const;
-    return_type operator()(const UnaryExpr& expr) const;
-    return_type operator()(const BinaryExpr& expr) const;
-    return_type operator()(const GroupedExpr& expr) const;
+    return_type operator()(const LiteralExpr& expr) const {}
+    return_type operator()(const UnaryExpr& expr) const {}
+    return_type operator()(const BinaryExpr& expr) const {}
+    return_type operator()(const GroupedExpr& expr) const {}
 };
 
 struct ExprAnalyzeVisitor {
     // FIXME: later
     using return_type = void;
-    return_type operator()(const LiteralExpr& expr) const;
-    return_type operator()(const UnaryExpr& expr) const;
-    return_type operator()(const BinaryExpr& expr) const;
-    return_type operator()(const GroupedExpr& expr) const;
+    return_type operator()(const LiteralExpr& expr) const {}
+    return_type operator()(const UnaryExpr& expr) const {}
+    return_type operator()(const BinaryExpr& expr) const {}
+    return_type operator()(const GroupedExpr& expr) const {}
 };
 
