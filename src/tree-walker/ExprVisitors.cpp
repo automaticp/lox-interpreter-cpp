@@ -10,12 +10,12 @@ ExprASTPrinterVisitor::operator()(const LiteralExpr& expr) const {
 
 ExprASTPrinterVisitor::return_type
 ExprASTPrinterVisitor::operator()(const UnaryExpr& expr) const {
-    return parenthesize(to_string(expr.op), *expr.operand);
+    return parenthesize(to_lexeme(expr.op), *expr.operand);
 }
 
 ExprASTPrinterVisitor::return_type
 ExprASTPrinterVisitor::operator()(const BinaryExpr& expr) const {
-    return parenthesize(to_string(expr.op), *expr.lhs, *expr.rhs);
+    return parenthesize(to_lexeme(expr.op), *expr.lhs, *expr.rhs);
 }
 
 ExprASTPrinterVisitor::return_type

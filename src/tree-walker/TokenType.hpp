@@ -37,7 +37,7 @@ enum class TokenType : size_t {
 
 namespace detail {
 
-inline std::array token_type_names{
+inline constexpr std::array token_type_names{
 
     "lparen", "rparen", "lbrace", "rbrace",
     "comma", "dot", "semicolon",
@@ -58,6 +58,29 @@ inline std::array token_type_names{
 
     "eof"
 };
+
+inline constexpr std::array token_type_lexemes{
+
+    "(", ")", "{", "}",
+    ",", ".", ";",
+    "-", "+", "/", "*",
+
+    "!", "!=",
+    "=", "==",
+    ">", ">=",
+    "<", "<=",
+
+    "?identifier?",
+
+    "?string?", "?number?",
+
+    "and", "class", "else", "false", "fun", "for",
+    "if", "nil", "or", "print", "return", "super", "this",
+    "true", "var", "while",
+
+    "?eof?"
+};
+
 
 const std::unordered_map<std::string, TokenType> keyword_map{
     {"and",     TokenType::kw_and},
@@ -83,6 +106,12 @@ const std::unordered_map<std::string, TokenType> keyword_map{
 
 inline std::string to_string(TokenType type) {
     return { detail::token_type_names[
+        static_cast<std::underlying_type_t<TokenType>>(type)
+    ] };
+}
+
+inline std::string to_lexeme(TokenType type) {
+    return { detail::token_type_lexemes[
         static_cast<std::underlying_type_t<TokenType>>(type)
     ] };
 }
