@@ -35,13 +35,13 @@ inline constexpr std::array scanner_error_msgs{
 
 } // namepace detail
 
-inline std::string to_error_message(ContextError err) {
+inline std::string_view to_error_message(ContextError err) {
     return detail::context_error_msgs[
         static_cast<std::underlying_type_t<ContextError>>(err)
     ];
 }
 
-inline std::string to_error_message(ScannerError err) {
+inline std::string_view to_error_message(ScannerError err) {
     return detail::scanner_error_msgs[
         static_cast<std::underlying_type_t<ScannerError>>(err)
     ];
