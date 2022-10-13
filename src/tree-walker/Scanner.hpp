@@ -4,6 +4,7 @@
 #include <string_view>
 #include <cassert>
 #include <utility>
+#include "Errors.hpp"
 #include "Token.hpp"
 #include "ErrorReporter.hpp"
 
@@ -143,7 +144,7 @@ private:
                 } else if (is_alpha(c)) {
                     add_identifier_token();
                 } else {
-                    report_error(std::string("Unexpected character: ") + c);
+                    report_error(ScannerError::unexpected_character, std::string{c});
                 }
                 break;
         }
@@ -196,7 +197,7 @@ private:
         }
 
         if (state_.is_end()) {
-            report_error("Unterminated string literal.");
+            report_error(ScannerError::unterminated_string_literal, state_.lexeme());
             return;
         }
 
@@ -226,7 +227,7 @@ private:
                     state_.advance();
                 }
             } else {
-                report_error("Unterminated number literal.");
+                report_error(ScannerError::unterminated_number_literal, state_.lexeme());
                 return;
             }
         }
@@ -250,8 +251,8 @@ private:
         }
     }
 
-    void report_error(std::string_view message) {
-        err_.error(state_.line(), message);
+    void report_error(ScannerError type, std::string_view details = "") {
+        err_.scanner_error(type, state_.line(), details);
     }
 
 

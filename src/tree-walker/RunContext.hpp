@@ -1,5 +1,6 @@
 #pragma once
 #include "ErrorReporter.hpp"
+#include "Errors.hpp"
 #include "Scanner.hpp"
 #include <string>
 #include <optional>
@@ -51,9 +52,7 @@ public:
         if (text) {
             run(text.value());
         } else {
-            // FIXME: Should use different error reporters for different stages:
-            // context, scanning, parsing, etc.
-            err_.error(0, "Unable to read file " + filename_.value());
+            err_.context_error(ContextError::unable_to_open_file, filename_.value());
         }
     }
 
