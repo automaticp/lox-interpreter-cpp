@@ -212,8 +212,7 @@ private:
             auto expr = expression();
 
             if (!state_.match(rparen)) {
-                // FIXME:
-                // report_error(ParserError::missing_closing_paren);
+                report_error(ParserError::missing_closing_paren);
             }
 
             return std::make_unique<GroupedExpr>(
@@ -221,16 +220,14 @@ private:
             );
         }
 
-        // FIXME:
-        // report_error(ParserError::unknown_primary_expression);
+        report_error(ParserError::unknown_primary_expression);
         return { nullptr };
     }
 
 
-
-    // void report_error(ParserError type) {
-    //     err_.parser_error(type, state_.peek());
-    // }
+    void report_error(ParserError type, std::string_view details = "") {
+        err_.parser_error(type, state_.peek(), details);
+    }
 
 };
 

@@ -4,11 +4,13 @@
 #include <string_view>
 #include <vector>
 #include "Errors.hpp"
+#include "Token.hpp"
 
 class ErrorReporter {
 private:
     std::vector<ContextError> context_errs_;
     std::vector<ScannerError> scanner_errs_;
+    std::vector<ParserError> parser_errs_;
 
 public:
     bool had_context_errors() const noexcept {
@@ -19,8 +21,12 @@ public:
         return !scanner_errs_.empty();
     }
 
+    bool had_parser_errors() const noexcept {
+        return !parser_errs_.empty();
+    }
+
     bool had_errors() const noexcept {
-        return had_context_errors() || had_scanner_errors();
+        return had_context_errors() || had_scanner_errors() || had_parser_errors();
     }
 
     void scanner_error(ScannerError type, size_t line, std::string_view details) {
@@ -33,12 +39,20 @@ public:
         report_context_error(type, details);
     }
 
+    void parser_error(ParserError type, const Token& token, std::string_view details) {
+        parser_errs_.push_back(type);
+        report_parser_error(type, token, details);
+    }
+
+
     virtual ~ErrorReporter() = default;
 
 protected:
     virtual void report_context_error(ContextError type, std::string_view details = "") = 0;
 
     virtual void report_scanner_error(ScannerError type, size_t line, std::string_view details = "") = 0;
+
+    virtual void report_parser_error(ParserError type, const Token& token, std::string_view details = "") = 0;
 
 };
 
@@ -70,6 +84,17 @@ protected:
             os_ << '.' << std::endl;
         }
     }
+
+    void report_parser_error(ParserError type, const Token& token, std::string_view details) override {
+        os_ << "[Error @Parser] at line " << token.line << " after " << token.lexeme << ":\n"
+            << to_error_message(type);
+        if (!details.empty()) {
+            append_details(details);
+        } else {
+            os_ << '.' << std::endl;
+        }
+    }
+
 
 private:
     void append_details(std::string_view details) {

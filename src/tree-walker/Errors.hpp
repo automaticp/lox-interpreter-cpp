@@ -18,6 +18,13 @@ enum class ScannerError : size_t {
 
 };
 
+enum class ParserError : size_t {
+
+    unknown_primary_expression = 0,
+    missing_closing_paren
+
+};
+
 
 
 namespace detail {
@@ -30,6 +37,11 @@ inline constexpr std::array scanner_error_msgs{
     "Unexpected character",
     "Unterminated string literal",
     "Unterminated number literal"
+};
+
+inline constexpr std::array parser_error_msgs{
+    "Unknown primary expression",
+    "Missing closing ')'"
 };
 
 
@@ -47,3 +59,8 @@ inline std::string_view to_error_message(ScannerError err) {
     ];
 }
 
+inline std::string_view to_error_message(ParserError err) {
+    return detail::parser_error_msgs[
+        static_cast<std::underlying_type_t<ParserError>>(err)
+    ];
+}
