@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <optional>
@@ -34,6 +35,10 @@ int main(int argc, char* argv[]) {
     };
 
     context.start_running();
+
+    if (context.is_file_mode() && err_reporter.had_errors()) {
+        return 1;
+    }
 
     return 0;
 }
