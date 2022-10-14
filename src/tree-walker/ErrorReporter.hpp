@@ -5,6 +5,7 @@
 #include <vector>
 #include "Errors.hpp"
 #include "Token.hpp"
+#include <fmt/format.h>
 
 class ErrorReporter {
 private:
@@ -65,40 +66,40 @@ public:
 
 protected:
     void report_context_error(ContextError type, std::string_view details) override {
-        os_ << "[Error @Context]:\n"
-            << to_error_message(type);
-        if (!details.empty()) {
-            append_details(details);
-        } else {
-            os_ << '.' << std::endl;
-        }
+        os_ << fmt::format(
+            "[Error @Context]:\n{:s}{:s}\n",
+            to_error_message(type), details_tail(details)
+        );
     }
 
 
     void report_scanner_error(ScannerError type, size_t line, std::string_view details) override {
-        os_ << "[Error @Scanner] at line " << line << ":\n"
-            << to_error_message(type);
-        if (!details.empty()) {
-            append_details(details);
-        } else {
-            os_ << '.' << std::endl;
-        }
+        os_ << fmt::format(
+            "[Error @Scanner] at line {:d}:\n{:s}{:s}\n",
+            line, to_error_message(type), details_tail(details)
+        );
     }
 
+
     void report_parser_error(ParserError type, const Token& token, std::string_view details) override {
-        os_ << "[Error @Parser] at line " << token.line << " after " << token.lexeme << ":\n"
-            << to_error_message(type);
-        if (!details.empty()) {
-            append_details(details);
-        } else {
-            os_ << '.' << std::endl;
-        }
+        os_ << fmt::format(
+            "[Error @Parser] at line {:d} token {:s}:\n{:s}{:s}\n",
+            token.line, token.lexeme, to_error_message(type), details_tail(details)
+        );
     }
 
 
 private:
-    void append_details(std::string_view details) {
-        os_ << (details.size() < 16 ? ": " : ":\n    ");
-        os_ << details << std::endl;
+    static std::string details_tail(std::string_view details) {
+        if (details.empty()) return ".";
+        return fmt::format(
+            "{:s}{:s}.",
+            details_sep(details),
+            details
+        );
+    }
+
+    static std::string_view details_sep(std::string_view details) {
+        return (details.size() < 16 ? ": " : ":\n    ");
     }
 };
