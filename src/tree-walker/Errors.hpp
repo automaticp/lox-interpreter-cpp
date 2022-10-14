@@ -2,7 +2,9 @@
 #include <cstddef>
 #include <string>
 #include <array>
-#include <type_traits>
+#include "EnumUtils.hpp"
+
+
 
 enum class ContextError : size_t {
 
@@ -49,18 +51,18 @@ inline constexpr std::array parser_error_msgs{
 
 inline std::string_view to_error_message(ContextError err) {
     return detail::context_error_msgs[
-        static_cast<std::underlying_type_t<ContextError>>(err)
+        to_underlying(err)
     ];
 }
 
 inline std::string_view to_error_message(ScannerError err) {
     return detail::scanner_error_msgs[
-        static_cast<std::underlying_type_t<ScannerError>>(err)
+        to_underlying(err)
     ];
 }
 
 inline std::string_view to_error_message(ParserError err) {
     return detail::parser_error_msgs[
-        static_cast<std::underlying_type_t<ParserError>>(err)
+        to_underlying(err)
     ];
 }

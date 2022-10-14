@@ -2,9 +2,9 @@
 #include <cstddef>
 #include <iostream>
 #include <array>
-#include <type_traits>
 #include <string>
 #include <unordered_map>
+#include "EnumUtils.hpp"
 
 enum class TokenType : size_t {
 
@@ -106,19 +106,19 @@ inline const std::unordered_map<std::string, TokenType> keyword_map{
 
 inline std::string to_string(TokenType type) {
     return { detail::token_type_names[
-        static_cast<std::underlying_type_t<TokenType>>(type)
+        to_underlying(type)
     ] };
 }
 
 inline std::string to_lexeme(TokenType type) {
     return { detail::token_type_lexemes[
-        static_cast<std::underlying_type_t<TokenType>>(type)
+        to_underlying(type)
     ] };
 }
 
 inline std::ostream& operator<<(std::ostream& os, TokenType type) {
     os << detail::token_type_names[
-        static_cast<std::underlying_type_t<TokenType>>(type)
+        to_underlying(type)
     ];
     return os;
 }
