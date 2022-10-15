@@ -30,6 +30,21 @@ public:
         return had_context_errors() || had_scanner_errors() || had_parser_errors();
     }
 
+    const std::vector<ContextError>&
+    get_context_errors() const noexcept {
+        return context_errs_;
+    }
+
+    const std::vector<ScannerError>&
+    get_scanner_errors() const noexcept {
+        return scanner_errs_;
+    }
+
+    const std::vector<ParserError>&
+    get_parser_errors() const noexcept {
+        return parser_errs_;
+    }
+
     void scanner_error(ScannerError type, size_t line, std::string_view details) {
         scanner_errs_.push_back(type);
         report_scanner_error(type, line, details);

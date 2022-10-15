@@ -102,11 +102,13 @@ public:
     Parser(std::vector<Token> tokens, ErrorReporter& err) :
         tokens_{ std::move(tokens) }, err_{ err } {}
 
-    const IExpr& parse_tokens() {
-
-        root_expr_ = expression();
-
-        return *root_expr_;
+    bool parse_tokens() {
+        try {
+            root_expr_ = expression();
+            return true;
+        } catch (ParserError) {
+            return false;
+        }
     }
 
     const IExpr& peek_result() const {
@@ -218,14 +220,14 @@ private:
             );
         }
 
-        report_error(ParserError::unknown_primary_expression);
+        report_error_and_abort(ParserError::unknown_primary_expression);
         return { nullptr };
     }
 
 
     bool try_consume(TokenType expected, ParserError fail_error) {
         if (!state_.match(expected)) {
-            report_error(fail_error);
+            report_error_and_abort(fail_error);
             return false;
         }
         return true;
@@ -259,11 +261,18 @@ private:
 
     }
 
+    void abort_parsing_by_throwing_last_error() noexcept(false) {
+        throw err_.get_parser_errors().back();
+    }
 
     void report_error(ParserError type, std::string_view details = "") {
         err_.parser_error(type, state_.peek(), details);
     }
 
+    void report_error_and_abort(ParserError type, std::string_view details = "") {
+        report_error(type, details);
+        abort_parsing_by_throwing_last_error();
+    }
 };
 
 
