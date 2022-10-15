@@ -231,6 +231,34 @@ private:
         return true;
     }
 
+    void synchronize_on_next_statement() {
+
+        using enum TokenType;
+
+        while(!state_.is_end()) {
+
+            const Token& prev{ state_.advance() };
+            if (prev.type == semicolon) {
+                return;
+            }
+
+            switch (state_.peek().type) {
+                case kw_class:
+                case kw_fun:
+                case kw_var:
+                case kw_for:
+                case kw_if:
+                case kw_while:
+                case kw_print:
+                case kw_return:
+                    return;
+                default:
+                    break;
+            }
+        }
+
+    }
+
 
     void report_error(ParserError type, std::string_view details = "") {
         err_.parser_error(type, state_.peek(), details);
