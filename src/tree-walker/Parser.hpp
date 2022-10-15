@@ -211,9 +211,7 @@ private:
 
             auto expr = expression();
 
-            if (!state_.match(rparen)) {
-                report_error(ParserError::missing_closing_paren);
-            }
+            try_consume(rparen, ParserError::missing_closing_paren);
 
             return std::make_unique<GroupedExpr>(
                 std::move(expr)
@@ -222,6 +220,15 @@ private:
 
         report_error(ParserError::unknown_primary_expression);
         return { nullptr };
+    }
+
+
+    bool try_consume(TokenType expected, ParserError fail_error) {
+        if (!state_.match(expected)) {
+            report_error(fail_error);
+            return false;
+        }
+        return true;
     }
 
 
