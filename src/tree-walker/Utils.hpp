@@ -7,3 +7,4 @@ std::underlying_type_t<EnumType> to_underlying(EnumType value) {
     return static_cast<std::underlying_type_t<EnumType>>(value);
 }
 
+

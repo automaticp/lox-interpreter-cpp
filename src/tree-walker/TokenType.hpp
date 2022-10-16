@@ -4,7 +4,7 @@
 #include <array>
 #include <string>
 #include <unordered_map>
-#include "EnumUtils.hpp"
+#include "Utils.hpp"
 
 enum class TokenType : size_t {
 
