@@ -23,7 +23,7 @@ TEST_CASE("literals") {
     LiteralExpr l_nil{ Token{ kw_nil, "nil", 0, nullptr } };
 
     CHECK(print(l_string)   == "\"hello\"");
-    CHECK(print(l_number)   == "5.600000");
+    CHECK(print(l_number)   == "5.6");
     CHECK(print(l_boolean)  == "true");
     CHECK(print(l_nil)      == "nil");
 
@@ -45,7 +45,7 @@ TEST_CASE("unary") {
     };
 
     CHECK(print(u_not_true) == "(! true)");
-    CHECK(print(u_minus_num) == "(- 5.600000)");
+    CHECK(print(u_minus_num) == "(- 5.6)");
 
 }
 
@@ -72,7 +72,7 @@ TEST_CASE("binary") {
         std::make_unique<LiteralExpr>(Token{ string, "\"world\"", 0, "world" })
     };
 
-    CHECK(print(b_num_times_num) == "(* 5.600000 0.100000)");
+    CHECK(print(b_num_times_num) == "(* 5.6 0.1)");
     CHECK(print(b_false_and_true) == "(and false true)");
     CHECK(print(b_hello_plus_world) == "(+ \"hello\" \"world\")");
 
@@ -104,7 +104,7 @@ TEST_CASE("compound") {
         )
     };
 
-    CHECK(print(c) == "(* (- 123.000000) (group 45.670000))");
+    CHECK(print(c) == "(* (- 123) (group 45.67))");
 
 }
 

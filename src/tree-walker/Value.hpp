@@ -3,6 +3,7 @@
 #include <string>
 #include <cstddef>
 #include "Object.hpp"
+#include "Utils.hpp"
 #include <string_view>
 
 using Value = std::variant<Object, std::string, double, bool, std::nullptr_t>;
@@ -59,7 +60,7 @@ struct ValueToStringVisitor {
     std::string operator()(const std::string& val) const { return '"' + val + '"'; }
     std::string operator()(const double& val) const {
         // FIXME: truncate float values when printing
-        return std::to_string(val);
+        return std::string(num_to_string(val));
     }
     std::string operator()(const bool& val) const { return { val ? "true" : "false" }; }
     std::string operator()(const std::nullptr_t& val) const { return { "nil" }; }
