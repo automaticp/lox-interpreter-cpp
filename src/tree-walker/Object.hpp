@@ -16,6 +16,10 @@ public:
     Object(Object &&);
     ~Object();
 
+    bool operator==(const Object& other) const {
+        return false;
+    }
+
 private:
     ObjectImpl& impl() const noexcept {
         return *pimpl_;
