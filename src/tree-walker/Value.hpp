@@ -17,7 +17,7 @@ inline bool holds_same(const Value& lhs, const Value& rhs) {
 }
 
 
-inline bool operator==(const Value& lhs, const Value& rhs) {
+inline bool is_equal(const Value& lhs, const Value& rhs) {
     if (holds_same(lhs, rhs)) {
         return lhs == rhs;
     } else {
@@ -51,4 +51,20 @@ struct ValueTypeNameVisitor {
 
 inline std::string_view type_name(const Value& val) {
     return std::visit(detail::ValueTypeNameVisitor{}, val);
+}
+
+
+struct ValueToStringVisitor {
+    std::string operator()(const Object& val) const { return "?Object?"; }
+    std::string operator()(const std::string& val) const { return '"' + val + '"'; }
+    std::string operator()(const double& val) const {
+        // FIXME: truncate float values when printing
+        return std::to_string(val);
+    }
+    std::string operator()(const bool& val) const { return { val ? "true" : "false" }; }
+    std::string operator()(const std::nullptr_t& val) const { return { "nil" }; }
+};
+
+inline std::string to_string(const Value& value) {
+    return std::visit(ValueToStringVisitor{}, value);
 }
