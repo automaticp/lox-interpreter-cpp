@@ -2,6 +2,8 @@
 #include "ErrorReporter.hpp"
 #include "Errors.hpp"
 #include "Scanner.hpp"
+#include "Parser.hpp"
+#include "ExprVisitors.hpp"
 #include <string>
 #include <optional>
 #include <fstream>
@@ -10,12 +12,17 @@
 
 class RunContext {
 private:
-    bool is_debug_;
+    bool is_debug_scanner_;
+    bool is_debug_parser_;
     std::optional<std::string> filename_;
     ErrorReporter& err_;
 public:
-    RunContext(ErrorReporter& err_reporter, bool is_debug, std::optional<std::string> filename) :
-        err_{ err_reporter }, filename_{ filename }, is_debug_{ is_debug } {}
+    RunContext(ErrorReporter& err_reporter,
+        bool is_debug_scanner, bool is_debug_parser,
+        std::optional<std::string> filename = std::nullopt) :
+        err_{ err_reporter }, filename_{ filename },
+        is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
+    {}
 
     void start_running() {
         if (is_prompt_mode()) {
@@ -25,7 +32,8 @@ public:
         }
     }
 
-    bool is_debug_mode() const noexcept { return is_debug_; }
+    bool is_debug_scanner_mode() const noexcept { return is_debug_scanner_; }
+    bool is_debug_parser_mode() const noexcept { return is_debug_parser_; }
     bool is_prompt_mode() const noexcept { return !filename_.has_value(); }
     bool is_file_mode() const noexcept { return filename_.has_value(); }
 
@@ -35,7 +43,8 @@ public:
 
         std::cout << "Starting lox interpreter prompt...\n";
 
-        if (is_debug_mode()) { std::cout << "(Running in debug mode)\n"; }
+        if (is_debug_scanner_mode()) { std::cout << "(Scanner debugging enabled)\n"; }
+        if (is_debug_parser_mode()) { std::cout << "(Parser debugging enabled)\n"; }
 
         std::cout << "> ";
         while (std::getline(std::cin, line)) {
@@ -62,11 +71,22 @@ public:
 
         const auto& tokens = scanner.scan_tokens();
 
-        if (is_debug_mode()) {
+        if (is_debug_scanner_mode()) {
+            std::cout << "[Debug @Scanner]:\n";
             for (const auto& token : tokens) {
                 std::cout << token.info() << '\n';
             }
         }
+
+        Parser parser{ tokens, err_ };
+
+        if (parser.parse_tokens()) {
+            if (is_debug_parser_mode()) {
+                std::cout << "[Debug @Parser]:\n";
+                std::cout << parser.peek_result().accept(ExprASTPrinterVisitor{}) << '\n';
+            }
+        }
+
     }
 
 private:
