@@ -105,6 +105,8 @@ public:
     bool parse_tokens() {
         try {
             root_expr_ = expression();
+            assert(state_.peek().type == TokenType::eof);
+            state_.advance();
             return true;
         } catch (ParserError) {
             return false;
