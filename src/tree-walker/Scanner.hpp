@@ -7,6 +7,7 @@
 #include "Errors.hpp"
 #include "Token.hpp"
 #include "ErrorReporter.hpp"
+#include "TokenType.hpp"
 
 class Scanner {
 private:
@@ -245,7 +246,15 @@ private:
 
         auto it = detail::keyword_map.find(std::string(state_.lexeme()));
         if (it != detail::keyword_map.end()) {
-            add_token(it->second);
+            if (it->second == TokenType::kw_true) {
+                add_token(it->second, true);
+            } else if (it->second == TokenType::kw_false) {
+                add_token(it->second, false);
+            } else if (it->second == TokenType::kw_nil) {
+                add_token(it->second, nullptr);
+            } else {
+                add_token(it->second);
+            }
         } else {
             add_token(TokenType::identifier);
         }
