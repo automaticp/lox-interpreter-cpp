@@ -93,6 +93,7 @@ public:
             state_.new_token();
             scan_token();
         }
+        add_token(TokenType::eof);
 
         return tokens_;
     }
