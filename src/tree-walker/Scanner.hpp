@@ -93,7 +93,7 @@ public:
             state_.new_token();
             scan_token();
         }
-        add_token(TokenType::eof);
+        add_eof_token();
 
         return tokens_;
     }
@@ -191,6 +191,11 @@ private:
     void add_token(TokenType type, LiteralValue&& literal) {
         tokens_.emplace_back(type, state_.lexeme(), state_.line(), std::move(literal));
     }
+
+    void add_eof_token() {
+        tokens_.emplace_back(TokenType::eof, to_lexeme(TokenType::eof), state_.line());
+    }
+
 
     void add_string_literal_token() {
         while (!state_.is_end() && state_.peek() != '"') {
