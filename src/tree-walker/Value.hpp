@@ -3,7 +3,7 @@
 #include <string>
 #include <cstddef>
 #include "Object.hpp"
-
+#include <string_view>
 
 using Value = std::variant<Object, std::string, double, bool, std::nullptr_t>;
 
@@ -26,3 +26,29 @@ inline bool operator==(const Value& lhs, const Value& rhs) {
 }
 
 
+namespace detail {
+
+struct ValueTypeNameVisitor {
+    std::string_view operator()(const Object&) const {
+        return "Object";
+    }
+    std::string_view operator()(const std::string&) const {
+        return "String";
+    }
+    std::string_view operator()(const double&) const {
+        return "Number";
+    }
+    std::string_view operator()(const bool&) const {
+        return "Boolean";
+    }
+    std::string_view operator()(const std::nullptr_t&) const {
+        return "Nil";
+    }
+};
+
+} // namespace detail
+
+
+inline std::string_view type_name(const Value& val) {
+    return std::visit(detail::ValueTypeNameVisitor{}, val);
+}
