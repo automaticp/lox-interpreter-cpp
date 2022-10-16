@@ -107,3 +107,18 @@ error_binary_without_left_operand = binary_op, expression;
 |equal|5|LA| *expr* ( == \| != ) *expr*|
 |ternary|6|RA (values)| *expr* ? *expr* : *expr*|
 |comma|7|LA| *expr*, *expr*|
+
+
+
+# Script Grammar
+
+```EBNF
+program = { statement }, ?EOF?;
+
+statememt = expression_stmt | print_stmt;
+
+expression_stmt = expression, ";";
+
+print_stmt = "print", expression, ";";
+
+```
