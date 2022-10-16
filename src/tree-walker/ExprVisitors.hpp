@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <concepts>
+#include "Value.hpp"
 
 class IExpr;
 class LiteralExpr;
@@ -29,12 +30,29 @@ private:
 
 
 struct ExprInterpretVisitor {
-    // FIXME: later
-    using return_type = void;
-    return_type operator()(const LiteralExpr& expr) const {}
-    return_type operator()(const UnaryExpr& expr) const {}
-    return_type operator()(const BinaryExpr& expr) const {}
-    return_type operator()(const GroupedExpr& expr) const {}
+    using return_type = Value;
+    return_type operator()(const LiteralExpr& expr) const;
+    return_type operator()(const UnaryExpr& expr) const;
+    return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
+
+private:
+    return_type evaluate(const IExpr& expr) const;
+    static bool is_truthful(const Value& value);
+
+    template<typename T>
+    const T& try_cast(const Value& value) const {
+        if (holds<T>(value)) {
+            return std::get<T>(value);
+        } else {
+            abort_by_exception(/* InterpreterError::unexpected_type */);
+        }
+    }
+
+    void abort_by_exception(/* InterpreterError type */) const noexcept(false) {
+        // throw type;
+        throw;
+    }
 };
 
 struct ExprResolveVisitor {
