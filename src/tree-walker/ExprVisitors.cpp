@@ -28,19 +28,19 @@ ExprASTPrinterVisitor::operator()(const GroupedExpr& expr) const {
 
 
 
-ExprInterpretVisitor::return_type
-ExprInterpretVisitor::evaluate(const IExpr& expr) const {
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::evaluate(const IExpr& expr) const {
     return expr.accept(*this);
 }
 
 
-ExprInterpretVisitor::return_type
-ExprInterpretVisitor::operator()(const LiteralExpr& expr) const {
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const LiteralExpr& expr) const {
     return { std::visit([](auto&& arg) { return Value{ arg }; }, expr.token.literal.value()) };
 }
 
-ExprInterpretVisitor::return_type
-ExprInterpretVisitor::operator()(const UnaryExpr& expr) const {
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const UnaryExpr& expr) const {
     Value val{ evaluate(*expr.operand) };
 
     switch (expr.op) {
@@ -67,7 +67,7 @@ ExprInterpretVisitor::operator()(const UnaryExpr& expr) const {
 }
 
 
-bool ExprInterpretVisitor::is_truthful(const Value& value) {
+bool ExprInterpreterVisitor::is_truthful(const Value& value) {
     if (holds<std::nullptr_t>(value)) {
         return false;
     }
@@ -80,8 +80,8 @@ bool ExprInterpretVisitor::is_truthful(const Value& value) {
 }
 
 
-ExprInterpretVisitor::return_type
-ExprInterpretVisitor::operator()(const BinaryExpr& expr) const {
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
     Value lhs{ evaluate(*expr.lhs) };
     Value rhs{ evaluate(*expr.rhs) };
 
@@ -121,7 +121,7 @@ ExprInterpretVisitor::operator()(const BinaryExpr& expr) const {
     return nullptr;
 }
 
-ExprInterpretVisitor::return_type
-ExprInterpretVisitor::operator()(const GroupedExpr& expr) const {
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
     return evaluate(*expr.expr);
 }

@@ -29,7 +29,7 @@ private:
 };
 
 
-struct ExprInterpretVisitor {
+struct ExprInterpreterVisitor {
     using return_type = Value;
     return_type operator()(const LiteralExpr& expr) const;
     return_type operator()(const UnaryExpr& expr) const;
