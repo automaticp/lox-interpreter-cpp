@@ -28,6 +28,13 @@ enum class ParserError : size_t {
 };
 
 
+enum class InterpreterError : size_t {
+
+    unexpected_type = 0
+
+};
+
+
 
 namespace detail {
 
@@ -44,6 +51,10 @@ inline constexpr std::array scanner_error_msgs{
 inline constexpr std::array parser_error_msgs{
     "Unknown primary expression",
     "Missing closing ')'"
+};
+
+inline constexpr std::array interpreter_error_msgs{
+    "Unexpected type"
 };
 
 
@@ -63,6 +74,12 @@ inline std::string_view to_error_message(ScannerError err) {
 
 inline std::string_view to_error_message(ParserError err) {
     return detail::parser_error_msgs[
+        to_underlying(err)
+    ];
+}
+
+inline std::string_view to_error_message(InterpreterError err) {
+    return detail::interpreter_error_msgs[
         to_underlying(err)
     ];
 }

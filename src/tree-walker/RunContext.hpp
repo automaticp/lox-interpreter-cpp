@@ -3,6 +3,7 @@
 #include "Errors.hpp"
 #include "Scanner.hpp"
 #include "Parser.hpp"
+#include "Interpreter.hpp"
 #include "ExprVisitors.hpp"
 #include <string>
 #include <optional>
@@ -67,6 +68,9 @@ public:
 
 
     void run(const std::string& text) {
+
+        err_.reset();
+
         Scanner scanner{ text, err_ };
 
         const auto& tokens = scanner.scan_tokens();
@@ -78,6 +82,10 @@ public:
             }
         }
 
+        if (err_.had_scanner_errors()) {
+            return;
+        }
+
         Parser parser{ tokens, err_ };
 
         if (parser.parse_tokens()) {
@@ -85,6 +93,18 @@ public:
                 std::cout << "[Debug @Parser]:\n";
                 std::cout << parser.peek_result().accept(ExprASTPrinterVisitor{}) << '\n';
             }
+        } else {
+            return;
+        }
+
+        Interpreter intepreter{ parser.peek_result(), err_ };
+
+        if (intepreter.interpret()) {
+            if (is_prompt_mode()) {
+                std::cout << to_string(intepreter.result()) << '\n';
+            }
+        } else {
+            return;
         }
 
     }

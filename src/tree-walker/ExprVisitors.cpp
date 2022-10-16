@@ -1,5 +1,7 @@
 #include "ExprVisitors.hpp"
 
+#include "ErrorReporter.hpp"
+#include "Errors.hpp"
 #include "TokenType.hpp"
 #include "Expr.hpp"
 #include "Value.hpp"
@@ -45,16 +47,11 @@ ExprInterpreterVisitor::operator()(const UnaryExpr& expr) const {
 
     switch (expr.op) {
         case TokenType::minus:
-            if (holds<double>(val)) {
-                return -std::get<double>(val);
-            } else {
-                // FIXME: report failure
-            }
+            check_type<double>(expr, val);
+            return -std::get<double>(val);
             break;
         case TokenType::plus:
-            if (!holds<double>(val)) {
-                // FIXME: report failure
-            }
+            check_type<double>(expr, val);
             break;
         case TokenType::bang:
             return !is_truthful(val);
@@ -88,32 +85,46 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
     using enum TokenType;
     switch (expr.op) {
         case minus:
-            return try_cast<double>(lhs) - try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) - std::get<double>(rhs);
         case slash:
-            return try_cast<double>(lhs) / try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) / std::get<double>(rhs);
         case star:
-            return try_cast<double>(lhs) * try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) * std::get<double>(rhs);
         case plus:
             if (holds<double>(lhs) && holds<double>(rhs)) {
                 return std::get<double>(lhs) + std::get<double>(rhs);
             } else if (holds<std::string>(lhs) && holds<std::string>(rhs)) {
                 return std::get<std::string>(lhs) + std::get<std::string>(rhs);
             } else {
-                abort_by_exception(/* InterpreterError::unexpected_type */);
+                report_error(
+                    InterpreterError::unexpected_type, expr,
+                    fmt::format(
+                        "Expected a pair of Numbers or Strings, Encountered {:s} and {:s}",
+                        type_name(lhs), type_name(rhs)
+                    )
+                );
+                abort_by_exception(InterpreterError::unexpected_type);
             }
             break;
         case greater:
-            return try_cast<double>(lhs) > try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) > std::get<double>(rhs);
         case greater_eq:
-            return try_cast<double>(lhs) >= try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) >= std::get<double>(rhs);
         case less:
-            return try_cast<double>(lhs) < try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) < std::get<double>(rhs);
         case less_eq:
-            return try_cast<double>(lhs) <= try_cast<double>(rhs);
+            check_type<double, double>(expr, lhs, rhs);
+            return std::get<double>(lhs) <= std::get<double>(rhs);
         case eq_eq:
-            return lhs == rhs;
+            return is_equal(lhs, rhs);
         case bang_eq:
-            return lhs != rhs;
+            return !is_equal(lhs, rhs);
         default:
             break;
     }
@@ -125,3 +136,55 @@ ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
     return evaluate(*expr.expr);
 }
+
+void ExprInterpreterVisitor::report_error(InterpreterError type, const IExpr& expr, std::string_view details) const {
+    err_.interpreter_error(type, expr, details);
+}
+
+
+
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const LiteralExpr& expr) const {
+    return expr.token;
+}
+
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const UnaryExpr& expr) const {
+    return expr.op;
+}
+
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const BinaryExpr& expr) const {
+    return expr.op;
+}
+
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const GroupedExpr& expr) const {
+    return expr.expr->accept(*this);
+}
+
+
+
+
+
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const LiteralExpr& expr) const {
+    return "Literal Expression";
+}
+
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const UnaryExpr& expr) const {
+    return "Unary Expression";
+}
+
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const BinaryExpr& expr) const {
+    return "Binary Expression";
+}
+
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const GroupedExpr& expr) const {
+    return "Group Expression";
+}
+
+

@@ -4,6 +4,8 @@
 #include <string_view>
 #include <vector>
 #include "Errors.hpp"
+#include "ExprVisitors.hpp"
+#include "IExpr.hpp"
 #include "Token.hpp"
 #include <fmt/format.h>
 
@@ -12,8 +14,16 @@ private:
     std::vector<ContextError> context_errs_;
     std::vector<ScannerError> scanner_errs_;
     std::vector<ParserError> parser_errs_;
+    std::vector<InterpreterError> interpreter_errs_;
 
 public:
+    void reset() {
+        context_errs_.clear();
+        scanner_errs_.clear();
+        parser_errs_.clear();
+        interpreter_errs_.clear();
+    }
+
     bool had_context_errors() const noexcept {
         return !context_errs_.empty();
     }
@@ -26,8 +36,13 @@ public:
         return !parser_errs_.empty();
     }
 
+    bool had_interpreter_errors() const noexcept {
+        return !interpreter_errs_.empty();
+    }
+
     bool had_errors() const noexcept {
-        return had_context_errors() || had_scanner_errors() || had_parser_errors();
+        return had_context_errors() || had_scanner_errors()
+            || had_parser_errors() || had_interpreter_errors();
     }
 
     const std::vector<ContextError>&
@@ -45,6 +60,12 @@ public:
         return parser_errs_;
     }
 
+    const std::vector<InterpreterError>&
+    get_interpreter_errors() const noexcept {
+        return interpreter_errs_;
+    }
+
+
     void scanner_error(ScannerError type, size_t line, std::string_view details) {
         scanner_errs_.push_back(type);
         report_scanner_error(type, line, details);
@@ -60,6 +81,11 @@ public:
         report_parser_error(type, token, details);
     }
 
+    void interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) {
+        interpreter_errs_.push_back(type);
+        report_interpreter_error(type, expr, details);
+    }
+
 
     virtual ~ErrorReporter() = default;
 
@@ -70,6 +96,7 @@ protected:
 
     virtual void report_parser_error(ParserError type, const Token& token, std::string_view details = "") = 0;
 
+    virtual void report_interpreter_error(InterpreterError type, const IExpr& token, std::string_view details = "") = 0;
 };
 
 
@@ -100,6 +127,15 @@ protected:
         os_ << fmt::format(
             "[Error @Parser] at line {:d} token {:s}:\n{:s}{:s}\n",
             token.line, token.lexeme, to_error_message(type), details_tail(details)
+        );
+    }
+
+    void report_interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) override {
+        const Token& primary{ expr.accept(ExprGetPrimaryTokenVisitor{}) };
+        os_ << fmt::format(
+            "[Error @Interpreter] at line {:d} in {:s}:\n{:s}{:s}\n",
+            primary.line, expr.accept(ExprUserFriendlyNameVisitor{}),
+            to_error_message(type), details_tail(details)
         );
     }
 

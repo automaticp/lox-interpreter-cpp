@@ -1,8 +1,11 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <string_view>
 #include <concepts>
+#include <fmt/format.h>
 #include "Value.hpp"
+#include "Errors.hpp"
 
 class IExpr;
 class LiteralExpr;
@@ -29,6 +32,9 @@ private:
 };
 
 
+
+class ErrorReporter;
+
 struct ExprInterpreterVisitor {
     using return_type = Value;
     return_type operator()(const LiteralExpr& expr) const;
@@ -36,39 +42,55 @@ struct ExprInterpreterVisitor {
     return_type operator()(const BinaryExpr& expr) const;
     return_type operator()(const GroupedExpr& expr) const;
 
+    explicit ExprInterpreterVisitor(ErrorReporter& err) : err_{ err } {}
+
 private:
+    ErrorReporter& err_;
+
     return_type evaluate(const IExpr& expr) const;
     static bool is_truthful(const Value& value);
 
     template<typename T>
-    const T& try_cast(const Value& value) const {
-        if (!holds<T>(value)) {
-            abort_by_exception(/* InterpreterError::unexpected_type */);
+    void check_type(const IExpr& expr, const Value& val) const {
+        if (!holds<T>(val)) {
+            report_error(
+                InterpreterError::unexpected_type, expr,
+                fmt::format("Expected {:s}, Encountered {:s}", type_name(Value{T{}}), type_name(val))
+            );
+            abort_by_exception(InterpreterError::unexpected_type);
         }
-        return std::get<T>(value);
     }
 
-    void abort_by_exception(/* InterpreterError type */) const noexcept(false) {
-        // throw type;
-        throw;
+    template<typename T1, typename T2>
+    void check_type(const IExpr& expr, const Value& val1, const Value& val2) const {
+        check_type<T1>(expr, val1);
+        check_type<T2>(expr, val2);
     }
+
+    void abort_by_exception(InterpreterError type) const noexcept(false) {
+        throw type;
+    }
+
+    void report_error(InterpreterError type, const IExpr& expr, std::string_view details = "") const;
 };
 
-struct ExprResolveVisitor {
-    // FIXME: later
-    using return_type = void;
-    return_type operator()(const LiteralExpr& expr) const {}
-    return_type operator()(const UnaryExpr& expr) const {}
-    return_type operator()(const BinaryExpr& expr) const {}
-    return_type operator()(const GroupedExpr& expr) const {}
+
+class Token;
+
+struct ExprGetPrimaryTokenVisitor {
+    using return_type = const Token&;
+    return_type operator()(const LiteralExpr& expr) const;
+    return_type operator()(const UnaryExpr& expr) const;
+    return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
 };
 
-struct ExprAnalyzeVisitor {
-    // FIXME: later
-    using return_type = void;
-    return_type operator()(const LiteralExpr& expr) const {}
-    return_type operator()(const UnaryExpr& expr) const {}
-    return_type operator()(const BinaryExpr& expr) const {}
-    return_type operator()(const GroupedExpr& expr) const {}
+
+struct ExprUserFriendlyNameVisitor {
+    using return_type = std::string_view;
+    return_type operator()(const LiteralExpr& expr) const;
+    return_type operator()(const UnaryExpr& expr) const;
+    return_type operator()(const BinaryExpr& expr) const;
+    return_type operator()(const GroupedExpr& expr) const;
 };
 

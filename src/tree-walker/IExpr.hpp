@@ -69,7 +69,7 @@ protected:
 //
 // Extend this list (and the list below) to add more visitors.
 using IFullyVisitableExpr = IVisitable<
-    ExprASTPrinterVisitor, ExprInterpreterVisitor
+    ExprASTPrinterVisitor, ExprInterpreterVisitor, ExprGetPrimaryTokenVisitor, ExprUserFriendlyNameVisitor
 >;
 
 
@@ -136,7 +136,7 @@ struct Visitable<CRTP, LastVisitor> : IExpr {
 // Extend this list to add more visitors.
 template<typename CRTP>
 using FullyVisitableExpr = Visitable<
-    CRTP, ExprASTPrinterVisitor, ExprInterpreterVisitor
+    CRTP, ExprASTPrinterVisitor, ExprInterpreterVisitor, ExprGetPrimaryTokenVisitor, ExprUserFriendlyNameVisitor
 >;
 
 
