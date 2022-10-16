@@ -133,8 +133,8 @@ protected:
     void report_interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) override {
         const Token& primary{ expr.accept(ExprGetPrimaryTokenVisitor{}) };
         os_ << fmt::format(
-            "[Error @Interpreter] at line {:d} in {:s}:\n{:s}{:s}\n",
-            primary.line, expr.accept(ExprUserFriendlyNameVisitor{}),
+            "[Error @Interpreter] at line {:d} in {:s} ({:s}):\n{:s}{:s}\n",
+            primary.line, expr.accept(ExprUserFriendlyNameVisitor{}), primary.lexeme,
             to_error_message(type), details_tail(details)
         );
     }
