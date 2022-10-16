@@ -207,7 +207,7 @@ private:
         if (state_.match(string, number, kw_true, kw_false, kw_nil)) {
 
             return std::make_unique<LiteralExpr>(
-                state_.peek().literal.value()
+                state_.peek_previous().literal.value()
             );
         } else if (state_.match(lparen)) {
 
