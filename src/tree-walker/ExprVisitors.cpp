@@ -8,7 +8,7 @@
 
 ExprASTPrinterVisitor::return_type
 ExprASTPrinterVisitor::operator()(const LiteralExpr& expr) const {
-    return to_string(expr.value);
+    return to_string(expr.token.literal.value());
 }
 
 ExprASTPrinterVisitor::return_type
@@ -36,8 +36,7 @@ ExprInterpretVisitor::evaluate(const IExpr& expr) const {
 
 ExprInterpretVisitor::return_type
 ExprInterpretVisitor::operator()(const LiteralExpr& expr) const {
-    return { expr.value };
-    // return { std::visit([](auto&& arg) { return Value{arg}; }, expr.value) }
+    return { std::visit([](auto&& arg) { return Value{ arg }; }, expr.token.literal.value()) };
 }
 
 ExprInterpretVisitor::return_type

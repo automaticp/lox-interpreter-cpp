@@ -2,6 +2,7 @@
 #include <memory>
 #include "ExprVisitors.hpp"
 #include "Expr.hpp"
+#include "Token.hpp"
 #include "TokenType.hpp"
 
 
@@ -14,10 +15,12 @@ TEST_SUITE("ASTPrinter") {
 
 TEST_CASE("literals") {
 
-    LiteralExpr l_string{ "hello" };
-    LiteralExpr l_number{ 5.6 };
-    LiteralExpr l_boolean{ true };
-    LiteralExpr l_nil{ nullptr };
+    using enum TokenType;
+
+    LiteralExpr l_string{ Token{ string, "\"hello\"", 0, "hello" } };
+    LiteralExpr l_number{ Token{ number, "5.6", 0, 5.6 } };
+    LiteralExpr l_boolean{ Token{ kw_true, "true", 0, true } };
+    LiteralExpr l_nil{ Token{ kw_nil, "nil", 0, nullptr } };
 
     CHECK(print(l_string)   == "\"hello\"");
     CHECK(print(l_number)   == "5.600000");
@@ -29,8 +32,17 @@ TEST_CASE("literals") {
 
 TEST_CASE("unary") {
 
-    UnaryExpr u_not_true{ TokenType::bang, std::make_unique<LiteralExpr>(true) };
-    UnaryExpr u_minus_num{ TokenType::minus, std::make_unique<LiteralExpr>(5.6) };
+    using enum TokenType;
+
+    UnaryExpr u_not_true{
+        Token{ bang, "!", 0 },
+        std::make_unique<LiteralExpr>(Token{ kw_true, "true", 0, true})
+    };
+
+    UnaryExpr u_minus_num{
+        Token{ minus, "-", 0 },
+        std::make_unique<LiteralExpr>(Token{ number, "5.6", 0, 5.6 })
+    };
 
     CHECK(print(u_not_true) == "(! true)");
     CHECK(print(u_minus_num) == "(- 5.600000)");
@@ -40,22 +52,24 @@ TEST_CASE("unary") {
 
 TEST_CASE("binary") {
 
+    using enum TokenType;
+
     BinaryExpr b_num_times_num{
-        TokenType::star,
-        std::make_unique<LiteralExpr>(5.6),
-        std::make_unique<LiteralExpr>(0.1)
+        Token{ star, "*", 0 },
+        std::make_unique<LiteralExpr>(Token{ number, "5.6", 0,5.6 }),
+        std::make_unique<LiteralExpr>(Token{ number, "0.1", 0, 0.1 })
     };
 
     BinaryExpr b_false_and_true{
-        TokenType::kw_and,
-        std::make_unique<LiteralExpr>(false),
-        std::make_unique<LiteralExpr>(true)
+        Token{ kw_and, "and", 0 },
+        std::make_unique<LiteralExpr>(Token{ kw_false, "false", 0, false }),
+        std::make_unique<LiteralExpr>(Token{ kw_true, "true", 0, true})
     };
 
     BinaryExpr b_hello_plus_world{
-        TokenType::plus,
-        std::make_unique<LiteralExpr>("hello"),
-        std::make_unique<LiteralExpr>("world")
+        Token{ plus, "+", 0 },
+        std::make_unique<LiteralExpr>(Token{ string, "\"hello\"", 0, "hello" }),
+        std::make_unique<LiteralExpr>(Token{ string, "\"world\"", 0, "world" })
     };
 
     CHECK(print(b_num_times_num) == "(* 5.600000 0.100000)");
@@ -67,7 +81,9 @@ TEST_CASE("binary") {
 
 TEST_CASE("group") {
 
-    GroupedExpr g_nil{ std::make_unique<LiteralExpr>(nullptr) };
+    GroupedExpr g_nil{
+        std::make_unique<LiteralExpr>(Token{ TokenType::kw_nil, "nil", 0, nullptr })
+    };
 
     CHECK(print(g_nil) == "(group nil)");
 
@@ -75,14 +91,16 @@ TEST_CASE("group") {
 
 TEST_CASE("compound") {
 
+    using enum TokenType;
+
     BinaryExpr c{
-        TokenType::star,
+        Token{ star, "*", 0},
         std::make_unique<UnaryExpr>(
-            TokenType::minus,
-            std::make_unique<LiteralExpr>(123.0)
+            Token{ minus, "-", 0 },
+            std::make_unique<LiteralExpr>(Token{ number, "123", 0, 123.0 } )
         ),
         std::make_unique<GroupedExpr>(
-            std::make_unique<LiteralExpr>(45.67)
+            std::make_unique<LiteralExpr>(Token{ number, "45.67", 0, 45.67 })
         )
     };
 

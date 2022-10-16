@@ -4,35 +4,35 @@
 #include "LiteralValue.hpp"
 #include "TokenType.hpp"
 #include "IExpr.hpp"
-
+#include "Token.hpp"
 
 
 struct LiteralExpr : FullyVisitableExpr<LiteralExpr> {
 public:
-    LiteralValue value;
+    Token token;
 
-    LiteralExpr(LiteralValue value) :
-        value{ std::move(value) } {}
+    LiteralExpr(Token token) :
+        token{ std::move(token) } {}
 };
 
 
 struct UnaryExpr : FullyVisitableExpr<UnaryExpr> {
 public:
-    TokenType op;
+    Token op;
     std::unique_ptr<IExpr> operand;
 
-    UnaryExpr(TokenType op, std::unique_ptr<IExpr> expr) :
+    UnaryExpr(Token op, std::unique_ptr<IExpr> expr) :
         op{ op }, operand{ std::move(expr) } {}
 };
 
 
 struct BinaryExpr : FullyVisitableExpr<BinaryExpr> {
 public:
-    TokenType op;
+    Token op;
     std::unique_ptr<IExpr> lhs;
     std::unique_ptr<IExpr> rhs;
 
-    BinaryExpr(TokenType op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
+    BinaryExpr(Token op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
         op{ op }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
 };
 

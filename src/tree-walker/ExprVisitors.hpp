@@ -42,11 +42,10 @@ private:
 
     template<typename T>
     const T& try_cast(const Value& value) const {
-        if (holds<T>(value)) {
-            return std::get<T>(value);
-        } else {
+        if (!holds<T>(value)) {
             abort_by_exception(/* InterpreterError::unexpected_type */);
         }
+        return std::get<T>(value);
     }
 
     void abort_by_exception(/* InterpreterError type */) const noexcept(false) {

@@ -139,7 +139,7 @@ private:
 
         using enum TokenType;
         while (state_.match(bang_eq, eq_eq)) {
-            TokenType op{ state_.peek_previous().type };
+            Token op{ state_.peek_previous() };
             expr = std::make_unique<BinaryExpr>(
                 op, std::move(expr), comparison_expr()
             );
@@ -153,7 +153,7 @@ private:
 
         using enum TokenType;
         while (state_.match(greater, greater_eq, less, less_eq)) {
-            TokenType op{ state_.peek_previous().type };
+            Token op{ state_.peek_previous() };
             expr = std::make_unique<BinaryExpr>(
                 op, std::move(expr), term_expr()
             );
@@ -168,7 +168,7 @@ private:
 
         using enum TokenType;
         while (state_.match(plus, minus)) {
-            TokenType op{ state_.peek_previous().type };
+            Token op{ state_.peek_previous() };
             expr = std::make_unique<BinaryExpr>(
                 op, std::move(expr), factor_expr()
             );
@@ -182,7 +182,7 @@ private:
 
         using enum TokenType;
         while (state_.match(star, slash)) {
-            TokenType op{ state_.peek_previous().type };
+            Token op{ state_.peek_previous() };
             expr = std::make_unique<BinaryExpr>(
                 op, std::move(expr), unary_expr()
             );
@@ -195,7 +195,7 @@ private:
 
         using enum TokenType;
         if (state_.match(bang, minus, plus)) {
-            TokenType op{ state_.peek_previous().type };
+            Token op{ state_.peek_previous() };
             return std::make_unique<UnaryExpr>(
                 op, unary_expr()
             );
@@ -209,7 +209,7 @@ private:
         if (state_.match(string, number, kw_true, kw_false, kw_nil)) {
 
             return std::make_unique<LiteralExpr>(
-                state_.peek_previous().literal.value()
+                state_.peek_previous()
             );
         } else if (state_.match(lparen)) {
 

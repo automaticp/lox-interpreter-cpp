@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string_view>
 #include <utility>
+#include <cassert>
 
 class Token {
 public:
@@ -41,4 +42,11 @@ public:
     bool operator!=(const Token& other) const noexcept {
         return !(*this == other);
     }
+
+    operator const LiteralValue& () const {
+        assert(literal.has_value());
+        return literal.value();
+    }
+    operator TokenType() const { return type; }
+
 };
