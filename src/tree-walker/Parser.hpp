@@ -1,5 +1,6 @@
 #pragma once
 #include "ErrorReporter.hpp"
+#include "Errors.hpp"
 #include "ExprVisitors.hpp"
 #include "IExpr.hpp"
 #include "Expr.hpp"
@@ -107,14 +108,15 @@ public:
 
     bool parse_tokens() {
         statements_.clear();
-        try {
-            while (!state_.is_eof()) {
-                statements_.emplace_back(statement());
+
+        while (!state_.is_eof()) {
+            try {
+                statements_.emplace_back(declaration());
+            } catch (ParserError) {
+                synchronize_on_next_statement();
             }
-            return true;
-        } catch (ParserError) {
-            return false;
         }
+        return err_.had_parser_errors();
     }
 
     const std::vector<std::unique_ptr<IStmt>>& peek_result() const {
@@ -133,6 +135,28 @@ public:
     }
 
 private:
+    std::unique_ptr<IStmt> declaration() {
+        if (state_.match(TokenType::kw_var)) {
+            return var_decl();
+        } else {
+            return statement();
+        }
+    }
+
+    std::unique_ptr<IStmt> var_decl() {
+        const Token& id = try_consume(
+            TokenType::identifier, ParserError::expected_identifier
+        );
+
+        // FIXME: could be LiteralExpr(nil) or its own NullExpr;
+        std::unique_ptr<IExpr> init{ nullptr };
+        if (state_.match(TokenType::eq)) {
+            init = expression();
+        }
+
+        try_consume_semicolon();
+        return std::make_unique<VarStmt>(id, std::move(init));
+    }
 
     std::unique_ptr<IStmt> statement() {
         if (state_.match(TokenType::kw_print)) {
@@ -145,9 +169,7 @@ private:
     std::unique_ptr<IStmt> print_stmt() {
         auto expr = expression();
 
-        try_consume(
-            TokenType::semicolon, ParserError::missing_semicolon
-        );
+        try_consume_semicolon();
 
         return std::make_unique<PrintStmt>(std::move(expr));
     }
@@ -155,9 +177,7 @@ private:
     std::unique_ptr<IStmt> expression_stmt() {
         auto expr = expression();
 
-        try_consume(
-            TokenType::semicolon, ParserError::missing_semicolon
-        );
+        try_consume_semicolon();
 
         return std::make_unique<ExpressionStmt>(std::move(expr));
     }
@@ -257,6 +277,10 @@ private:
             return std::make_unique<GroupedExpr>(
                 std::move(expr)
             );
+        } else if (state_.match(identifier)) {
+            return std::make_unique<VariableExpr>(
+                state_.peek_previous()
+            );
         }
 
         report_error_and_abort(ParserError::unknown_primary_expression);
@@ -264,19 +288,24 @@ private:
     }
 
 
-    bool try_consume(TokenType expected, ParserError fail_error) {
+    const Token& try_consume(TokenType expected, ParserError fail_error) {
         if (!state_.match(expected)) {
             report_error_and_abort(fail_error);
-            return false;
         }
-        return true;
+        return state_.peek_previous();
+    }
+
+    const Token& try_consume_semicolon() {
+        return try_consume(
+            TokenType::semicolon, ParserError::missing_semicolon
+        );
     }
 
     void synchronize_on_next_statement() {
 
         using enum TokenType;
 
-        while(!state_.is_end()) {
+        while(!state_.is_eof()) {
 
             const Token& prev{ state_.advance() };
             if (prev.type == semicolon) {

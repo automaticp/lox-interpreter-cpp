@@ -24,7 +24,8 @@ enum class ParserError : size_t {
 
     unknown_primary_expression = 0,
     missing_closing_paren,
-    missing_semicolon
+    missing_semicolon,
+    expected_identifier
 
 };
 
@@ -52,7 +53,8 @@ inline constexpr std::array scanner_error_msgs{
 inline constexpr std::array parser_error_msgs{
     "Unknown primary expression",
     "Missing closing ')'",
-    "Missing ';' at the end of statement"
+    "Missing ';' at the end of statement",
+    "Expected identifier"
 };
 
 inline constexpr std::array interpreter_error_msgs{

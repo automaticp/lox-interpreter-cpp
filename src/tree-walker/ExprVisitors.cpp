@@ -8,6 +8,11 @@
 #include <cstddef>
 #include <variant>
 
+
+
+
+// ---- ExprASTPrinterVisitor ----
+
 ExprASTPrinterVisitor::return_type
 ExprASTPrinterVisitor::operator()(const LiteralExpr& expr) const {
     return to_string(expr.token.literal.value());
@@ -28,6 +33,16 @@ ExprASTPrinterVisitor::operator()(const GroupedExpr& expr) const {
     return parenthesize("group", *expr.expr);
 }
 
+ExprASTPrinterVisitor::return_type
+ExprASTPrinterVisitor::operator()(const VariableExpr& expr) const {
+    return expr.identifier.lexeme;
+}
+
+
+
+
+
+// ---- ExprInterpreterVisitor ----
 
 
 ExprInterpreterVisitor::return_type
@@ -137,10 +152,25 @@ ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
     return evaluate(*expr.expr);
 }
 
+
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
+    // FIXME: add definition
+}
+
+
 void ExprInterpreterVisitor::report_error(InterpreterError type, const IExpr& expr, std::string_view details) const {
     err_.interpreter_error(type, expr, details);
 }
 
+
+
+
+
+
+
+
+// ---- ExprGetPrimaryTokenVisitor ----
 
 
 ExprGetPrimaryTokenVisitor::return_type
@@ -163,9 +193,15 @@ ExprGetPrimaryTokenVisitor::operator()(const GroupedExpr& expr) const {
     return expr.expr->accept(*this);
 }
 
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const VariableExpr& expr) const {
+    return expr.identifier;
+}
 
 
 
+
+// ---- ExprUserFriendlyNameVisitor ----
 
 ExprUserFriendlyNameVisitor::return_type
 ExprUserFriendlyNameVisitor::operator()(const LiteralExpr& expr) const {
@@ -187,4 +223,8 @@ ExprUserFriendlyNameVisitor::operator()(const GroupedExpr& expr) const {
     return "Group Expression";
 }
 
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const VariableExpr& expr) const {
+    return "Variable Expression";
+}
 

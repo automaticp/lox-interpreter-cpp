@@ -22,7 +22,7 @@ public:
     std::unique_ptr<IExpr> operand;
 
     UnaryExpr(Token op, std::unique_ptr<IExpr> expr) :
-        op{ op }, operand{ std::move(expr) } {}
+        op{ std::move(op) }, operand{ std::move(expr) } {}
 };
 
 
@@ -33,7 +33,7 @@ public:
     std::unique_ptr<IExpr> rhs;
 
     BinaryExpr(Token op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
-        op{ op }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
+        op{ std::move(op) }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
 };
 
 
@@ -43,4 +43,13 @@ public:
 
     GroupedExpr(std::unique_ptr<IExpr> expr) :
         expr{ std::move(expr) } {}
+};
+
+
+struct VariableExpr : FullyVisitableExpr<VariableExpr> {
+public:
+    Token identifier;
+
+    VariableExpr(Token identifier) :
+        identifier{ std::move(identifier) } {}
 };
