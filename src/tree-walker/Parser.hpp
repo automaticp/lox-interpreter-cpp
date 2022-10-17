@@ -3,6 +3,8 @@
 #include "ExprVisitors.hpp"
 #include "IExpr.hpp"
 #include "Expr.hpp"
+#include "IStmt.hpp"
+#include "Stmt.hpp"
 #include "Token.hpp"
 #include "TokenType.hpp"
 #include <concepts>
@@ -129,6 +131,39 @@ public:
     }
 
 private:
+
+    std::unique_ptr<IStmt> statement() {
+        if (state_.match(TokenType::kw_print)) {
+            return print_stmt();
+        } else {
+            return expression_stmt();
+        }
+    }
+
+    std::unique_ptr<IStmt> print_stmt() {
+        auto expr = expression();
+
+        try_consume(
+            TokenType::semicolon, ParserError::missing_semicolon
+        );
+
+        return std::make_unique<PrintStmt>(std::move(expr));
+    }
+
+    std::unique_ptr<IStmt> expression_stmt() {
+        auto expr = expression();
+
+        try_consume(
+            TokenType::semicolon, ParserError::missing_semicolon
+        );
+
+        return std::make_unique<ExpressionStmt>(std::move(expr));
+    }
+
+
+
+
+
 
     std::unique_ptr<IExpr> expression() {
         return equality_expr();

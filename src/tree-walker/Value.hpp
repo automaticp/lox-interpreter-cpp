@@ -59,7 +59,6 @@ struct ValueToStringVisitor {
     std::string operator()(const Object& val) const { return "?Object?"; }
     std::string operator()(const std::string& val) const { return '"' + val + '"'; }
     std::string operator()(const double& val) const {
-        // FIXME: truncate float values when printing
         return std::string(num_to_string(val));
     }
     std::string operator()(const bool& val) const { return { val ? "true" : "false" }; }

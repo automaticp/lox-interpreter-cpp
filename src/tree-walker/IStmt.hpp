@@ -1,17 +1,13 @@
 #pragma once
 #include "IVisitable.hpp"
-
+#include "StmtVisitors.hpp"
 
 // Design notes:
 //
 // See IExpr.hpp and IVisitable.hpp.
 
-struct StmtVisitor {
-    using return_type = void;
-};
-
 using IFullyVisitableStmt = IVisitable<
-    StmtVisitor
+    StmtEvaluateVisitor
 >;
 
 class IStmt : IFullyVisitableStmt {
@@ -21,5 +17,5 @@ public:
 
 template<typename CRTP>
 using FullyVisitableStmt = Visitable<
-    CRTP, IStmt, StmtVisitor
+    CRTP, IStmt, StmtEvaluateVisitor
 >;
