@@ -122,3 +122,21 @@ expression_stmt = expression, ";";
 print_stmt = "print", expression, ";";
 
 ```
+
+## Variable declaration
+
+```EBNF
+program = { declaration }, ?EOF?;
+
+declaration = statement | var_decl;
+
+
+var_decl = "var", identifier, ["=", expression], ";";
+
+identifier = alpha_char, { alnum_char };
+alpha_char = ?letter? | "_";
+alnum_char = alpha_char | digit;
+
+primary_expr = literal | parenthesized_expr | identifier;
+
+```
