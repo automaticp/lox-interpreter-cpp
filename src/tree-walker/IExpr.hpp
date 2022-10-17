@@ -56,15 +56,15 @@ using FullyVisitableExpr = Visitable<
 // IExpr
 //     + public virtual ~IExpr() = default;
 // ^
-// Visitable<DerivedExpr, Visitor1>
+// Visitable<DerivedExpr, IExpr, Visitor1>
 //     + accept(Visitor1&) { ... }
 // ^
-// Visitable<DerivedExpr, Visitor1, Visitor2>
+// Visitable<DerivedExpr, IExpr, Visitor1, Visitor2>
 //     + accept(Visitor2&) { ... }
 // ^
 // ...
 // ^
-// Visitable<DerivedExpr, Visitor1, Visitor2, ..., VisitorN>
+// Visitable<DerivedExpr, IExpr, Visitor1, Visitor2, ..., VisitorN>
 //     + accept(VisitorN&) { ... }
 // ^
 // DerivedExpr
