@@ -116,7 +116,7 @@ public:
                 synchronize_on_next_statement();
             }
         }
-        return err_.had_parser_errors();
+        return !err_.had_parser_errors();
     }
 
     const std::vector<std::unique_ptr<IStmt>>& peek_result() const {
@@ -149,9 +149,13 @@ private:
         );
 
         // FIXME: could be LiteralExpr(nil) or its own NullExpr;
-        std::unique_ptr<IExpr> init{ nullptr };
+        std::unique_ptr<IExpr> init;
         if (state_.match(TokenType::eq)) {
             init = expression();
+        } else {
+            init = std::make_unique<LiteralExpr>(
+                Token{TokenType::kw_nil, "nil", state_.current()->line, nullptr}
+            );
         }
 
         try_consume_semicolon();

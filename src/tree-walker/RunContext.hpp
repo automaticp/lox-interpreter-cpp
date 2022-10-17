@@ -17,11 +17,14 @@ private:
     bool is_debug_parser_;
     std::optional<std::string> filename_;
     ErrorReporter& err_;
+    Interpreter intepreter_;
 public:
     RunContext(ErrorReporter& err_reporter,
         bool is_debug_scanner, bool is_debug_parser,
         std::optional<std::string> filename = std::nullopt) :
-        err_{ err_reporter }, filename_{ filename },
+        err_{ err_reporter },
+        intepreter_{ err_ },
+        filename_{ filename },
         is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
     {}
 
@@ -99,9 +102,7 @@ public:
             return;
         }
 
-        Interpreter intepreter{ err_ };
-
-        intepreter.interpret(parser.peek_result());
+        intepreter_.interpret(parser.peek_result());
     }
 
 private:

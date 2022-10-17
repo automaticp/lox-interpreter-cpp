@@ -155,7 +155,11 @@ ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
-    // FIXME: add definition
+    Value* val = env_.get(expr.identifier.lexeme);
+    if (!val) {
+        report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+    }
+    return *val;
 }
 
 

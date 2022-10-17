@@ -32,7 +32,8 @@ enum class ParserError : size_t {
 
 enum class InterpreterError : size_t {
 
-    unexpected_type = 0
+    unexpected_type = 0,
+    undefined_variable
 
 };
 
@@ -58,7 +59,8 @@ inline constexpr std::array parser_error_msgs{
 };
 
 inline constexpr std::array interpreter_error_msgs{
-    "Unexpected type"
+    "Unexpected type",
+    "Undefined variable"
 };
 
 

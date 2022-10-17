@@ -4,6 +4,7 @@
 #include <string_view>
 #include <concepts>
 #include <fmt/format.h>
+#include "Environment.hpp"
 #include "Value.hpp"
 #include "Errors.hpp"
 
@@ -45,22 +46,22 @@ struct ExprInterpreterVisitor {
     return_type operator()(const GroupedExpr& expr) const;
     return_type operator()(const VariableExpr& expr) const;
 
-    explicit ExprInterpreterVisitor(ErrorReporter& err) : err_{ err } {}
+    explicit ExprInterpreterVisitor(ErrorReporter& err, Environment& env) : err_{ err }, env_{ env } {}
 
-private:
     ErrorReporter& err_;
 protected:
+    Environment& env_;
+
     return_type evaluate(const IExpr& expr) const;
     static bool is_truthful(const Value& value);
 
     template<typename T>
     void check_type(const IExpr& expr, const Value& val) const {
         if (!holds<T>(val)) {
-            report_error(
+            report_error_and_abort(
                 InterpreterError::unexpected_type, expr,
                 fmt::format("Expected {:s}, Encountered {:s}", type_name(Value{T{}}), type_name(val))
             );
-            abort_by_exception(InterpreterError::unexpected_type);
         }
     }
 
@@ -75,6 +76,11 @@ protected:
     }
 
     void report_error(InterpreterError type, const IExpr& expr, std::string_view details = "") const;
+
+    void report_error_and_abort(InterpreterError type, const IExpr& expr, std::string_view details = "") const {
+        report_error(type, expr, details);
+        abort_by_exception(type);
+    }
 };
 
 
