@@ -3,32 +3,31 @@
 #include "Errors.hpp"
 #include "Expr.hpp"
 #include "ExprVisitors.hpp"
+#include "StmtVisitors.hpp"
 #include "IExpr.hpp"
 #include "Value.hpp"
+#include "Stmt.hpp"
+#include <vector>
 
 class Interpreter {
 private:
-    const IExpr& root_expr_;
     ErrorReporter& err_;
-    Value result_{ nullptr };
+    StmtInterpreterVisitor visitor_;
 
 public:
-    friend class ExprInterpreterVisitor;
-
-    Interpreter(const IExpr& root_expr, ErrorReporter& err) :
-        root_expr_{ root_expr }, err_{ err }
+    Interpreter(ErrorReporter& err) :
+        err_{ err }, visitor_{ err }
     {}
 
-    bool interpret() {
+    bool interpret(const std::vector<std::unique_ptr<IStmt>>& statements) {
         try {
-            result_ = root_expr_.accept(ExprInterpreterVisitor{ err_ });
+            for (const auto& statement : statements) {
+                visitor_.execute(*statement);
+            }
             return true;
         } catch (InterpreterError) {
             return false;
         }
     }
-
-    const Value& result() const noexcept { return result_; }
-
 
 };

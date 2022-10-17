@@ -91,22 +91,17 @@ public:
         if (parser.parse_tokens()) {
             if (is_debug_parser_mode()) {
                 std::cout << "[Debug @Parser]:\n";
-                std::cout << parser.peek_result().accept(ExprASTPrinterVisitor{}) << '\n';
+                for (const auto& stmt: parser.peek_result()) {
+                    std::cout << stmt->accept(StmtASTPrinterVisitor{}) << '\n';
+                }
             }
         } else {
             return;
         }
 
-        Interpreter intepreter{ parser.peek_result(), err_ };
+        Interpreter intepreter{ err_ };
 
-        if (intepreter.interpret()) {
-            if (is_prompt_mode()) {
-                std::cout << to_string(intepreter.result()) << '\n';
-            }
-        } else {
-            return;
-        }
-
+        intepreter.interpret(parser.peek_result());
     }
 
 private:

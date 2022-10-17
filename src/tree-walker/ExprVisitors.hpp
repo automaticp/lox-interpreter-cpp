@@ -46,7 +46,7 @@ struct ExprInterpreterVisitor {
 
 private:
     ErrorReporter& err_;
-
+protected:
     return_type evaluate(const IExpr& expr) const;
     static bool is_truthful(const Value& value);
 

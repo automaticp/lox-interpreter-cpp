@@ -19,8 +19,7 @@ class Parser {
 private:
     std::vector<Token> tokens_;
     ErrorReporter& err_;
-    std::unique_ptr<IExpr> root_expr_;
-
+    std::vector<std::unique_ptr<IStmt>> statements_;
 
     class ParserState {
     public:
@@ -37,6 +36,8 @@ private:
         void reset() noexcept { cur_ = beg_; }
 
         bool is_end() const noexcept { return cur_ == end_; }
+
+        bool is_eof() const noexcept { return cur_->type == TokenType::eof; }
 
         bool is_begin() const noexcept { return cur_ == beg_; }
 
@@ -105,29 +106,30 @@ public:
         tokens_{ std::move(tokens) }, err_{ err } {}
 
     bool parse_tokens() {
+        statements_.clear();
         try {
-            root_expr_ = expression();
-            assert(state_.peek().type == TokenType::eof);
-            state_.advance();
+            while (!state_.is_eof()) {
+                statements_.emplace_back(statement());
+            }
             return true;
         } catch (ParserError) {
             return false;
         }
     }
 
-    const IExpr& peek_result() const {
+    const std::vector<std::unique_ptr<IStmt>>& peek_result() const {
         assert(is_full());
-        return *root_expr_;
+        return statements_;
     }
 
-    [[nodiscard]] std::unique_ptr<IExpr> get_result() {
+    [[nodiscard]] std::vector<std::unique_ptr<IStmt>> get_result() {
         assert(is_full());
         state_.reset();
-        return std::move(root_expr_);
+        return std::move(statements_);
     }
 
     bool is_full() const noexcept {
-        return !tokens_.empty() && state_.is_end();
+        return !tokens_.empty() && state_.is_eof();
     }
 
 private:
