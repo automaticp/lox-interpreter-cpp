@@ -158,3 +158,15 @@ statement = expression_stmt | print_stmt | block;
 
 block = "{", { declaration }, "}";
 ```
+
+
+
+# Control Flow
+
+## If statement
+
+```EBNF
+statement = expression_stmt | if_stmt | print_stmt | block;
+
+if_stmt = "if", "(", expression, ")", statement, [ "else", statement ];
+```

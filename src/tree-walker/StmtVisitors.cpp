@@ -30,6 +30,15 @@ StmtInterpreterVisitor::operator()(const BlockStmt& stmt) const {
     }
 }
 
+StmtInterpreterVisitor::return_type
+StmtInterpreterVisitor::operator()(const IfStmt& stmt) const {
+    if (is_truthful(evaluate(*stmt.condition))) {
+        execute(*stmt.then_branch);
+    } else {
+        execute(*stmt.else_branch);
+    }
+}
+
 
 
 void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
@@ -65,4 +74,15 @@ StmtASTPrinterVisitor::operator()(const BlockStmt& stmt) const {
     }
     result += "}";
     return result;
+}
+
+StmtASTPrinterVisitor::return_type
+StmtASTPrinterVisitor::operator()(const IfStmt& stmt) const {
+    return fmt::format(
+        "if ({}) {} {} {}",
+        stmt.condition->accept(*this),
+        stmt.then_branch->accept(*this),
+        stmt.else_branch ? "else" : "",
+        stmt.else_branch ? stmt.else_branch->accept(*this) : ""
+    );
 }

@@ -44,3 +44,19 @@ public:
     BlockStmt(std::vector<std::unique_ptr<IStmt>> statements) :
         statements{ std::move(statements) } {}
 };
+
+
+struct IfStmt : FullyVisitableStmt<IfStmt> {
+public:
+    std::unique_ptr<IExpr> condition;
+    std::unique_ptr<IStmt> then_branch;
+    std::unique_ptr<IStmt> else_branch;
+
+    IfStmt(
+        std::unique_ptr<IExpr> condition,
+        std::unique_ptr<IStmt> then_branch,
+        std::unique_ptr<IStmt> else_branch
+    ) : condition{ std::move(condition) },
+        then_branch{ std::move(then_branch) },
+        else_branch{ std::move(else_branch) } {}
+};

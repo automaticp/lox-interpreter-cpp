@@ -171,7 +171,9 @@ private:
     }
 
     std::unique_ptr<IStmt> statement() {
-        if (state_.match(TokenType::kw_print)) {
+        if (state_.match(TokenType::kw_if)) {
+            return if_stmt();
+        } else if (state_.match(TokenType::kw_print)) {
             return print_stmt();
         } else if (state_.match(TokenType::lbrace)) {
             return block_stmt();
@@ -179,6 +181,31 @@ private:
             return expression_stmt();
         }
     }
+
+    std::unique_ptr<IStmt> if_stmt() {
+        try_consume(
+            TokenType::lparen, ParserError::missing_opening_paren
+        );
+
+        auto condition = expression();
+
+        try_consume(
+            TokenType::rparen, ParserError::missing_closing_paren
+        );
+
+        auto then_branch = statement();
+        std::unique_ptr<IStmt> else_branch{ nullptr };
+        if (state_.match(TokenType::kw_else)) {
+            else_branch = statement();
+        }
+
+        return std::make_unique<IfStmt>(
+            std::move(condition),
+            std::move(then_branch),
+            std::move(else_branch)
+        );
+    }
+
 
     std::vector<std::unique_ptr<IStmt>> block() {
         std::vector<std::unique_ptr<IStmt>> stmts;
