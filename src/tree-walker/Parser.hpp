@@ -175,6 +175,8 @@ private:
             return if_stmt();
         } else if (state_.match(TokenType::kw_while)) {
             return while_stmt();
+        } else if (state_.match(TokenType::kw_for)) {
+            return for_stmt();
         } else if (state_.match(TokenType::kw_print)) {
             return print_stmt();
         } else if (state_.match(TokenType::lbrace)) {
@@ -205,6 +207,85 @@ private:
             std::move(condition),
             std::move(then_branch),
             std::move(else_branch)
+        );
+    }
+
+    std::unique_ptr<IStmt> for_stmt() {
+        try_consume(
+            TokenType::lparen, ParserError::missing_opening_paren
+        );
+
+
+        std::unique_ptr<IStmt> initializer{ nullptr };
+        if (state_.match(TokenType::semicolon)) {
+            /* nothing, already null */
+        } else if (state_.match(TokenType::kw_var)) {
+            initializer = var_decl();
+        } else {
+            initializer = expression_stmt();
+        }
+
+
+        std::unique_ptr<IExpr> condition{ nullptr };
+        if (!state_.check(TokenType::semicolon)) {
+            condition = expression();
+        } else {
+            condition = std::make_unique<LiteralExpr>(
+                Token{
+                    TokenType::kw_true, "true",
+                    state_.current()->line, true
+                }
+            );
+        }
+        try_consume_semicolon();
+
+
+        std::unique_ptr<IExpr> increment{ nullptr };
+        if (!state_.check(TokenType::rparen)) {
+            increment = expression();
+        }
+
+        try_consume(
+            TokenType::rparen, ParserError::missing_closing_paren
+        );
+
+
+        /*
+
+        { // full_body
+            initializer;
+            while (condition) { // full_stmts
+                stmt;
+                increment;
+            }
+        }
+
+        */
+
+        auto stmt = statement();
+
+        std::vector<std::unique_ptr<IStmt>> full_body;
+
+        if (initializer) {
+            full_body.emplace_back(std::move(initializer));
+        }
+
+        if (increment) {
+            std::vector<std::unique_ptr<IStmt>> full_stmts;
+            full_stmts.emplace_back(std::move(stmt));
+            full_stmts.emplace_back(std::make_unique<ExpressionStmt>(std::move(increment)));
+            stmt = std::make_unique<BlockStmt>(std::move(full_stmts));
+        }
+
+        auto loop = std::make_unique<WhileStmt>(
+            std::move(condition),
+            std::move(stmt)
+        );
+
+        full_body.emplace_back(std::move(loop));
+
+        return std::make_unique<BlockStmt>(
+            std::move(full_body)
         );
     }
 

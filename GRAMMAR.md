@@ -190,4 +190,17 @@ and_expr = equality_expr, { "and", equality_expr };
 statement = expression_stmt | if_stmt | while_stmt | print_stmt | block;
 
 while_stmt = "while", "(", expression, ")", statement;
+```
+
+
+## For loops
+
 ```EBNF
+statement = expression_stmt | if_stmt | while_stmt | for_stmt | print_stmt | block;
+
+for_stmt = "for", "("
+    ( var_decl | expression_stmt | ";" ),
+    [ expression ], ";",
+    [ expression ],
+")", statement;
+```
