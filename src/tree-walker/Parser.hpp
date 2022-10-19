@@ -18,10 +18,6 @@
 
 class Parser {
 private:
-    std::vector<Token> tokens_;
-    ErrorReporter& err_;
-    std::vector<std::unique_ptr<IStmt>> statements_;
-
     class ParserState {
     public:
         using iter_t = std::vector<Token>::const_iterator;
@@ -100,7 +96,16 @@ private:
     };
 
 
+
+    std::vector<Token> tokens_;
+    ErrorReporter& err_;
+    std::vector<std::unique_ptr<IStmt>> statements_;
+
     ParserState state_{ tokens_.begin(), tokens_.end() };
+
+
+
+
 
 public:
     Parser(std::vector<Token> tokens, ErrorReporter& err) :
@@ -133,6 +138,9 @@ public:
     bool is_full() const noexcept {
         return !tokens_.empty() && state_.is_eof();
     }
+
+
+
 
 private:
     std::unique_ptr<IStmt> declaration() {
@@ -185,7 +193,6 @@ private:
 
         return std::make_unique<ExpressionStmt>(std::move(expr));
     }
-
 
 
 
@@ -292,6 +299,9 @@ private:
     }
 
 
+
+
+
     const Token& try_consume(TokenType expected, ParserError fail_error) {
         if (!state_.match(expected)) {
             report_error_and_abort(fail_error);
@@ -304,6 +314,10 @@ private:
             TokenType::semicolon, ParserError::missing_semicolon
         );
     }
+
+
+
+
 
     void synchronize_on_next_statement() {
 
@@ -333,13 +347,19 @@ private:
 
     }
 
+
+
+
+
     void abort_parsing_by_throwing_last_error() noexcept(false) {
         throw err_.get_parser_errors().back();
     }
 
+
     void report_error(ParserError type, std::string_view details = "") {
         err_.parser_error(type, state_.peek(), details);
     }
+
 
     void report_error_and_abort(ParserError type, std::string_view details = "") {
         report_error(type, details);
