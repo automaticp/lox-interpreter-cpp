@@ -39,6 +39,13 @@ StmtInterpreterVisitor::operator()(const IfStmt& stmt) const {
     }
 }
 
+StmtInterpreterVisitor::return_type
+StmtInterpreterVisitor::operator()(const WhileStmt& stmt) const {
+    while (is_truthful(evaluate(*stmt.condition))) {
+        execute(*stmt.statement);
+    }
+}
+
 
 
 void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
@@ -84,5 +91,14 @@ StmtASTPrinterVisitor::operator()(const IfStmt& stmt) const {
         stmt.then_branch->accept(*this),
         stmt.else_branch ? "else" : "",
         stmt.else_branch ? stmt.else_branch->accept(*this) : ""
+    );
+}
+
+StmtASTPrinterVisitor::return_type
+StmtASTPrinterVisitor::operator()(const WhileStmt& stmt) const {
+    return fmt::format(
+        "while ({}) {}",
+        stmt.condition->accept(*this),
+        stmt.statement->accept(*this)
     );
 }

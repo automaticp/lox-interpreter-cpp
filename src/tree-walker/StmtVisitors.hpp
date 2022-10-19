@@ -9,6 +9,7 @@ class ExpressionStmt;
 class VarStmt;
 class BlockStmt;
 class IfStmt;
+class WhileStmt;
 
 // Inheritance is a hack here
 struct StmtInterpreterVisitor : protected ExprInterpreterVisitor {
@@ -26,6 +27,7 @@ public:
     return_type operator()(const VarStmt& stmt) const;
     return_type operator()(const BlockStmt& stmt) const;
     return_type operator()(const IfStmt& stmt) const;
+    return_type operator()(const WhileStmt& stmt) const;
 
     void execute(const IStmt& stmt) const;
 };
@@ -42,5 +44,6 @@ public:
     return_type operator()(const VarStmt& stmt) const;
     return_type operator()(const BlockStmt& stmt) const;
     return_type operator()(const IfStmt& stmt) const;
+    return_type operator()(const WhileStmt& stmt) const;
 };
 

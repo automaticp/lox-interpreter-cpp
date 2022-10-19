@@ -60,3 +60,13 @@ public:
         then_branch{ std::move(then_branch) },
         else_branch{ std::move(else_branch) } {}
 };
+
+
+struct WhileStmt : FullyVisitableStmt<WhileStmt> {
+public:
+    std::unique_ptr<IExpr> condition;
+    std::unique_ptr<IStmt> statement;
+
+    WhileStmt(std::unique_ptr<IExpr> condition, std::unique_ptr<IStmt> statement) :
+        condition{ std::move(condition) }, statement{ std::move(statement) } {}
+};

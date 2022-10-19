@@ -173,6 +173,8 @@ private:
     std::unique_ptr<IStmt> statement() {
         if (state_.match(TokenType::kw_if)) {
             return if_stmt();
+        } else if (state_.match(TokenType::kw_while)) {
+            return while_stmt();
         } else if (state_.match(TokenType::kw_print)) {
             return print_stmt();
         } else if (state_.match(TokenType::lbrace)) {
@@ -203,6 +205,23 @@ private:
             std::move(condition),
             std::move(then_branch),
             std::move(else_branch)
+        );
+    }
+
+    std::unique_ptr<IStmt> while_stmt() {
+        try_consume(
+            TokenType::lparen, ParserError::missing_opening_paren
+        );
+
+        auto condition = expression();
+
+        try_consume(
+            TokenType::rparen, ParserError::missing_closing_paren
+        );
+
+        return std::make_unique<WhileStmt>(
+            std::move(condition),
+            statement()
         );
     }
 

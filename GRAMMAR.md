@@ -182,3 +182,12 @@ assignment_expr = identifier, "=", assignment_expr | or_expr;
 or_expr = and_expr, { "or", and_expr };
 and_expr = equality_expr, { "and", equality_expr };
 ```
+
+
+## While loops
+
+```EBNF
+statement = expression_stmt | if_stmt | while_stmt | print_stmt | block;
+
+while_stmt = "while", "(", expression, ")", statement;
+```EBNF
