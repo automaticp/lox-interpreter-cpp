@@ -14,6 +14,7 @@ class UnaryExpr;
 class BinaryExpr;
 class GroupedExpr;
 class VariableExpr;
+class AssignExpr;
 
 struct ExprASTPrinterVisitor {
     using return_type = std::string;
@@ -22,6 +23,7 @@ struct ExprASTPrinterVisitor {
     return_type operator()(const BinaryExpr& expr) const;
     return_type operator()(const GroupedExpr& expr) const;
     return_type operator()(const VariableExpr& expr) const;
+    return_type operator()(const AssignExpr& expr) const;
 
 private:
     template<std::derived_from<IExpr> ...Es>
@@ -45,6 +47,7 @@ struct ExprInterpreterVisitor {
     return_type operator()(const BinaryExpr& expr) const;
     return_type operator()(const GroupedExpr& expr) const;
     return_type operator()(const VariableExpr& expr) const;
+    return_type operator()(const AssignExpr& expr) const;
 
     explicit ExprInterpreterVisitor(ErrorReporter& err, Environment& env) : err_{ err }, env_{ env } {}
 
@@ -93,6 +96,7 @@ struct ExprGetPrimaryTokenVisitor {
     return_type operator()(const BinaryExpr& expr) const;
     return_type operator()(const GroupedExpr& expr) const;
     return_type operator()(const VariableExpr& expr) const;
+    return_type operator()(const AssignExpr& expr) const;
 };
 
 
@@ -103,5 +107,6 @@ struct ExprUserFriendlyNameVisitor {
     return_type operator()(const BinaryExpr& expr) const;
     return_type operator()(const GroupedExpr& expr) const;
     return_type operator()(const VariableExpr& expr) const;
+    return_type operator()(const AssignExpr& expr) const;
 };
 

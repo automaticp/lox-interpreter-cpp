@@ -199,7 +199,33 @@ private:
 
 
     std::unique_ptr<IExpr> expression() {
-        return equality_expr();
+        return assignment_expr();
+    }
+
+    std::unique_ptr<IExpr> assignment_expr() {
+        auto expr = equality_expr();
+
+        using enum TokenType;
+        if (state_.match(eq)) {
+            Token op{ state_.peek_previous() };
+            auto rvalue = assignment_expr();
+
+            auto vexpr = dynamic_cast<VariableExpr*>(expr.get());
+            if (vexpr) {
+                return std::make_unique<AssignExpr>(
+                    vexpr->identifier, std::move(op), std::move(rvalue)
+                );
+            } else {
+                const Token& primary{ expr->accept(ExprGetPrimaryTokenVisitor{}) };
+                report_error(
+                    ParserError::invalid_assignment_target,
+                    primary,
+                    primary.lexeme
+                );
+            }
+        }
+
+        return expr;
     }
 
     std::unique_ptr<IExpr> equality_expr() {
@@ -358,6 +384,10 @@ private:
 
     void report_error(ParserError type, std::string_view details = "") {
         err_.parser_error(type, state_.peek(), details);
+    }
+
+    void report_error(ParserError type, const Token& token, std::string_view details = "") {
+        err_.parser_error(type, token, details);
     }
 
 

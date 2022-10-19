@@ -53,3 +53,15 @@ public:
     VariableExpr(Token identifier) :
         identifier{ std::move(identifier) } {}
 };
+
+
+struct AssignExpr : FullyVisitableExpr<AssignExpr> {
+public:
+    Token identifier;
+    Token op;
+    std::unique_ptr<IExpr> rvalue;
+
+    AssignExpr(Token identifier, Token op, std::unique_ptr<IExpr> rvalue) :
+        identifier{ std::move(identifier) }, op{ op }, rvalue{ std::move(rvalue) } {}
+
+};

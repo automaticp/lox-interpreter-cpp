@@ -26,4 +26,13 @@ public:
         }
     }
 
+    Value* assign(const std::string& name, Value value) {
+        if (env_.contains(name)) {
+            env_[name] = value;
+            return &env_[name];
+        } else {
+            return nullptr;
+        }
+    }
+
 };

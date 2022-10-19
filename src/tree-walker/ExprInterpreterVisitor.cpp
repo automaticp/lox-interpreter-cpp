@@ -4,6 +4,7 @@
 #include "Value.hpp"
 #include "ErrorReporter.hpp"
 #include "Errors.hpp"
+#include "Environment.hpp"
 #include <fmt/format.h>
 
 
@@ -137,4 +138,17 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
     return *val;
 }
 
+
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
+    Value* val = env_.assign(
+        expr.identifier.lexeme,
+        evaluate(*expr.rvalue)
+    );
+
+    if (!val) {
+        report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+    }
+    return *val;
+}
 
