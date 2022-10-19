@@ -26,7 +26,8 @@ enum class ParserError : size_t {
     missing_closing_paren,
     missing_semicolon,
     expected_identifier,
-    invalid_assignment_target
+    invalid_assignment_target,
+    missing_closing_brace
 
 };
 
@@ -57,7 +58,8 @@ inline constexpr std::array parser_error_msgs{
     "Missing closing ')'",
     "Missing ';' at the end of statement",
     "Expected identifier",
-    "Invalid assignment target"
+    "Invalid assignment target",
+    "Missing closing '}'"
 };
 
 inline constexpr std::array interpreter_error_msgs{

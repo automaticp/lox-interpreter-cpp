@@ -4,6 +4,7 @@
 #include "Token.hpp"
 #include <memory>
 #include <utility>
+#include <vector>
 
 struct ExpressionStmt : FullyVisitableStmt<ExpressionStmt> {
 public:
@@ -33,4 +34,13 @@ public:
     VarStmt(Token identifier, std::unique_ptr<IExpr> init) :
         identifier{ std::move(identifier) },
         init{ std::move(init) } {}
+};
+
+
+struct BlockStmt : FullyVisitableStmt<BlockStmt> {
+public:
+    std::vector<std::unique_ptr<IStmt>> statements;
+
+    BlockStmt(std::vector<std::unique_ptr<IStmt>> statements) :
+        statements{ std::move(statements) } {}
 };

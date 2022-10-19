@@ -1,4 +1,5 @@
 #include "StmtVisitors.hpp"
+#include "Environment.hpp"
 #include "Stmt.hpp"
 #include "ExprVisitors.hpp"
 #include <iostream>
@@ -19,11 +20,21 @@ StmtInterpreterVisitor::operator()(const VarStmt& stmt) const {
     env_.define(stmt.identifier.lexeme, evaluate(*stmt.init));
 }
 
+StmtInterpreterVisitor::return_type
+StmtInterpreterVisitor::operator()(const BlockStmt& stmt) const {
+    Environment block_env{ &env_ };
+    StmtInterpreterVisitor block_visitor{ err_, block_env };
+
+    for (const auto& statement : stmt.statements) {
+        block_visitor.execute(*statement);
+    }
+}
+
+
 
 void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
     stmt.accept(*this);
 }
-
 
 
 
@@ -44,4 +55,14 @@ StmtASTPrinterVisitor::operator()(const ExpressionStmt& stmt) const {
 StmtASTPrinterVisitor::return_type
 StmtASTPrinterVisitor::operator()(const VarStmt& stmt) const {
     return fmt::format("var {:s} = {:s};", stmt.identifier.lexeme, stmt.init->accept(*this));
+}
+
+StmtASTPrinterVisitor::return_type
+StmtASTPrinterVisitor::operator()(const BlockStmt& stmt) const {
+    std::string result{ "{\n" };
+    for (const auto& statement : stmt.statements) {
+        result += statement->accept(*this) + '\n';
+    }
+    result += "}";
+    return result;
 }

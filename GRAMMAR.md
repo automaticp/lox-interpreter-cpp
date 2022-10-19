@@ -150,3 +150,11 @@ assignment_expr = identifier, "=", assignment_expr | equality_expr;
 
 expression = assignment_expr;
 ```
+
+## Block statement
+
+```ENBF
+statement = expression_stmt | print_stmt | block;
+
+block = "{", { declaration }, "}";
+```

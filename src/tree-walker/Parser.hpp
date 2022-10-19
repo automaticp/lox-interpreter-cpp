@@ -173,9 +173,29 @@ private:
     std::unique_ptr<IStmt> statement() {
         if (state_.match(TokenType::kw_print)) {
             return print_stmt();
+        } else if (state_.match(TokenType::lbrace)) {
+            return block_stmt();
         } else {
             return expression_stmt();
         }
+    }
+
+    std::vector<std::unique_ptr<IStmt>> block() {
+        std::vector<std::unique_ptr<IStmt>> stmts;
+
+        while (!state_.is_eof() && !state_.check(TokenType::rbrace)) {
+            stmts.emplace_back(declaration());
+        }
+
+        try_consume(
+            TokenType::rbrace, ParserError::missing_closing_brace
+        );
+
+        return stmts;
+    }
+
+    std::unique_ptr<IStmt> block_stmt() {
+        return std::make_unique<BlockStmt>(block());
     }
 
     std::unique_ptr<IStmt> print_stmt() {
