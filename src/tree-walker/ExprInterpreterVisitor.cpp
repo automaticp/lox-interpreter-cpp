@@ -1,6 +1,7 @@
 #include "ExprVisitors.hpp"
 
 #include "Expr.hpp"
+#include "TokenType.hpp"
 #include "Value.hpp"
 #include "ErrorReporter.hpp"
 #include "Errors.hpp"
@@ -150,5 +151,19 @@ ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
         report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
     }
     return *val;
+}
+
+
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const LogicalExpr& expr) const {
+    Value lhs{ evaluate(*expr.lhs) };
+
+    if (expr.op.type == TokenType::kw_or) {
+        if (is_truthful(lhs)) { return lhs; }
+    } else {
+        if (!is_truthful(lhs)) { return lhs; }
+    }
+
+    return evaluate(*expr.rhs);
 }
 

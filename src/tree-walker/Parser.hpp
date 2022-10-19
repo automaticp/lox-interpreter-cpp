@@ -250,7 +250,7 @@ private:
     }
 
     std::unique_ptr<IExpr> assignment_expr() {
-        auto expr = equality_expr();
+        auto expr = or_expr();
 
         using enum TokenType;
         if (state_.match(eq)) {
@@ -274,6 +274,36 @@ private:
 
         return expr;
     }
+
+    std::unique_ptr<IExpr> or_expr() {
+        auto expr = and_expr();
+
+        using enum TokenType;
+        while (state_.match(kw_or)) {
+            Token op{ state_.peek_previous() };
+            expr = std::make_unique<LogicalExpr>(
+                op, std::move(expr), and_expr()
+            );
+        }
+
+        return expr;
+    }
+
+    std::unique_ptr<IExpr> and_expr() {
+        auto expr = comparison_expr();
+
+        using enum TokenType;
+        while (state_.match(kw_and)) {
+            Token op{ state_.peek_previous() };
+            expr = std::make_unique<LogicalExpr>(
+                op, std::move(expr), comparison_expr()
+            );
+        }
+
+        return expr;
+    }
+
+
 
     std::unique_ptr<IExpr> equality_expr() {
         auto expr = comparison_expr();

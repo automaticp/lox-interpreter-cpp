@@ -105,9 +105,11 @@ error_binary_without_left_operand = binary_op, expression;
 |term|3|LA|*expr* ( + \| - ) *expr*|
 |comp|4|LA|*expr* ( > \| >= \| < \| <= ) *expr*|
 |equal|5|LA| *expr* ( == \| != ) *expr*|
-|ternary|6|RA (values)| *expr* ? *expr* : *expr*|
-|comma|7|LA| *expr*, *expr*|
-|assign|8|RA| *lvalue* = *expr*|
+|and|6|LA|*expr* and *expr*|
+|or|7|LA|*expr* or *expr*|
+|ternary|8|RA (values)| *expr* ? *expr* : *expr*|
+|assign|9|RA| *lvalue* = *expr*|
+|comma|10|LA| *expr*, *expr*|
 
 
 
@@ -169,4 +171,14 @@ block = "{", { declaration }, "}";
 statement = expression_stmt | if_stmt | print_stmt | block;
 
 if_stmt = "if", "(", expression, ")", statement, [ "else", statement ];
+```
+
+
+## Short-Circuiting operators
+
+```EBNF
+assignment_expr = identifier, "=", assignment_expr | or_expr;
+
+or_expr = and_expr, { "or", and_expr };
+and_expr = equality_expr, { "and", equality_expr };
 ```

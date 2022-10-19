@@ -40,6 +40,10 @@ ExprASTPrinterVisitor::operator()(const AssignExpr& expr) const {
     return parenthesize(expr.identifier.lexeme, *expr.rvalue);
 }
 
+ExprASTPrinterVisitor::return_type
+ExprASTPrinterVisitor::operator()(const LogicalExpr& expr) const {
+    return parenthesize(to_lexeme(expr.op), *expr.lhs, *expr.rhs);
+}
 
 
 
@@ -77,6 +81,11 @@ ExprGetPrimaryTokenVisitor::operator()(const AssignExpr& expr) const {
     return expr.op;
 }
 
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const LogicalExpr& expr) const {
+    return expr.op;
+}
+
 
 
 // ---- ExprUserFriendlyNameVisitor ----
@@ -111,3 +120,7 @@ ExprUserFriendlyNameVisitor::operator()(const AssignExpr& expr) const {
     return "Assignment Expression";
 }
 
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const LogicalExpr& expr) const {
+    return "Logical Expression";
+}

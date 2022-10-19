@@ -65,3 +65,13 @@ public:
         identifier{ std::move(identifier) }, op{ op }, rvalue{ std::move(rvalue) } {}
 
 };
+
+
+struct LogicalExpr : FullyVisitableExpr<LogicalExpr> {
+    Token op;
+    std::unique_ptr<IExpr> lhs;
+    std::unique_ptr<IExpr> rhs;
+
+    LogicalExpr(Token op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
+        op{ std::move(op) }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
+};
