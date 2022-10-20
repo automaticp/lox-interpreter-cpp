@@ -1,6 +1,4 @@
 #pragma once
-#include "Environment.hpp"
-#include "ErrorReporter.hpp"
 #include "ExprVisitors.hpp"
 
 class IStmt;
@@ -11,14 +9,18 @@ class BlockStmt;
 class IfStmt;
 class WhileStmt;
 
+class Environment;
+class ErrorReporter;
+class Interpreter;
+
 // Inheritance is a hack here
 struct StmtInterpreterVisitor : protected ExprInterpreterVisitor {
 private:
     ErrorReporter& err_;
 
 public:
-    StmtInterpreterVisitor(ErrorReporter& err, Environment& env) :
-        err_{ err }, ExprInterpreterVisitor{ err, env }
+    StmtInterpreterVisitor(ErrorReporter& err, Environment& env, Interpreter& interpreter) :
+        err_{ err }, ExprInterpreterVisitor{ err, env, interpreter }
     {}
 
     using return_type = void;
@@ -28,6 +30,7 @@ public:
     return_type operator()(const BlockStmt& stmt) const;
     return_type operator()(const IfStmt& stmt) const;
     return_type operator()(const WhileStmt& stmt) const;
+    return_type operator()(const FunStmt& stmt) const;
 
     void execute(const IStmt& stmt) const;
 };
@@ -45,5 +48,6 @@ public:
     return_type operator()(const BlockStmt& stmt) const;
     return_type operator()(const IfStmt& stmt) const;
     return_type operator()(const WhileStmt& stmt) const;
+    return_type operator()(const FunStmt& stmt) const;
 };
 

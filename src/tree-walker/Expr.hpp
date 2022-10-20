@@ -1,6 +1,7 @@
 #pragma once
 #include <utility>
 #include <memory>
+#include <vector>
 #include "LiteralValue.hpp"
 #include "TokenType.hpp"
 #include "IExpr.hpp"
@@ -68,10 +69,22 @@ public:
 
 
 struct LogicalExpr : FullyVisitableExpr<LogicalExpr> {
+public:
     Token op;
     std::unique_ptr<IExpr> lhs;
     std::unique_ptr<IExpr> rhs;
 
     LogicalExpr(Token op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
         op{ std::move(op) }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
+};
+
+
+struct CallExpr : FullyVisitableExpr<CallExpr> {
+public:
+    std::unique_ptr<IExpr> callee;
+    std::vector<std::unique_ptr<IExpr>> args;
+    Token rparen;
+
+    CallExpr(std::unique_ptr<IExpr> callee, std::vector<std::unique_ptr<IExpr>> args, Token rparen) :
+        callee{ std::move(callee) }, rparen{ std::move(rparen) }, args{ std::move(args) } {}
 };

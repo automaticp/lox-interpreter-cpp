@@ -2,11 +2,78 @@
 #include <variant>
 #include <string>
 #include <cstddef>
-#include "Object.hpp"
+#include <memory>
+#include "Token.hpp"
 #include "Utils.hpp"
 #include <string_view>
+#include <unordered_map>
+#include "FieldName.hpp"
 
-using Value = std::variant<Object, std::string, double, bool, std::nullptr_t>;
+
+class Object;
+class Function;
+class Environment;
+
+using Value = std::variant<Object, Function, std::string, double, bool, std::nullptr_t>;
+
+
+// Define Callable and Object before anything triggers a template instantiation
+
+
+class ExprInterpreterVisitor;
+
+class FunStmt;
+
+class Function {
+private:
+    const FunStmt* declaration_;
+
+public:
+    Function(const FunStmt* declaration) : declaration_{ declaration } {}
+
+    Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
+
+    size_t arity() const noexcept;
+
+    bool operator==(const Function& other) const noexcept {
+        return declaration_ == other.declaration_;
+    }
+
+};
+
+
+
+
+class ObjectImpl;
+
+class Object {
+private:
+    std::unique_ptr<ObjectImpl> pimpl_;
+public:
+    Object();
+    Object(const Object&);
+    Object& operator=(const Object&);
+    // Defined is cpp file, as otherwise unique_ptr
+    // tries to generate ObjectImpl's destructor here.
+    // Which doesn't work due to class being incomplete.
+    Object& operator=(Object &&);
+    Object(Object &&);
+    ~Object();
+
+    bool operator==(const Object& other) const {
+        return false;
+    }
+
+    Value operator()(const ExprInterpreterVisitor& interpreter, const std::vector<Value>& args);
+
+private:
+    ObjectImpl& impl() const noexcept {
+        return *pimpl_;
+    }
+};
+
+
+
 
 template<typename ...Ts>
 inline bool holds(const Value& value) {
@@ -16,7 +83,6 @@ inline bool holds(const Value& value) {
 inline bool holds_same(const Value& lhs, const Value& rhs) {
     return lhs.index() == rhs.index();
 }
-
 
 inline bool is_equal(const Value& lhs, const Value& rhs) {
     if (holds_same(lhs, rhs)) {
@@ -32,6 +98,9 @@ namespace detail {
 struct ValueTypeNameVisitor {
     std::string_view operator()(const Object&) const {
         return "Object";
+    }
+    std::string_view operator()(const Function&) const {
+        return "Function";
     }
     std::string_view operator()(const std::string&) const {
         return "String";
@@ -57,6 +126,7 @@ inline std::string_view type_name(const Value& val) {
 
 struct ValueToStringVisitor {
     std::string operator()(const Object& val) const { return "?Object?"; }
+    std::string operator()(const Function& val) const { return "?Function?"; }
     std::string operator()(const std::string& val) const { return '"' + val + '"'; }
     std::string operator()(const double& val) const {
         return std::string(num_to_string(val));

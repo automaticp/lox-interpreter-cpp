@@ -2,7 +2,12 @@
 #include "Environment.hpp"
 #include "Stmt.hpp"
 #include "ExprVisitors.hpp"
+#include "Token.hpp"
+#include "Value.hpp"
+#include <fmt/format.h>
 #include <iostream>
+#include <memory>
+#include <ranges>
 
 StmtInterpreterVisitor::return_type
 StmtInterpreterVisitor::operator()(const PrintStmt& stmt) const {
@@ -17,13 +22,13 @@ StmtInterpreterVisitor::operator()(const ExpressionStmt& stmt) const {
 
 StmtInterpreterVisitor::return_type
 StmtInterpreterVisitor::operator()(const VarStmt& stmt) const {
-    env_.define(stmt.identifier.lexeme, evaluate(*stmt.init));
+    env.define(stmt.identifier.lexeme, evaluate(*stmt.init));
 }
 
 StmtInterpreterVisitor::return_type
 StmtInterpreterVisitor::operator()(const BlockStmt& stmt) const {
-    Environment block_env{ &env_ };
-    StmtInterpreterVisitor block_visitor{ err_, block_env };
+    Environment block_env{ &env };
+    StmtInterpreterVisitor block_visitor{ err_, block_env, interpreter };
 
     for (const auto& statement : stmt.statements) {
         block_visitor.execute(*statement);
@@ -46,6 +51,13 @@ StmtInterpreterVisitor::operator()(const WhileStmt& stmt) const {
     }
 }
 
+StmtInterpreterVisitor::return_type
+StmtInterpreterVisitor::operator()(const FunStmt& stmt) const {
+    env.define(
+        stmt.name.lexeme,
+        Function{ &stmt }
+    );
+}
 
 
 void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
@@ -100,5 +112,38 @@ StmtASTPrinterVisitor::operator()(const WhileStmt& stmt) const {
         "while ({}) {}",
         stmt.condition->accept(*this),
         stmt.statement->accept(*this)
+    );
+}
+
+StmtASTPrinterVisitor::return_type
+StmtASTPrinterVisitor::operator()(const FunStmt& stmt) const {
+    // I wanted to do ranges but it seems I don't know ranges =(
+    auto join_token_names = [](const std::vector<Token>& ts) -> std::string {
+        if (ts.empty()) return { "" };
+
+        std::string result;
+        auto it{ ts.begin() };
+
+        for (; it < ts.end() - 1; ++it) {
+            result += it->lexeme + ", ";
+        }
+        result += (++it)->lexeme;
+
+        return result;
+    };
+
+    auto join_statements = [this](const std::vector<std::unique_ptr<IStmt>>& stmts) -> std::string {
+        std::string result;
+        for (const auto& s : stmts) {
+            result += s->accept(*this);
+        }
+        return result;
+    };
+
+    return fmt::format(
+        "fun {}({}) {{\n{}}}\n",
+        stmt.name.lexeme,
+        join_token_names(stmt.parameters),
+        join_statements(stmt.body)
     );
 }

@@ -204,3 +204,17 @@ for_stmt = "for", "("
     [ expression ],
 ")", statement;
 ```
+
+
+# Functions
+
+# Call expression
+
+```EBNF
+unary_expr = unary_op, unary | call_expr;
+
+call_expr = primary_expr, { "(", [ arguments ], ")" };
+
+arguments = expression, { ",", expression };
+```
+

@@ -14,6 +14,7 @@
 #include <concepts>
 #include <memory>
 #include <utility>
+#include <span>
 
 
 class Parser {
@@ -22,11 +23,13 @@ private:
     public:
         using iter_t = std::vector<Token>::const_iterator;
     private:
-        const iter_t beg_;
+        iter_t beg_;
         iter_t cur_;
-        const iter_t end_;
+        iter_t end_;
 
     public:
+        ParserState() = default;
+
         ParserState(iter_t beg, iter_t end) :
             beg_{ beg }, cur_{ beg }, end_{ end } {}
 
@@ -96,23 +99,26 @@ private:
     };
 
 
-
-    std::vector<Token> tokens_;
     ErrorReporter& err_;
     std::vector<std::unique_ptr<IStmt>> statements_;
 
-    ParserState state_{ tokens_.begin(), tokens_.end() };
+    ParserState state_;
 
 
-
+    void prepare_tokens(const std::vector<Token>& new_tokens) {
+        state_ = { new_tokens.begin(), new_tokens.end() };
+    }
 
 
 public:
-    Parser(std::vector<Token> tokens, ErrorReporter& err) :
-        tokens_{ std::move(tokens) }, err_{ err } {}
+    Parser(ErrorReporter& err) : err_{ err } {}
 
-    bool parse_tokens() {
-        statements_.clear();
+    // returns a view of new statements
+    std::span<std::unique_ptr<IStmt>>
+    parse_tokens(const std::vector<Token>& tokens) {
+        prepare_tokens(tokens);
+
+        size_t num_stmts_before = statements_.size();
 
         while (!state_.is_eof()) {
             try {
@@ -121,22 +127,26 @@ public:
                 synchronize_on_next_statement();
             }
         }
-        return !err_.had_parser_errors();
+
+        return {
+            statements_.begin() + num_stmts_before,
+            statements_.size() - num_stmts_before
+        };
     }
 
     const std::vector<std::unique_ptr<IStmt>>& peek_result() const {
-        assert(is_full());
+        assert(is_eof());
         return statements_;
     }
 
     [[nodiscard]] std::vector<std::unique_ptr<IStmt>> get_result() {
-        assert(is_full());
+        assert(is_eof());
         state_.reset();
         return std::move(statements_);
     }
 
-    bool is_full() const noexcept {
-        return !tokens_.empty() && state_.is_eof();
+    bool is_eof() const noexcept {
+        return state_.is_eof();
     }
 
 
@@ -146,6 +156,8 @@ private:
     std::unique_ptr<IStmt> declaration() {
         if (state_.match(TokenType::kw_var)) {
             return var_decl();
+        } else if (state_.match(TokenType::kw_fun)) {
+            return fun_decl();
         } else {
             return statement();
         }
@@ -168,6 +180,45 @@ private:
 
         try_consume_semicolon();
         return std::make_unique<VarStmt>(id, std::move(init));
+    }
+
+    std::unique_ptr<IStmt> fun_decl() {
+        using enum TokenType;
+
+        const Token& id = try_consume(
+            identifier, ParserError::expected_identifier
+        );
+
+        try_consume(
+            lparen, ParserError::missing_opening_paren
+        );
+
+        std::vector<Token> params;
+        if (!state_.check(TokenType::rparen)) {
+            do {
+                params.emplace_back(
+                    try_consume(
+                        identifier,
+                        ParserError::expected_identifier
+                    )
+                );
+            } while (state_.match(comma));
+        }
+
+        try_consume(
+            rparen, ParserError::missing_closing_paren
+        );
+
+
+        try_consume(
+            lbrace, ParserError::missing_opening_brace
+        );
+
+        return std::make_unique<FunStmt>(
+            id,
+            std::move(params),
+            block()
+        );
     }
 
     std::unique_ptr<IStmt> statement() {
@@ -471,9 +522,45 @@ private:
                 op, unary_expr()
             );
         } else {
-            return primary_expr();
+            return call_expr();
         }
     }
+
+    std::unique_ptr<IExpr> call_expr() {
+        auto expr = primary_expr();
+
+        while (true) {
+            if (state_.match(TokenType::lparen)) {
+                expr = parse_call_expr(std::move(expr));
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    std::unique_ptr<IExpr>
+    parse_call_expr(std::unique_ptr<IExpr> callee) {
+        std::vector<std::unique_ptr<IExpr>> args;
+
+        if (!state_.check(TokenType::rparen)) {
+            do {
+                args.emplace_back(expression());
+            } while (state_.match(TokenType::comma));
+        }
+
+        const Token& closing_paren = try_consume(
+            TokenType::rparen, ParserError::missing_closing_paren
+        );
+
+        return std::make_unique<CallExpr>(
+            std::move(callee),
+            std::move(args),
+            closing_paren
+        );
+    }
+
 
     std::unique_ptr<IExpr> primary_expr() {
         using enum TokenType;

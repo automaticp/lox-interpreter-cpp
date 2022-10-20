@@ -28,6 +28,7 @@ enum class ParserError : size_t {
     missing_semicolon,
     expected_identifier,
     invalid_assignment_target,
+    missing_opening_brace,
     missing_closing_brace
 
 };
@@ -36,7 +37,8 @@ enum class ParserError : size_t {
 enum class InterpreterError : size_t {
 
     unexpected_type = 0,
-    undefined_variable
+    undefined_variable,
+    wrong_num_of_arguments
 
 };
 
@@ -61,12 +63,14 @@ inline constexpr std::array parser_error_msgs{
     "Missing ';' at the end of statement",
     "Expected identifier",
     "Invalid assignment target",
+    "Missing opening '{'",
     "Missing closing '}'"
 };
 
 inline constexpr std::array interpreter_error_msgs{
     "Unexpected type",
-    "Undefined variable"
+    "Undefined variable",
+    "Wrong number of arguments"
 };
 
 

@@ -45,6 +45,23 @@ ExprASTPrinterVisitor::operator()(const LogicalExpr& expr) const {
     return parenthesize(to_lexeme(expr.op), *expr.lhs, *expr.rhs);
 }
 
+ExprASTPrinterVisitor::return_type
+ExprASTPrinterVisitor::operator()(const CallExpr& expr) const {
+    return call_expr_string(expr);
+}
+
+
+
+std::string ExprASTPrinterVisitor::call_expr_string(const CallExpr& expr) const {
+    std::string result{ "(call " };
+    result += expr.callee->accept(*this) + " ";
+    for (const auto& arg : expr.args) {
+        result += arg->accept(*this) + " ";
+    }
+    result += ")";
+    return result;
+}
+
 
 
 
@@ -86,6 +103,11 @@ ExprGetPrimaryTokenVisitor::operator()(const LogicalExpr& expr) const {
     return expr.op;
 }
 
+ExprGetPrimaryTokenVisitor::return_type
+ExprGetPrimaryTokenVisitor::operator()(const CallExpr& expr) const {
+    return expr.rparen;
+}
+
 
 
 // ---- ExprUserFriendlyNameVisitor ----
@@ -123,4 +145,9 @@ ExprUserFriendlyNameVisitor::operator()(const AssignExpr& expr) const {
 ExprUserFriendlyNameVisitor::return_type
 ExprUserFriendlyNameVisitor::operator()(const LogicalExpr& expr) const {
     return "Logical Expression";
+}
+
+ExprUserFriendlyNameVisitor::return_type
+ExprUserFriendlyNameVisitor::operator()(const CallExpr& expr) const {
+    return "Call Expression";
 }

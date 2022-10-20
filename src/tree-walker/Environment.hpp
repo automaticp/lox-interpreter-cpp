@@ -8,7 +8,7 @@
 
 class Environment {
 private:
-    std::unordered_map<std::string, Value> env_;
+    std::unordered_map<std::string, Value> map_;
     Environment* enclosing_{ nullptr };
 
 public:
@@ -18,13 +18,13 @@ public:
         enclosing_{ enclosing } {}
 
     void define(const std::string& name, Value value) {
-        env_.insert_or_assign(name, std::move(value));
+        map_.insert_or_assign(name, std::move(value));
     }
 
     // optinal references when, eh?
     Value* get(const std::string& name) {
-        if (env_.contains(name)) {
-            return &env_[name];
+        if (map_.contains(name)) {
+            return &map_[name];
         } else if (enclosing_) {
             return enclosing_->get(name);
         } else {
@@ -33,9 +33,9 @@ public:
     }
 
     Value* assign(const std::string& name, Value value) {
-        if (env_.contains(name)) {
-            env_[name] = std::move(value);
-            return &env_[name];
+        if (map_.contains(name)) {
+            map_[name] = std::move(value);
+            return &map_[name];
         } else if (enclosing_) {
             return enclosing_->assign(name, std::move(value));
         } else {

@@ -4,7 +4,6 @@
 #include <string_view>
 #include <concepts>
 #include <fmt/format.h>
-#include "Environment.hpp"
 #include "Value.hpp"
 #include "Errors.hpp"
 
@@ -16,6 +15,7 @@ class GroupedExpr;
 class VariableExpr;
 class AssignExpr;
 class LogicalExpr;
+class CallExpr;
 
 struct ExprASTPrinterVisitor {
     using return_type = std::string;
@@ -26,21 +26,25 @@ struct ExprASTPrinterVisitor {
     return_type operator()(const VariableExpr& expr) const;
     return_type operator()(const AssignExpr& expr) const;
     return_type operator()(const LogicalExpr& expr) const;
+    return_type operator()(const CallExpr& expr) const;
 
 private:
     template<std::derived_from<IExpr> ...Es>
-    static std::string parenthesize(std::string_view name, const Es&... exprs) {
+    std::string parenthesize(std::string_view name, const Es&... exprs) const {
         std::stringstream ss;
         ss << '(' << name;
-        (ss << ... << (std::string(" ") + exprs.accept(ExprASTPrinterVisitor{})));
+        (ss << ... << (std::string(" ") + exprs.accept(*this)));
         ss << ')';
         return ss.str();
     }
+
+    std::string call_expr_string(const CallExpr& expr) const;
 };
 
 
 
 class ErrorReporter;
+class Interpreter;
 
 struct ExprInterpreterVisitor {
     using return_type = Value;
@@ -51,12 +55,15 @@ struct ExprInterpreterVisitor {
     return_type operator()(const VariableExpr& expr) const;
     return_type operator()(const AssignExpr& expr) const;
     return_type operator()(const LogicalExpr& expr) const;
+    return_type operator()(const CallExpr& expr) const;
 
-    explicit ExprInterpreterVisitor(ErrorReporter& err, Environment& env) : err_{ err }, env_{ env } {}
+    ExprInterpreterVisitor(ErrorReporter& err, Environment& env, Interpreter& interpreter) :
+        err{ err }, env{ env }, interpreter{ interpreter }  {}
 
-    ErrorReporter& err_;
+    ErrorReporter& err;
+    Environment& env;
+    Interpreter& interpreter;
 protected:
-    Environment& env_;
 
     return_type evaluate(const IExpr& expr) const;
     static bool is_truthful(const Value& value);
@@ -101,6 +108,7 @@ struct ExprGetPrimaryTokenVisitor {
     return_type operator()(const VariableExpr& expr) const;
     return_type operator()(const AssignExpr& expr) const;
     return_type operator()(const LogicalExpr& expr) const;
+    return_type operator()(const CallExpr& expr) const;
 };
 
 
@@ -113,5 +121,6 @@ struct ExprUserFriendlyNameVisitor {
     return_type operator()(const VariableExpr& expr) const;
     return_type operator()(const AssignExpr& expr) const;
     return_type operator()(const LogicalExpr& expr) const;
+    return_type operator()(const CallExpr& expr) const;
 };
 

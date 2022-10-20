@@ -17,13 +17,15 @@ private:
     bool is_debug_parser_;
     std::optional<std::string> filename_;
     ErrorReporter& err_;
+    Parser parser_;
     Interpreter intepreter_;
 public:
     RunContext(ErrorReporter& err_reporter,
         bool is_debug_scanner, bool is_debug_parser,
         std::optional<std::string> filename = std::nullopt) :
         err_{ err_reporter },
-        intepreter_{ err_ },
+        parser_{ err_reporter },
+        intepreter_{ err_reporter },
         filename_{ filename },
         is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
     {}
@@ -89,20 +91,16 @@ public:
             return;
         }
 
-        Parser parser{ tokens, err_ };
 
-        if (parser.parse_tokens()) {
-            if (is_debug_parser_mode()) {
-                std::cout << "[Debug @Parser]:\n";
-                for (const auto& stmt: parser.peek_result()) {
-                    std::cout << stmt->accept(StmtASTPrinterVisitor{}) << '\n';
-                }
+        auto new_stmts = parser_.parse_tokens(tokens);
+        if (is_debug_parser_mode()) {
+            std::cout << "[Debug @Parser]:\n";
+            for (const auto& stmt: new_stmts) {
+                std::cout << stmt->accept(StmtASTPrinterVisitor{}) << '\n';
             }
-        } else {
-            return;
         }
 
-        intepreter_.interpret(parser.peek_result());
+        intepreter_.interpret(new_stmts);
     }
 
 private:

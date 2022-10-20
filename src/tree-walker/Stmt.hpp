@@ -70,3 +70,14 @@ public:
     WhileStmt(std::unique_ptr<IExpr> condition, std::unique_ptr<IStmt> statement) :
         condition{ std::move(condition) }, statement{ std::move(statement) } {}
 };
+
+
+struct FunStmt : FullyVisitableStmt<FunStmt> {
+public:
+    Token name;
+    std::vector<Token> parameters;
+    std::vector<std::unique_ptr<IStmt>> body;
+
+    FunStmt(Token name, std::vector<Token> parameters, std::vector<std::unique_ptr<IStmt>> body) :
+        name{ std::move(name) }, parameters{ std::move(parameters) }, body{ std::move(body) } {}
+};

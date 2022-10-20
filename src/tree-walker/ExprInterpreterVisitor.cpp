@@ -7,6 +7,7 @@
 #include "Errors.hpp"
 #include "Environment.hpp"
 #include <fmt/format.h>
+#include <variant>
 
 
 
@@ -31,7 +32,7 @@ bool ExprInterpreterVisitor::is_truthful(const Value& value) {
 
 
 void ExprInterpreterVisitor::report_error(InterpreterError type, const IExpr& expr, std::string_view details) const {
-    err_.interpreter_error(type, expr, details);
+    err.interpreter_error(type, expr, details);
 }
 
 
@@ -132,7 +133,7 @@ ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
-    Value* val = env_.get(expr.identifier.lexeme);
+    Value* val = env.get(expr.identifier.lexeme);
     if (!val) {
         report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
     }
@@ -142,7 +143,7 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
-    Value* val = env_.assign(
+    Value* val = env.assign(
         expr.identifier.lexeme,
         evaluate(*expr.rvalue)
     );
@@ -166,4 +167,45 @@ ExprInterpreterVisitor::operator()(const LogicalExpr& expr) const {
 
     return evaluate(*expr.rhs);
 }
+
+
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
+
+    Value callee = evaluate(*expr.callee);
+
+    std::vector<Value> args;
+    args.reserve(expr.args.size());
+    for (const auto& arg : expr.args) {
+        args.emplace_back(evaluate(*arg));
+    }
+
+    if (!std::holds_alternative<Function>(callee)) {
+        report_error_and_abort(
+            InterpreterError::unexpected_type, expr,
+            fmt::format(
+                "Expected: {}, Encountered {}",
+                type_name(Value(Function{ nullptr })),
+                type_name(callee)
+            )
+        );
+    }
+
+    // FIXME: get Callable or Object
+    Function& function = std::get<Function>(callee);
+
+    if (function.arity() != args.size()) {
+        report_error_and_abort(
+            InterpreterError::wrong_num_of_arguments, expr,
+            fmt::format(
+                "Expected: {}, Encountered {}",
+                function.arity(),
+                args.size()
+            )
+        );
+    }
+
+    return function(*this, args);
+}
+
 
