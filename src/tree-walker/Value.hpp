@@ -30,7 +30,7 @@ class FunStmt;
 class Function {
 private:
     const FunStmt* declaration_;
-
+    friend class ValueToStringVisitor;
 public:
     Function(const FunStmt* declaration) : declaration_{ declaration } {}
 
@@ -150,7 +150,7 @@ inline std::string_view type_name(const Value& val) {
 
 struct ValueToStringVisitor {
     std::string operator()(const Object& val) const { return "?Object?"; }
-    std::string operator()(const Function& val) const { return "?Function?"; }
+    std::string operator()(const Function& val) const;
     std::string operator()(const BuiltinFunction& val) const { return "?BuiltinFunction?"; }
     std::string operator()(const std::string& val) const { return '"' + val + '"'; }
     std::string operator()(const double& val) const {

@@ -57,3 +57,12 @@ Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std:
 Value BuiltinFunction::operator()(std::span<Value> args) {
     return fun_(args);
 }
+
+
+
+
+
+
+std::string ValueToStringVisitor::operator()(const Function& val) const {
+    return fmt::format("?Function {}?", val.declaration_->name.lexeme);
+}
