@@ -11,14 +11,8 @@
 #include <functional>
 #include <vector>
 #include <span>
-
-class Object;
-class Function;
-class Environment;
-class BuiltinFunction;
-
-using Value = std::variant<Object, Function, BuiltinFunction, std::string, double, bool, std::nullptr_t>;
-
+#include "Environment.hpp"
+#include "ValueDecl.hpp"
 
 // Define Callable and Object before anything triggers a template instantiation
 
@@ -29,6 +23,7 @@ class FunStmt;
 
 class Function {
 private:
+    Environment closure_;
     const FunStmt* declaration_;
     friend class ValueToStringVisitor;
 public:
