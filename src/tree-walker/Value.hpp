@@ -8,13 +8,16 @@
 #include <string_view>
 #include <unordered_map>
 #include "FieldName.hpp"
-
+#include <functional>
+#include <vector>
+#include <span>
 
 class Object;
 class Function;
 class Environment;
+class BuiltinFunction;
 
-using Value = std::variant<Object, Function, std::string, double, bool, std::nullptr_t>;
+using Value = std::variant<Object, Function, BuiltinFunction, std::string, double, bool, std::nullptr_t>;
 
 
 // Define Callable and Object before anything triggers a template instantiation
@@ -41,6 +44,24 @@ public:
 
 };
 
+
+class BuiltinFunction {
+private:
+    std::function<Value(std::span<Value>)> fun_;
+    size_t arity_;
+
+public:
+    BuiltinFunction(std::function<Value(std::span<Value>)> fun, size_t arity) :
+        fun_{ std::move(fun) }, arity_{ arity } {}
+
+    Value operator()(std::span<Value> args);
+
+    size_t arity() const noexcept { return arity_; }
+
+    bool operator==(const BuiltinFunction& other) const noexcept {
+        return false;
+    }
+};
 
 
 
@@ -102,6 +123,9 @@ struct ValueTypeNameVisitor {
     std::string_view operator()(const Function&) const {
         return "Function";
     }
+    std::string_view operator()(const BuiltinFunction&) const {
+        return "BuiltinFunction";
+    }
     std::string_view operator()(const std::string&) const {
         return "String";
     }
@@ -127,6 +151,7 @@ inline std::string_view type_name(const Value& val) {
 struct ValueToStringVisitor {
     std::string operator()(const Object& val) const { return "?Object?"; }
     std::string operator()(const Function& val) const { return "?Function?"; }
+    std::string operator()(const BuiltinFunction& val) const { return "?BuiltinFunction?"; }
     std::string operator()(const std::string& val) const { return '"' + val + '"'; }
     std::string operator()(const double& val) const {
         return std::string(num_to_string(val));

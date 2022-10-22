@@ -94,6 +94,9 @@ protected:
         report_error(type, expr, details);
         abort_by_exception(type);
     }
+
+    template<typename CallableValue>
+    CallableValue& get_invokable(Value& callee, std::vector<Value>& args, const CallExpr& expr) const;
 };
 
 

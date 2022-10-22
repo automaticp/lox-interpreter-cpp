@@ -52,3 +52,8 @@ Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std:
 
     return { nullptr };
 }
+
+
+Value BuiltinFunction::operator()(std::span<Value> args) {
+    return fun_(args);
+}

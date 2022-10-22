@@ -180,32 +180,41 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
         args.emplace_back(evaluate(*arg));
     }
 
-    if (!std::holds_alternative<Function>(callee)) {
+    if (holds<Function>(callee)) {
+        return get_invokable<Function>(callee, args, expr)(*this, args);
+    } else if (holds<BuiltinFunction>(callee)) {
+        return get_invokable<BuiltinFunction>(callee, args, expr)(args);
+    } else {
         report_error_and_abort(
             InterpreterError::unexpected_type, expr,
             fmt::format(
-                "Expected: {}, Encountered {}",
+                "Expected {} or {}, Encountered {}",
                 type_name(Value(Function{ nullptr })),
+                type_name(Value(BuiltinFunction{ nullptr, 0 })),
                 type_name(callee)
             )
         );
     }
 
-    // FIXME: get Callable or Object
-    Function& function = std::get<Function>(callee);
+    return { nullptr };
+}
+
+
+
+template<typename CallableValue>
+CallableValue& ExprInterpreterVisitor::get_invokable(Value& callee, std::vector<Value>& args, const CallExpr& expr) const {
+    CallableValue& function = std::get<CallableValue>(callee);
 
     if (function.arity() != args.size()) {
         report_error_and_abort(
             InterpreterError::wrong_num_of_arguments, expr,
             fmt::format(
-                "Expected: {}, Encountered {}",
+                "Expected {}, Encountered {}",
                 function.arity(),
                 args.size()
             )
         );
     }
 
-    return function(*this, args);
+    return function;
 }
-
-

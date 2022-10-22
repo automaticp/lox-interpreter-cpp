@@ -8,6 +8,7 @@
 #include "IExpr.hpp"
 #include "Value.hpp"
 #include "Stmt.hpp"
+#include "Builtins.hpp"
 #include <span>
 
 class Interpreter {
@@ -18,8 +19,10 @@ private:
 
 public:
     Interpreter(ErrorReporter& err) :
-        err_{ err }, visitor_{ err, env_, *this }, env_{}
-    {}
+        err_{ err }, visitor_{ err, env_, *this }, env_{} {
+
+        setup_builtins(env_);
+    }
 
     bool interpret(std::span<const std::unique_ptr<IStmt>> statements) {
         try {
