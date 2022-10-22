@@ -1,0 +1,88 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "default",
+            "binaryDir": "${sourceDir}/build",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "gnu-sanitizers",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "-fsanitize=address -fsanitize=undefined"
+            }
+        },
+        {
+            "name": "ninja",
+            "inherits": ["default"],
+            "generator": "Ninja"
+        },
+        {
+            "name": "ninja-debug",
+            "inherits": "ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "ninja-release",
+            "inherits": "ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "ninja-debug-gnu-sanitizers",
+            "inherits": ["ninja-debug", "gnu-sanitizers"]
+        },
+        {
+            "name": "ninja-mc",
+            "inherits": ["default"],
+            "generator": "Ninja Multi-Config"
+        },
+        {
+            "name": "ninja-mc-gnu-sanitizers",
+            "inherits": ["ninja-mc", "gnu-sanitizers"]
+        }
+
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default"
+        },
+        {
+            "name": "gnu-sanitizers",
+            "configurePreset": "gnu-sanitizers"
+        },
+        {
+            "name": "ninja",
+            "configurePreset": "ninja"
+        },
+        {
+            "name": "ninja-debug-gnu-sanitizers",
+            "configurePreset": "ninja-debug-gnu-sanitizers"
+        },
+        {
+            "name": "ninja-mc",
+            "configurePreset": "ninja-mc",
+            "hidden": true
+        },
+        {
+            "name": "ninja-mc-debug",
+            "inherits": ["ninja-mc"],
+            "configuration": "Debug"
+        },
+        {
+            "name": "ninja-mc-debug-gnu-sanitizers",
+            "configurePreset": "ninja-mc-gnu-sanitizers",
+            "configuration": "Debug"
+        },
+        {
+            "name": "ninja-mc-release",
+            "inherits": ["ninja-mc"],
+            "configuration": "Release"
+        }
+    ]
+}
