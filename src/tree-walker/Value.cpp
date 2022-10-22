@@ -1,5 +1,4 @@
 #include "Value.hpp"
-#include "ObjectImpl.hpp"
 #include "ExprVisitors.hpp"
 #include "Environment.hpp"
 #include "Stmt.hpp"
@@ -8,21 +7,6 @@
 #include <cassert>
 
 
-Object::Object() : pimpl_{ std::make_unique<ObjectImpl>() } {}
-Object& Object::operator=(Object &&) = default;
-Object::Object(Object &&) = default;
-Object::~Object() = default;
-
-
-Object::Object(const Object& other) :
-    pimpl_{ std::make_unique<ObjectImpl>(other.impl()) } {}
-
-Object& Object::operator=(const Object& other) {
-    if (this != &other) {
-        pimpl_ = std::make_unique<ObjectImpl>(other.impl());
-    }
-    return *this;
-}
 
 
 size_t Function::arity() const noexcept {

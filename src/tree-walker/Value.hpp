@@ -6,11 +6,11 @@
 #include "Token.hpp"
 #include "Utils.hpp"
 #include <string_view>
-#include <unordered_map>
 #include "FieldName.hpp"
 #include <functional>
 #include <vector>
 #include <span>
+#include <boost/unordered_map.hpp>
 #include "Environment.hpp"
 #include "ValueDecl.hpp"
 
@@ -60,32 +60,18 @@ public:
 
 
 
-class ObjectImpl;
 
 class Object {
 private:
-    std::unique_ptr<ObjectImpl> pimpl_;
+    boost::unordered_map<FieldName, Value> fields_;
 public:
-    Object();
-    Object(const Object&);
-    Object& operator=(const Object&);
-    // Defined is cpp file, as otherwise unique_ptr
-    // tries to generate ObjectImpl's destructor here.
-    // Which doesn't work due to class being incomplete.
-    Object& operator=(Object &&);
-    Object(Object &&);
-    ~Object();
-
     bool operator==(const Object& other) const {
         return false;
     }
 
+    // Not defined yet
     Value operator()(const ExprInterpreterVisitor& interpreter, const std::vector<Value>& args);
 
-private:
-    ObjectImpl& impl() const noexcept {
-        return *pimpl_;
-    }
 };
 
 
