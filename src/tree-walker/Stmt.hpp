@@ -81,3 +81,13 @@ public:
     FunStmt(Token name, std::vector<Token> parameters, std::vector<std::unique_ptr<IStmt>> body) :
         name{ std::move(name) }, parameters{ std::move(parameters) }, body{ std::move(body) } {}
 };
+
+
+struct ReturnStmt : FullyVisitableStmt<ReturnStmt> {
+public:
+    Token keyword;
+    std::unique_ptr<IExpr> expr;
+
+    ReturnStmt(Token keyword, std::unique_ptr<IExpr> expr) :
+        keyword{ std::move(keyword) }, expr{ std::move(expr) } {}
+};

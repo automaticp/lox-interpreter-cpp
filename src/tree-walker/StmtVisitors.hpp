@@ -8,6 +8,7 @@ class VarStmt;
 class BlockStmt;
 class IfStmt;
 class WhileStmt;
+class ReturnStmt;
 
 class Environment;
 class ErrorReporter;
@@ -31,6 +32,7 @@ public:
     return_type operator()(const IfStmt& stmt) const;
     return_type operator()(const WhileStmt& stmt) const;
     return_type operator()(const FunStmt& stmt) const;
+    return_type operator()(const ReturnStmt& stmt) const;
 
     void execute(const IStmt& stmt) const;
 };
@@ -49,5 +51,6 @@ public:
     return_type operator()(const IfStmt& stmt) const;
     return_type operator()(const WhileStmt& stmt) const;
     return_type operator()(const FunStmt& stmt) const;
+    return_type operator()(const ReturnStmt& stmt) const;
 };
 

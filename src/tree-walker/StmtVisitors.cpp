@@ -4,6 +4,7 @@
 #include "ExprVisitors.hpp"
 #include "Token.hpp"
 #include "Value.hpp"
+#include <fmt/core.h>
 #include <fmt/format.h>
 #include <iostream>
 #include <memory>
@@ -39,7 +40,7 @@ StmtInterpreterVisitor::return_type
 StmtInterpreterVisitor::operator()(const IfStmt& stmt) const {
     if (is_truthful(evaluate(*stmt.condition))) {
         execute(*stmt.then_branch);
-    } else {
+    } else if (stmt.else_branch) {
         execute(*stmt.else_branch);
     }
 }
@@ -58,6 +59,14 @@ StmtInterpreterVisitor::operator()(const FunStmt& stmt) const {
         Function{ &stmt }
     );
 }
+
+StmtInterpreterVisitor::return_type
+StmtInterpreterVisitor::operator()(const ReturnStmt& stmt) const {
+    // Walk up the call stack with exceptions.
+    // To be caught in the Function::operator()
+    throw evaluate(*stmt.expr);
+}
+
 
 
 void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
@@ -145,5 +154,12 @@ StmtASTPrinterVisitor::operator()(const FunStmt& stmt) const {
         stmt.name.lexeme,
         join_token_names(stmt.parameters),
         join_statements(stmt.body)
+    );
+}
+
+StmtASTPrinterVisitor::return_type
+StmtASTPrinterVisitor::operator()(const ReturnStmt& stmt) const {
+    return fmt::format(
+        "return {};", stmt.expr->accept(*this)
     );
 }

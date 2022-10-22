@@ -224,6 +224,8 @@ private:
     std::unique_ptr<IStmt> statement() {
         if (state_.match(TokenType::kw_if)) {
             return if_stmt();
+        } else if (state_.match(TokenType::kw_return)){
+            return return_stmt();
         } else if (state_.match(TokenType::kw_while)) {
             return while_stmt();
         } else if (state_.match(TokenType::kw_for)) {
@@ -260,6 +262,26 @@ private:
             std::move(else_branch)
         );
     }
+
+    std::unique_ptr<IStmt> return_stmt() {
+        const Token& keyword{ state_.peek_previous() };
+
+        std::unique_ptr<IExpr> value;
+        if (!state_.check(TokenType::semicolon)) {
+            value = expression();
+        } else {
+            value = std::make_unique<LiteralExpr>(
+                Token{ TokenType::kw_nil, "nil", state_.current()->line, nullptr }
+            );
+        }
+
+        try_consume_semicolon();
+
+        return std::make_unique<ReturnStmt>(
+            keyword, std::move(value)
+        );
+    }
+
 
     std::unique_ptr<IStmt> for_stmt() {
         try_consume(

@@ -41,8 +41,14 @@ Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std:
         );
     }
 
-    interpret_visitor.interpreter.interpret(
-        declaration_->body, env
-    );
-    return nullptr;
+
+    try {
+        interpret_visitor.interpreter.interpret(
+            declaration_->body, env
+        );
+    } catch (Value v) {
+        return v;
+    }
+
+    return { nullptr };
 }
