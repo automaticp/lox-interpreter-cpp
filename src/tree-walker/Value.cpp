@@ -50,3 +50,7 @@ Value BuiltinFunction::operator()(std::span<Value> args) {
 std::string ValueToStringVisitor::operator()(const Function& val) const {
     return fmt::format("?Function {}?", val.declaration_->name.lexeme);
 }
+
+std::string ValueToStringVisitor::operator()(const BuiltinFunction& val) const {
+    return fmt::format("?BuiltinFunction {}?", val.name_);
+}

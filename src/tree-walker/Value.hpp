@@ -44,10 +44,11 @@ class BuiltinFunction {
 private:
     std::function<Value(std::span<Value>)> fun_;
     size_t arity_;
-
+    std::string_view name_;
+    friend class ValueToStringVisitor;
 public:
-    BuiltinFunction(std::function<Value(std::span<Value>)> fun, size_t arity) :
-        fun_{ std::move(fun) }, arity_{ arity } {}
+    BuiltinFunction(std::string_view name, std::function<Value(std::span<Value>)> fun, size_t arity) :
+        fun_{ std::move(fun) }, arity_{ arity }, name_{ name } {}
 
     Value operator()(std::span<Value> args);
 
@@ -132,7 +133,7 @@ inline std::string_view type_name(const Value& val) {
 struct ValueToStringVisitor {
     std::string operator()(const Object& val) const { return "?Object?"; }
     std::string operator()(const Function& val) const;
-    std::string operator()(const BuiltinFunction& val) const { return "?BuiltinFunction?"; }
+    std::string operator()(const BuiltinFunction& val) const;
     std::string operator()(const std::string& val) const { return '"' + val + '"'; }
     std::string operator()(const double& val) const {
         return std::string(num_to_string(val));

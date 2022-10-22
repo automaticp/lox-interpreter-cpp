@@ -16,5 +16,5 @@ Value builtin_clock(std::span<Value> args) {
 
 
 void setup_builtins(Environment& env) {
-    env.define("clock", BuiltinFunction{ builtin_clock, 0 });
+    env.define("clock", BuiltinFunction{ "clock", builtin_clock, 0 });
 }

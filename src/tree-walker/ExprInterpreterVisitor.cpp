@@ -190,7 +190,7 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
             fmt::format(
                 "Expected {} or {}, Encountered {}",
                 type_name(Value(Function{ nullptr })),
-                type_name(Value(BuiltinFunction{ nullptr, 0 })),
+                type_name(Value(BuiltinFunction{ "", nullptr, 0 })),
                 type_name(callee)
             )
         );
