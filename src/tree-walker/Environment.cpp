@@ -1,5 +1,12 @@
 #include "Environment.hpp"
 #include "Value.hpp"
+#include <utility>
+
+template class boost::unordered_map<std::string, Value>;
+
+
+Environment::Environment(Environment* enclosing, boost::unordered_map<std::string, Value> map) :
+        enclosing_{ enclosing }, map_{ std::move(map) } {}
 
 
 

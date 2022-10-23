@@ -54,9 +54,31 @@ StmtInterpreterVisitor::operator()(const WhileStmt& stmt) const {
 
 StmtInterpreterVisitor::return_type
 StmtInterpreterVisitor::operator()(const FunStmt& stmt) const {
+    // Hail Mary closure that copies EVERYTHING from outer scopes,
+    // essentially, storing the state of the entire program at capture time.
+    // Absolutely horrible, but should work.
+    //
+    // First, intialize with the copy of the current scope.
+    Environment closure{ nullptr, env.map() };
+
+    // Ther recursively copy values for symbols not yet in closure,
+    // starting from the inner-most enclosing scope.
+    Environment* enclosing{ env.enclosing() };
+    while (enclosing) {
+        for (const auto& elem : enclosing->map()) {
+            if (!closure.get(elem.first)) {
+                closure.define(elem.first, elem.second);
+            }
+        }
+        enclosing = enclosing->enclosing();
+    }
+
     env.define(
         stmt.name.lexeme,
-        Function{ &stmt }
+        Function{
+            &stmt,
+            std::move(closure)
+        }
     );
 }
 

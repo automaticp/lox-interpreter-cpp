@@ -29,6 +29,17 @@ private:
 public:
     Function(const FunStmt* declaration) : declaration_{ declaration } {}
 
+    // Copy construct closure
+    Function(const FunStmt* declaration, Environment closure) :
+        declaration_{ declaration }, closure_{ std::move(closure) } {}
+
+
+    Function(const Function&) = default;
+    Function& operator=(const Function&) = default;
+    Function(Function&&) = default;
+    Function& operator=(Function&&) = default;
+
+
     Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
 
     size_t arity() const noexcept;
