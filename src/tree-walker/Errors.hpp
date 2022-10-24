@@ -43,6 +43,12 @@ enum class InterpreterError : size_t {
 };
 
 
+enum class ResolverError : size_t {
+
+    initialization_from_self = 0
+
+};
+
 
 namespace detail {
 
@@ -73,6 +79,10 @@ inline constexpr std::array interpreter_error_msgs{
     "Wrong number of arguments"
 };
 
+inline constexpr std::array resolver_error_msgs{
+    "Initialized name on the right-hand side of the initializer statement is forbidden"
+};
+
 
 } // namepace detail
 
@@ -96,6 +106,12 @@ inline std::string_view to_error_message(ParserError err) {
 
 inline std::string_view to_error_message(InterpreterError err) {
     return detail::interpreter_error_msgs[
+        to_underlying(err)
+    ];
+}
+
+inline std::string_view to_error_message(ResolverError err) {
+    return detail::resolver_error_msgs[
         to_underlying(err)
     ];
 }

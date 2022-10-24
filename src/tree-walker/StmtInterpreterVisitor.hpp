@@ -1,7 +1,5 @@
 #pragma once
-#include "ExprVisitors.hpp"
-#include "StmtInterpreterVisitor.hpp"
-#include "StmtResolveVisitor.hpp"
+#include "ExprInterpreterVisitor.hpp"
 
 class IStmt;
 class PrintStmt;
@@ -17,10 +15,15 @@ class ErrorReporter;
 class Interpreter;
 
 
-
-struct StmtASTPrinterVisitor : protected ExprASTPrinterVisitor {
+// Inheritance is a hack here
+struct StmtInterpreterVisitor : protected ExprInterpreterVisitor {
+//
 public:
-    using return_type = std::string;
+    StmtInterpreterVisitor(ErrorReporter& err, Environment& env, Interpreter& interpreter) :
+        ExprInterpreterVisitor{ err, env, interpreter }
+    {}
+
+    using return_type = void;
     return_type operator()(const PrintStmt& stmt) const;
     return_type operator()(const ExpressionStmt& stmt) const;
     return_type operator()(const VarStmt& stmt) const;
@@ -29,5 +32,7 @@ public:
     return_type operator()(const WhileStmt& stmt) const;
     return_type operator()(const FunStmt& stmt) const;
     return_type operator()(const ReturnStmt& stmt) const;
+
+    void execute(const IStmt& stmt) const;
 };
 

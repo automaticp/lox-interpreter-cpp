@@ -1,7 +1,6 @@
 #pragma once
-#include "ExprVisitors.hpp"
-#include "StmtInterpreterVisitor.hpp"
-#include "StmtResolveVisitor.hpp"
+#include "ExprResolveVisitor.hpp"
+
 
 class IStmt;
 class PrintStmt;
@@ -11,16 +10,13 @@ class BlockStmt;
 class IfStmt;
 class WhileStmt;
 class ReturnStmt;
+class FunStmt;
 
-class Environment;
-class ErrorReporter;
-class Interpreter;
+class Resolver;
 
-
-
-struct StmtASTPrinterVisitor : protected ExprASTPrinterVisitor {
+struct StmtResolveVisitor : protected ExprResolveVisitor {
 public:
-    using return_type = std::string;
+    using return_type = void;
     return_type operator()(const PrintStmt& stmt) const;
     return_type operator()(const ExpressionStmt& stmt) const;
     return_type operator()(const VarStmt& stmt) const;
@@ -29,5 +25,13 @@ public:
     return_type operator()(const WhileStmt& stmt) const;
     return_type operator()(const FunStmt& stmt) const;
     return_type operator()(const ReturnStmt& stmt) const;
+
+    StmtResolveVisitor(Resolver& resolver, Interpreter& interpreter, ErrorReporter& err) :
+        ExprResolveVisitor(resolver, interpreter, err) {}
+
+private:
+    using ExprResolveVisitor::resolve;
+    void resolve(const IStmt& stmt) const;
+    void resolve_function(const FunStmt& stmt) const;
 };
 
