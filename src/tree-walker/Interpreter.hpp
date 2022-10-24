@@ -9,17 +9,23 @@
 #include "Value.hpp"
 #include "Stmt.hpp"
 #include "Builtins.hpp"
+#include "Resolver.hpp"
 #include <span>
 
 class Interpreter {
 private:
     ErrorReporter& err_;
+    Resolver& resolver_;
     Environment env_;
     StmtInterpreterVisitor visitor_;
 
+    // Another hack that shows the fragility of the design
+    friend StmtInterpreterVisitor;
+    friend ExprInterpreterVisitor;
+
 public:
-    Interpreter(ErrorReporter& err) :
-        err_{ err }, visitor_{ err, env_, *this }, env_{} {
+    Interpreter(ErrorReporter& err, Resolver& resolver) :
+        err_{ err }, resolver_{ resolver }, visitor_{ err, env_, *this }, env_{} {
 
         setup_builtins(env_);
     }

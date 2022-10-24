@@ -5,6 +5,7 @@
 #include "Parser.hpp"
 #include "Interpreter.hpp"
 #include "ExprVisitors.hpp"
+#include "Resolver.hpp"
 #include <string>
 #include <optional>
 #include <fstream>
@@ -18,6 +19,7 @@ private:
     std::optional<std::string> filename_;
     ErrorReporter& err_;
     Parser parser_;
+    Resolver resolver_;
     Interpreter intepreter_;
 public:
     RunContext(ErrorReporter& err_reporter,
@@ -25,7 +27,8 @@ public:
         std::optional<std::string> filename = std::nullopt) :
         err_{ err_reporter },
         parser_{ err_reporter },
-        intepreter_{ err_reporter },
+        resolver_{ err_reporter },
+        intepreter_{ err_reporter, resolver_ },
         filename_{ filename },
         is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
     {}
@@ -98,6 +101,16 @@ public:
             for (const auto& stmt: new_stmts) {
                 std::cout << stmt->accept(StmtASTPrinterVisitor{}) << '\n';
             }
+        }
+
+        if (err_.had_parser_errors()) {
+            return;
+        }
+
+        resolver_.resolve(new_stmts);
+
+        if (err_.had_resolver_errors()) {
+            return;
         }
 
         intepreter_.interpret(new_stmts);

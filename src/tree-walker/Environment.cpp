@@ -35,3 +35,19 @@ Value* Environment::assign(const std::string& name, Value value) {
         return nullptr;
     }
 }
+
+
+Value* Environment::get_at(size_t distance, const std::string& name) {
+    assert(ancestor(distance));
+    assert(ancestor(distance)->map_.contains(name));
+    return &ancestor(distance)->map_[name];
+}
+
+
+Value* Environment::assign_at(size_t distance, const std::string& name, Value value) {
+    assert(ancestor(distance));
+    assert(ancestor(distance)->map_.contains(name));
+    auto& value_ref = ancestor(distance)->map_[name];
+    value_ref = std::move(value);
+    return &value_ref;
+}

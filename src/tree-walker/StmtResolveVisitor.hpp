@@ -26,8 +26,8 @@ public:
     return_type operator()(const FunStmt& stmt) const;
     return_type operator()(const ReturnStmt& stmt) const;
 
-    StmtResolveVisitor(Resolver& resolver, Interpreter& interpreter, ErrorReporter& err) :
-        ExprResolveVisitor(resolver, interpreter, err) {}
+    StmtResolveVisitor(Resolver& resolver, ErrorReporter& err) :
+        ExprResolveVisitor(resolver, err) {}
 
 private:
     using ExprResolveVisitor::resolve;

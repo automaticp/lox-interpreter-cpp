@@ -6,6 +6,7 @@
 #include "ErrorReporter.hpp"
 #include "Errors.hpp"
 #include "Environment.hpp"
+#include "Interpreter.hpp"
 #include <fmt/format.h>
 #include <variant>
 
@@ -133,25 +134,49 @@ ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
-    Value* val = env.get(expr.identifier.lexeme);
-    if (!val) {
-        report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+
+    auto& depths = interpreter.resolver_.depth_map();
+    auto it = depths.find(&expr);
+    if (it != depths.end()) {
+        return *env.get_at(it->second, expr.identifier.lexeme);
+    } else {
+        Value* val = interpreter.env_.get(expr.identifier.lexeme);
+        if (!val) {
+            report_error_and_abort(
+                InterpreterError::undefined_variable,
+                expr, expr.identifier.lexeme
+            );
+        }
+        return *val;
     }
-    return *val;
+
 }
 
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
-    Value* val = env.assign(
-        expr.identifier.lexeme,
-        evaluate(*expr.rvalue)
-    );
+    auto& depths = interpreter.resolver_.depth_map();
 
-    if (!val) {
-        report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+    auto it = depths.find(&expr);
+    if (it != depths.end()) {
+        Value* val = env.assign_at(
+            it->second,
+            expr.identifier.lexeme,
+            evaluate(*expr.rvalue)
+        );
+        assert(val); // This whole thing is so fragile, I hate it
+        return *val;
+    } else {
+        Value* val = interpreter.env_.assign(
+            expr.identifier.lexeme,
+            evaluate(*expr.rvalue)
+        );
+
+        if (!val) {
+            report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+        }
+        return *val;
     }
-    return *val;
 }
 
 

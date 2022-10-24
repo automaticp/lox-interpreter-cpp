@@ -1,12 +1,17 @@
 #pragma once
 #include "ExprResolveVisitor.hpp"
+#include "StmtResolveVisitor.hpp"
+#include "IStmt.hpp"
+#include "ErrorReporter.hpp"
+#include <memory>
 #include <vector>
 #include <stack>
 #include <boost/unordered_map.hpp>
 #include <string>
-
+#include <span>
 
 class IExpr;
+
 
 enum class ResolveState : bool {
     declared = false,
@@ -15,6 +20,9 @@ enum class ResolveState : bool {
 
 class Resolver {
 private:
+    ErrorReporter& err_;
+    StmtResolveVisitor visitor_;
+
     using map_t = boost::unordered_map<std::string, ResolveState>;
     using scope_stack_t = std::vector<map_t>;
     scope_stack_t scope_stack_;
@@ -23,6 +31,16 @@ private:
     depth_map_t depth_map_;
 
 public:
+    Resolver(ErrorReporter& err) :
+        err_{ err }, visitor_{ *this, err } {}
+
+
+    void resolve(std::span<std::unique_ptr<IStmt>> stmts) {
+        for (const auto& stmt : stmts) {
+            stmt->accept(visitor_);
+        }
+    }
+
     void push_scope() {
         scope_stack_.emplace_back();
     }
