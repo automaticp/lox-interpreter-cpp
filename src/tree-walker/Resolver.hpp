@@ -46,7 +46,9 @@ private:
 
 public:
     Resolver(ErrorReporter& err) :
-        err_{ err }, visitor_{ *this, err } {}
+        err_{ err }, visitor_{ *this, err } {
+            push_scope(ScopeType::global);
+        }
 
 
     void resolve(std::span<std::unique_ptr<IStmt>> stmts) {
@@ -102,11 +104,11 @@ public:
 
 
     bool is_in_global_scope() const noexcept {
-        return scope_type_stack_.empty() || top_scope_type() == ScopeType::global;
+        return top_scope_type() == ScopeType::global;
     }
 
     bool declare(const std::string& name) {
-        if (top_scope().contains(name)) {
+        if (top_scope().contains(name) && !is_in_global_scope()) {
             return false;
         }
         top_scope()[name] = ResolveState::declared;
