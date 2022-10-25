@@ -4,6 +4,7 @@
 
 Value builtin_clock(std::span<Value> args);
 
+Value builtin_typename(std::span<Value> args);
 
 
 class Environment;
