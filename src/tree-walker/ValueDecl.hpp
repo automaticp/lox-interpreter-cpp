@@ -16,5 +16,6 @@ class Object;
 class Function;
 class Environment;
 class BuiltinFunction;
+class ValueHandle;
 
-using Value = std::variant<Object, Function, BuiltinFunction, std::string, double, bool, std::nullptr_t>;
+using Value = std::variant<ValueHandle, Object, Function, BuiltinFunction, std::string, double, bool, std::nullptr_t>;

@@ -4,8 +4,24 @@
 #include "Stmt.hpp"
 #include "Interpreter.hpp"
 #include "StmtVisitors.hpp"
+#include "ValueDecl.hpp"
 #include <memory>
 #include <cassert>
+
+
+
+
+ValueHandle::ValueHandle(Value& target) noexcept : handle_{ &target } {
+    assert(
+        !holds<ValueHandle>(target) &&
+        "Handle to a Handle is redundant"
+    );
+}
+
+Value ValueHandle::decay() const noexcept {
+    assert(handle_);
+    return *handle_;
+}
 
 
 
@@ -31,8 +47,8 @@ Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std:
         interpret_visitor.interpreter.interpret(
             declaration_->body, env
         );
-    } catch (Value v) {
-        return v;
+    } catch (Value& v) {
+        return std::move(v);
     }
 
     return { nullptr };
