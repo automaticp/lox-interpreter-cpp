@@ -6,6 +6,7 @@
 #include "Interpreter.hpp"
 #include "ExprVisitors.hpp"
 #include "Resolver.hpp"
+#include "Builtins.hpp"
 #include <string>
 #include <optional>
 #include <fstream>
@@ -20,7 +21,7 @@ private:
     ErrorReporter& err_;
     Parser parser_;
     Resolver resolver_;
-    Interpreter intepreter_;
+    Interpreter interpreter_;
 public:
     RunContext(ErrorReporter& err_reporter,
         bool is_debug_scanner, bool is_debug_parser,
@@ -28,10 +29,12 @@ public:
         err_{ err_reporter },
         parser_{ err_reporter },
         resolver_{ err_reporter },
-        intepreter_{ err_reporter, resolver_ },
+        interpreter_{ err_reporter, resolver_ },
         filename_{ std::move(filename) },
         is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
-    {}
+    {
+        setup_builtins(interpreter_.get_global_environment(),  resolver_);
+    }
 
     void start_running() {
         if (is_prompt_mode()) {
@@ -114,7 +117,7 @@ public:
             return;
         }
 
-        intepreter_.interpret(new_stmts);
+        interpreter_.interpret(new_stmts);
     }
 
 private:

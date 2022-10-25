@@ -27,18 +27,18 @@ enum class ScopeType {
 
 
 class Resolver {
+public:
+    using map_t = boost::unordered_map<std::string, ResolveState>;
+    using scope_stack_t = std::vector<map_t>;
+    using scope_type_stack_t = std::vector<ScopeType>;
+    using depth_map_t = boost::unordered_map<const IExpr*, size_t>;
+
 private:
     ErrorReporter& err_;
     StmtResolveVisitor visitor_;
 
-    using map_t = boost::unordered_map<std::string, ResolveState>;
-    using scope_stack_t = std::vector<map_t>;
     scope_stack_t scope_stack_;
-
-    using scope_type_stack_t = std::vector<ScopeType>;
     scope_type_stack_t scope_type_stack_;
-
-    using depth_map_t = boost::unordered_map<const IExpr*, size_t>;
     depth_map_t depth_map_;
 
     bool is_in_function_prev_{ false };

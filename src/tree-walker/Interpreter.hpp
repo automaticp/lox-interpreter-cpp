@@ -25,10 +25,8 @@ private:
 
 public:
     Interpreter(ErrorReporter& err, Resolver& resolver) :
-        err_{ err }, resolver_{ resolver }, visitor_{ err, env_, *this }, env_{} {
-
-        setup_builtins(env_);
-    }
+        err_{ err }, resolver_{ resolver }, visitor_{ err, env_, *this }, env_{}
+    {}
 
     bool interpret(std::span<const std::unique_ptr<IStmt>> statements) {
         try {
@@ -52,5 +50,7 @@ public:
             return false;
         }
     }
+
+    Environment& get_global_environment() noexcept { return env_; }
 
 };

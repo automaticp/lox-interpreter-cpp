@@ -47,7 +47,8 @@ enum class ResolverError : size_t {
 
     initialization_from_self = 0,
     local_variable_redeclaration,
-    return_from_global_scope
+    return_from_global_scope,
+    undefined_variable
 
 };
 
@@ -84,7 +85,8 @@ inline constexpr std::array interpreter_error_msgs{
 inline constexpr std::array resolver_error_msgs{
     "Initialized name on the right-hand side of the initializer statement is forbidden",
     "Redeclaration of a local variable",
-    "Return from global scope"
+    "Return from global scope",
+    "Undefined variable"
 };
 
 

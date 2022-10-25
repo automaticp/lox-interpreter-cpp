@@ -1,4 +1,5 @@
 #include "ExprResolveVisitor.hpp"
+#include "Errors.hpp"
 #include "ExprVisitors.hpp"
 
 #include "Interpreter.hpp"
@@ -18,6 +19,8 @@ void ExprResolveVisitor::resolve_local(const IExpr& expr, const std::string& nam
             return;
         }
     }
+    // Not resolved
+    err_.resolver_error(ResolverError::undefined_variable, expr, name);
 }
 
 ExprResolveVisitor::return_type
