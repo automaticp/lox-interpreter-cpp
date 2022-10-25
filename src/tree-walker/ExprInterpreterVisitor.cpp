@@ -43,7 +43,13 @@ void ExprInterpreterVisitor::report_error(InterpreterError type, const IExpr& ex
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const LiteralExpr& expr) const {
-    return { std::visit([](auto&& arg) { return Value{ arg }; }, expr.token.literal.value()) };
+    assert(expr.token.literal.has_value());
+    return {
+        std::visit(
+            [](auto&& arg) { return Value{ arg }; },
+            expr.token.literal.value()
+        )
+    };
 }
 
 

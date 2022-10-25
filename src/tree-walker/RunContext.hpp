@@ -10,7 +10,7 @@
 #include <optional>
 #include <fstream>
 #include <iostream>
-
+#include <utility>
 
 class RunContext {
 private:
@@ -29,7 +29,7 @@ public:
         parser_{ err_reporter },
         resolver_{ err_reporter },
         intepreter_{ err_reporter, resolver_ },
-        filename_{ filename },
+        filename_{ std::move(filename) },
         is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
     {}
 
@@ -65,7 +65,8 @@ public:
     }
 
     void run_file() {
-        // filename_ is guaranteed to have value from start_running()
+        // filename_ is guaranteed to have value if called from start_running()
+        assert(filename_);
         auto text = read_file(filename_.value());
         if (text) {
             run(text.value());
