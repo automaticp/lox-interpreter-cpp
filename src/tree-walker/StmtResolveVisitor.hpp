@@ -33,5 +33,7 @@ private:
     using ExprResolveVisitor::resolve;
     void resolve(const IStmt& stmt) const;
     void resolve_function(const FunStmt& stmt) const;
+
+    bool try_declare(const IStmt& stmt, const std::string& name) const;
 };
 

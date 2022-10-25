@@ -21,7 +21,7 @@ void ExprResolveVisitor::resolve_local(const IExpr& expr, const std::string& nam
 }
 
 ExprResolveVisitor::return_type
-ExprResolveVisitor::operator()(const LiteralExpr& expr) const {
+ExprResolveVisitor::operator()(const LiteralExpr& /* expr */) const {
     return;
 }
 

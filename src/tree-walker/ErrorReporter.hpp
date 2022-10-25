@@ -6,6 +6,7 @@
 #include "Errors.hpp"
 #include "ExprVisitors.hpp"
 #include "IExpr.hpp"
+#include "IStmt.hpp"
 #include "Token.hpp"
 #include <fmt/format.h>
 
@@ -98,6 +99,11 @@ public:
         report_resolver_error(type, expr, details);
     }
 
+    void resolver_error(ResolverError type, const IStmt& stmt, std::string_view details) {
+        resolver_errs_.push_back(type);
+        report_resolver_error(type, stmt, details);
+    }
+
     void interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) {
         interpreter_errs_.push_back(type);
         report_interpreter_error(type, expr, details);
@@ -114,6 +120,7 @@ protected:
     virtual void report_parser_error(ParserError type, const Token& token, std::string_view details = "") = 0;
 
     virtual void report_resolver_error(ResolverError type, const IExpr& expr, std::string_view details = "") = 0;
+    virtual void report_resolver_error(ResolverError type, const IStmt& stmt, std::string_view details = "") = 0;
 
     virtual void report_interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details = "") = 0;
 };
@@ -158,6 +165,14 @@ protected:
         );
     }
 
+    void report_resolver_error(ResolverError type, const IStmt& stmt, std::string_view details) override {
+        os_ << fmt::format(
+            "[Error @Resolver] in {:s}:\n{:s}{:s}\n", // FIXME: how to get the line of the statement?
+            stmt.accept(StmtUserFriendlyNameVisitor{}),
+            to_error_message(type), details_tail(details)
+        );
+    }
+
     void report_interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) override {
         const Token& primary{ expr.accept(ExprGetPrimaryTokenVisitor{}) };
         os_ << fmt::format(
@@ -179,6 +194,7 @@ private:
     }
 
     static std::string_view details_sep(std::string_view details) {
-        return (details.size() < 16 ? ": " : ":\n    ");
+        constexpr size_t line_wrap_limit{ 16 }; // Chosen arbitrarily
+        return (details.size() < line_wrap_limit ? ": " : ":\n    ");
     }
 };

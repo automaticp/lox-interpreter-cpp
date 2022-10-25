@@ -97,3 +97,50 @@ StmtASTPrinterVisitor::operator()(const ReturnStmt& stmt) const {
         "return {};", stmt.expr->accept(*this)
     );
 }
+
+
+
+
+
+
+
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const PrintStmt&) const {
+    return "Print Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const ExpressionStmt&) const {
+    return "Expression Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const VarStmt&) const {
+    return "Variable Declaration";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const BlockStmt&) const {
+    return "Block Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const IfStmt&) const {
+    return "If Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const WhileStmt&) const {
+    return "Loop Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const FunStmt&) const {
+    return "Function Declaration";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const ReturnStmt&) const {
+    return "Return Statement";
+}

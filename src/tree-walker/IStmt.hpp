@@ -7,7 +7,7 @@
 // See IExpr.hpp and IVisitable.hpp.
 
 using IFullyVisitableStmt = IVisitable<
-    StmtInterpreterVisitor, StmtASTPrinterVisitor, StmtResolveVisitor
+    StmtInterpreterVisitor, StmtASTPrinterVisitor, StmtResolveVisitor, StmtUserFriendlyNameVisitor
 >;
 
 struct IStmt : IFullyVisitableStmt {
@@ -17,5 +17,5 @@ public:
 
 template<typename CRTP>
 using FullyVisitableStmt = Visitable<
-    CRTP, IStmt, StmtInterpreterVisitor, StmtASTPrinterVisitor, StmtResolveVisitor
+    CRTP, IStmt, StmtInterpreterVisitor, StmtASTPrinterVisitor, StmtResolveVisitor, StmtUserFriendlyNameVisitor
 >;
