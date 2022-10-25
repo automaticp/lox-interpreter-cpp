@@ -12,9 +12,9 @@ void ExprResolveVisitor::resolve(const IExpr& expr) const {
 void ExprResolveVisitor::resolve_local(const IExpr& expr, const std::string& name) const {
     size_t num_scopes{ resolver_.scopes().size() };
 
-    for (size_t i{ num_scopes - 1}; i >= 0; --i) {
-        if (resolver_.scope_at(i).contains(name)) {
-            resolver_.set_depth(expr, num_scopes - 1 - i);
+    for (size_t i{ 0 }; i < num_scopes; ++i) {
+        if (resolver_.scope_at(num_scopes - 1 - i).contains(name)) {
+            resolver_.set_depth(expr, i);
             return;
         }
     }
