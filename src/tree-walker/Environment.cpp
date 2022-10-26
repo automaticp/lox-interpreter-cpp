@@ -14,40 +14,47 @@ void Environment::define(const std::string& name, Value value) {
     map_.insert_or_assign(name, std::move(value));
 }
 
-// optinal references when, eh?
-Value* Environment::get(const std::string& name) {
+
+// Due to ValueHandle having different, but deceivingly
+// similar constructors, which ones of them are invoked
+// is clarified in the comments below.
+
+ValueHandle Environment::get(const std::string& name) {
     if (map_.contains(name)) {
-        return &map_[name];
+        // ValueHandle(Value&) **From ref**
+        return map_[name];
     } else if (enclosing_) {
+        // ValueHandle(const ValueHandle&) **Copy**
         return enclosing_->get(name);
     } else {
-        return nullptr;
+        // ValueHandle() **Empty handle**
+        return {};
     }
 }
 
-Value* Environment::assign(const std::string& name, Value value) {
+ValueHandle Environment::assign(const std::string& name, Value value) {
     if (map_.contains(name)) {
         map_[name] = std::move(value);
-        return &map_[name];
+        return map_[name]; // From ref
     } else if (enclosing_) {
-        return enclosing_->assign(name, std::move(value));
+        return enclosing_->assign(name, std::move(value)); // Copy
     } else {
-        return nullptr;
+        return {}; // Empty handle
     }
 }
 
 
-Value* Environment::get_at(size_t distance, const std::string& name) {
+ValueHandle Environment::get_at(size_t distance, const std::string& name) {
     assert(ancestor(distance));
     assert(ancestor(distance)->map_.contains(name));
-    return &ancestor(distance)->map_[name];
+    return ancestor(distance)->map_[name]; // From ref
 }
 
 
-Value* Environment::assign_at(size_t distance, const std::string& name, Value value) {
+ValueHandle Environment::assign_at(size_t distance, const std::string& name, Value value) {
     assert(ancestor(distance));
     assert(ancestor(distance)->map_.contains(name));
-    auto& value_ref = ancestor(distance)->map_[name];
+    Value& value_ref = ancestor(distance)->map_[name];
     value_ref = std::move(value);
-    return &value_ref;
+    return value_ref; // From ref
 }

@@ -21,13 +21,13 @@ public:
 
     void define(const std::string& name, Value value);
 
-    Value* get(const std::string& name);
+    ValueHandle get(const std::string& name);
 
-    Value* get_at(size_t distance, const std::string& name);
+    ValueHandle get_at(size_t distance, const std::string& name);
 
-    Value* assign(const std::string& name, Value value);
+    ValueHandle assign(const std::string& name, Value value);
 
-    Value* assign_at(size_t distance, const std::string& name, Value value);
+    ValueHandle assign_at(size_t distance, const std::string& name, Value value);
 
     Environment* enclosing() const noexcept { return enclosing_; }
 
