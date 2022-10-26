@@ -14,7 +14,7 @@
 //
 // Extend this list (and the list below) to add more visitors.
 using IFullyVisitableExpr = IVisitable<
-    ExprASTPrinterVisitor, ExprInterpreterVisitor, ExprGetPrimaryTokenVisitor, ExprUserFriendlyNameVisitor
+    ExprASTPrinterVisitor, ExprInterpreterVisitor, ExprGetPrimaryTokenVisitor, ExprUserFriendlyNameVisitor, ExprResolveVisitor
 >;
 
 
@@ -32,7 +32,7 @@ public:
 // Extend this list to add more visitors.
 template<typename CRTP>
 using FullyVisitableExpr = Visitable<
-    CRTP, IExpr, ExprASTPrinterVisitor, ExprInterpreterVisitor, ExprGetPrimaryTokenVisitor, ExprUserFriendlyNameVisitor
+    CRTP, IExpr, ExprASTPrinterVisitor, ExprInterpreterVisitor, ExprGetPrimaryTokenVisitor, ExprUserFriendlyNameVisitor, ExprResolveVisitor
 >;
 
 

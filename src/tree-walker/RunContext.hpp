@@ -5,11 +5,13 @@
 #include "Parser.hpp"
 #include "Interpreter.hpp"
 #include "ExprVisitors.hpp"
+#include "Resolver.hpp"
+#include "Builtins.hpp"
 #include <string>
 #include <optional>
 #include <fstream>
 #include <iostream>
-
+#include <utility>
 
 class RunContext {
 private:
@@ -18,17 +20,21 @@ private:
     std::optional<std::string> filename_;
     ErrorReporter& err_;
     Parser parser_;
-    Interpreter intepreter_;
+    Resolver resolver_;
+    Interpreter interpreter_;
 public:
     RunContext(ErrorReporter& err_reporter,
         bool is_debug_scanner, bool is_debug_parser,
         std::optional<std::string> filename = std::nullopt) :
         err_{ err_reporter },
         parser_{ err_reporter },
-        intepreter_{ err_reporter },
-        filename_{ filename },
+        resolver_{ err_reporter },
+        interpreter_{ err_reporter, resolver_ },
+        filename_{ std::move(filename) },
         is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
-    {}
+    {
+        setup_builtins(interpreter_.get_global_environment(),  resolver_);
+    }
 
     void start_running() {
         if (is_prompt_mode()) {
@@ -62,7 +68,8 @@ public:
     }
 
     void run_file() {
-        // filename_ is guaranteed to have value from start_running()
+        // filename_ is guaranteed to have value if called from start_running()
+        assert(filename_);
         auto text = read_file(filename_.value());
         if (text) {
             run(text.value());
@@ -100,7 +107,17 @@ public:
             }
         }
 
-        intepreter_.interpret(new_stmts);
+        if (err_.had_parser_errors()) {
+            return;
+        }
+
+        resolver_.resolve(new_stmts);
+
+        if (err_.had_resolver_errors()) {
+            return;
+        }
+
+        interpreter_.interpret(new_stmts);
     }
 
 private:

@@ -1,28 +1,29 @@
 #include "Value.hpp"
-#include "ObjectImpl.hpp"
 #include "ExprVisitors.hpp"
 #include "Environment.hpp"
 #include "Stmt.hpp"
 #include "Interpreter.hpp"
+#include "StmtVisitors.hpp"
+#include "ValueDecl.hpp"
 #include <memory>
 #include <cassert>
 
 
-Object::Object() : pimpl_{ std::make_unique<ObjectImpl>() } {}
-Object& Object::operator=(Object &&) = default;
-Object::Object(Object &&) = default;
-Object::~Object() = default;
 
 
-Object::Object(const Object& other) :
-    pimpl_{ std::make_unique<ObjectImpl>(other.impl()) } {}
-
-Object& Object::operator=(const Object& other) {
-    if (this != &other) {
-        pimpl_ = std::make_unique<ObjectImpl>(other.impl());
-    }
-    return *this;
+ValueHandle::ValueHandle(Value& target) noexcept : handle_{ &target } {
+    assert(
+        !holds<ValueHandle>(target) &&
+        "Handle to a Handle is redundant"
+    );
 }
+
+Value ValueHandle::decay() const noexcept {
+    assert(handle_);
+    return *handle_;
+}
+
+
 
 
 size_t Function::arity() const noexcept {
@@ -32,8 +33,9 @@ size_t Function::arity() const noexcept {
 
 Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std::vector<Value>& args) {
     assert(declaration_);
-    // Environment from enclosing scope, not just from global
-    Environment env{ &interpret_visitor.env };
+    // Environment from enclosing scope,
+    // captured by copy during construction of Function
+    Environment env{ &closure_ };
 
     for (size_t i{ 0 }; i < args.size(); ++i) {
         env.define(
@@ -41,17 +43,19 @@ Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std:
         );
     }
 
-
     try {
         interpret_visitor.interpreter.interpret(
             declaration_->body, env
         );
-    } catch (Value v) {
-        return v;
+    } catch (Value& v) {
+        return std::move(v);
     }
 
     return { nullptr };
 }
+
+
+
 
 
 Value BuiltinFunction::operator()(std::span<Value> args) {
@@ -61,8 +65,19 @@ Value BuiltinFunction::operator()(std::span<Value> args) {
 
 
 
+namespace detail {
 
+std::string ValueToStringVisitor::operator()(const ValueHandle& val) const {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): Find me a better way, yeah
+    return fmt::format("?ValueHandle {:x}?", reinterpret_cast<uintptr_t>(val.pointer()));
+}
 
 std::string ValueToStringVisitor::operator()(const Function& val) const {
     return fmt::format("?Function {}?", val.declaration_->name.lexeme);
 }
+
+std::string ValueToStringVisitor::operator()(const BuiltinFunction& val) const {
+    return fmt::format("?BuiltinFunction {}?", val.name_);
+}
+
+} // namespace detail

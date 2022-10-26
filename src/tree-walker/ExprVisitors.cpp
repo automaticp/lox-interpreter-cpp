@@ -12,6 +12,7 @@
 
 ExprASTPrinterVisitor::return_type
 ExprASTPrinterVisitor::operator()(const LiteralExpr& expr) const {
+    assert(expr.token.literal);
     return to_string(expr.token.literal.value());
 }
 
@@ -113,41 +114,41 @@ ExprGetPrimaryTokenVisitor::operator()(const CallExpr& expr) const {
 // ---- ExprUserFriendlyNameVisitor ----
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const LiteralExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const LiteralExpr&) const {
     return "Literal Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const UnaryExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const UnaryExpr&) const {
     return "Unary Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const BinaryExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const BinaryExpr&) const {
     return "Binary Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const GroupedExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const GroupedExpr&) const {
     return "Group Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const VariableExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const VariableExpr&) const {
     return "Variable Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const AssignExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const AssignExpr&) const {
     return "Assignment Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const LogicalExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const LogicalExpr&) const {
     return "Logical Expression";
 }
 
 ExprUserFriendlyNameVisitor::return_type
-ExprUserFriendlyNameVisitor::operator()(const CallExpr& expr) const {
+ExprUserFriendlyNameVisitor::operator()(const CallExpr&) const {
     return "Call Expression";
 }

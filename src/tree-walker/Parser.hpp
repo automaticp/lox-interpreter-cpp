@@ -463,13 +463,13 @@ private:
     }
 
     std::unique_ptr<IExpr> and_expr() {
-        auto expr = comparison_expr();
+        auto expr = equality_expr();
 
         using enum TokenType;
         while (state_.match(kw_and)) {
             Token op{ state_.peek_previous() };
             expr = std::make_unique<LogicalExpr>(
-                op, std::move(expr), comparison_expr()
+                op, std::move(expr), equality_expr()
             );
         }
 

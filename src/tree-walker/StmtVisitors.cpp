@@ -10,72 +10,6 @@
 #include <memory>
 #include <ranges>
 
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const PrintStmt& stmt) const {
-    auto value = evaluate(*stmt.expr);
-    std::cout << to_string(value) << '\n';
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const ExpressionStmt& stmt) const {
-    evaluate(*stmt.expr);
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const VarStmt& stmt) const {
-    env.define(stmt.identifier.lexeme, evaluate(*stmt.init));
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const BlockStmt& stmt) const {
-    Environment block_env{ &env };
-    StmtInterpreterVisitor block_visitor{ err_, block_env, interpreter };
-
-    for (const auto& statement : stmt.statements) {
-        block_visitor.execute(*statement);
-    }
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const IfStmt& stmt) const {
-    if (is_truthful(evaluate(*stmt.condition))) {
-        execute(*stmt.then_branch);
-    } else if (stmt.else_branch) {
-        execute(*stmt.else_branch);
-    }
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const WhileStmt& stmt) const {
-    while (is_truthful(evaluate(*stmt.condition))) {
-        execute(*stmt.statement);
-    }
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const FunStmt& stmt) const {
-    env.define(
-        stmt.name.lexeme,
-        Function{ &stmt }
-    );
-}
-
-StmtInterpreterVisitor::return_type
-StmtInterpreterVisitor::operator()(const ReturnStmt& stmt) const {
-    // Walk up the call stack with exceptions.
-    // To be caught in the Function::operator()
-    throw evaluate(*stmt.expr);
-}
-
-
-
-void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
-    stmt.accept(*this);
-}
-
-
-
-
 
 
 
@@ -162,4 +96,51 @@ StmtASTPrinterVisitor::operator()(const ReturnStmt& stmt) const {
     return fmt::format(
         "return {};", stmt.expr->accept(*this)
     );
+}
+
+
+
+
+
+
+
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const PrintStmt&) const {
+    return "Print Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const ExpressionStmt&) const {
+    return "Expression Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const VarStmt&) const {
+    return "Variable Declaration";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const BlockStmt&) const {
+    return "Block Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const IfStmt&) const {
+    return "If Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const WhileStmt&) const {
+    return "Loop Statement";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const FunStmt&) const {
+    return "Function Declaration";
+}
+
+StmtUserFriendlyNameVisitor::return_type
+StmtUserFriendlyNameVisitor::operator()(const ReturnStmt&) const {
+    return "Return Statement";
 }

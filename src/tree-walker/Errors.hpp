@@ -43,6 +43,15 @@ enum class InterpreterError : size_t {
 };
 
 
+enum class ResolverError : size_t {
+
+    initialization_from_self = 0,
+    local_variable_redeclaration,
+    return_from_global_scope,
+    undefined_variable
+
+};
+
 
 namespace detail {
 
@@ -73,29 +82,42 @@ inline constexpr std::array interpreter_error_msgs{
     "Wrong number of arguments"
 };
 
+inline constexpr std::array resolver_error_msgs{
+    "Initialized name on the right-hand side of the initializer statement is forbidden",
+    "Redeclaration of a local variable",
+    "Return from global scope",
+    "Undefined variable"
+};
+
 
 } // namepace detail
 
 inline std::string_view to_error_message(ContextError err) {
-    return detail::context_error_msgs[
+    return detail::context_error_msgs[ // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
         to_underlying(err)
     ];
 }
 
 inline std::string_view to_error_message(ScannerError err) {
-    return detail::scanner_error_msgs[
+    return detail::scanner_error_msgs[ // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
         to_underlying(err)
     ];
 }
 
 inline std::string_view to_error_message(ParserError err) {
-    return detail::parser_error_msgs[
+    return detail::parser_error_msgs[ // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
         to_underlying(err)
     ];
 }
 
 inline std::string_view to_error_message(InterpreterError err) {
-    return detail::interpreter_error_msgs[
+    return detail::interpreter_error_msgs[ // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        to_underlying(err)
+    ];
+}
+
+inline std::string_view to_error_message(ResolverError err) {
+    return detail::resolver_error_msgs[ // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
         to_underlying(err)
     ];
 }

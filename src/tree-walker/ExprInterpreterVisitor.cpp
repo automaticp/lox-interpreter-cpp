@@ -6,14 +6,24 @@
 #include "ErrorReporter.hpp"
 #include "Errors.hpp"
 #include "Environment.hpp"
+#include "Interpreter.hpp"
 #include <fmt/format.h>
 #include <variant>
 
 
 
-
+// Interprets the expression and decays the result.
+// Decay collapses ValueHandle into the wrapped type.
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::evaluate(const IExpr& expr) const {
+    return decay(expr.accept(*this));
+}
+
+// Interprets the expression without decaying the result.
+// Used when value could be mutated through a reference:
+// in methods, closures, assignment, etc.
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::evaluate_without_decay(const IExpr& expr) const {
     return expr.accept(*this);
 }
 
@@ -42,7 +52,13 @@ void ExprInterpreterVisitor::report_error(InterpreterError type, const IExpr& ex
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const LiteralExpr& expr) const {
-    return { std::visit([](auto&& arg) { return Value{ arg }; }, expr.token.literal.value()) };
+    assert(expr.token.literal.has_value());
+    return {
+        std::visit(
+            [](auto&& arg) { return Value{ arg }; },
+            expr.token.literal.value()
+        )
+    };
 }
 
 
@@ -114,9 +130,9 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
             check_type<double, double>(expr, lhs, rhs);
             return std::get<double>(lhs) <= std::get<double>(rhs);
         case eq_eq:
-            return is_equal(lhs, rhs);
+            return lhs == rhs;
         case bang_eq:
-            return !is_equal(lhs, rhs);
+            return lhs != rhs;
         default:
             break;
     }
@@ -127,31 +143,67 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
-    return evaluate(*expr.expr);
+    // Does not decay, so that:
+    //
+    // fun f() { ... }
+    //
+    // (f)();
+    //
+    // still evaluates f as reference.
+    return evaluate_without_decay(*expr.expr);
 }
 
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
-    Value* val = env.get(expr.identifier.lexeme);
-    if (!val) {
-        report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+
+    // FIXME now that the global scope is proper scope
+    auto& depths = interpreter.resolver_.depth_map();
+    auto it = depths.find(&expr);
+
+    ValueHandle handle{};
+
+    if (it != depths.end()) {
+        handle = env.get_at(it->second, expr.identifier.lexeme);
+    } else {
+        handle = interpreter.env_.get(expr.identifier.lexeme);
+        if (!handle) {
+            report_error_and_abort(
+                InterpreterError::undefined_variable,
+                expr, expr.identifier.lexeme
+            );
+        }
     }
-    return *val;
+    assert(handle);
+    // Return ValueHandle directly
+    return handle;
 }
 
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
-    Value* val = env.assign(
-        expr.identifier.lexeme,
-        evaluate(*expr.rvalue)
-    );
+    auto& depths = interpreter.resolver_.depth_map();
 
-    if (!val) {
-        report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+    auto it = depths.find(&expr);
+    if (it != depths.end()) {
+        ValueHandle val = env.assign_at(
+            it->second,
+            expr.identifier.lexeme,
+            evaluate(*expr.rvalue)
+        );
+        assert(val); // This whole thing is so fragile, I hate it
+        return *val;
+    } else {
+        ValueHandle val = interpreter.env_.assign(
+            expr.identifier.lexeme,
+            evaluate(*expr.rvalue)
+        );
+
+        if (!val) {
+            report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+        }
+        return *val;
     }
-    return *val;
 }
 
 
@@ -172,7 +224,8 @@ ExprInterpreterVisitor::operator()(const LogicalExpr& expr) const {
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
 
-    Value callee = evaluate(*expr.callee);
+    Value callee_maybe_handle = evaluate_without_decay(*expr.callee);
+    Value& callee = decay(callee_maybe_handle);
 
     std::vector<Value> args;
     args.reserve(expr.args.size());
@@ -190,7 +243,7 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
             fmt::format(
                 "Expected {} or {}, Encountered {}",
                 type_name(Value(Function{ nullptr })),
-                type_name(Value(BuiltinFunction{ nullptr, 0 })),
+                type_name(Value(BuiltinFunction{ "", nullptr, 0 })),
                 type_name(callee)
             )
         );

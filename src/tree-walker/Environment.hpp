@@ -1,14 +1,14 @@
 #pragma once
-#include <unordered_map>
 #include <string>
-#include "Value.hpp"
 #include <utility>
-#include <optional>
+#include <boost/unordered_map.hpp>
+#include "ValueDecl.hpp"
+
 
 
 class Environment {
 private:
-    std::unordered_map<std::string, Value> map_;
+    boost::unordered_map<std::string, Value> map_;
     Environment* enclosing_{ nullptr };
 
 public:
@@ -17,30 +17,30 @@ public:
     explicit Environment(Environment* enclosing) :
         enclosing_{ enclosing } {}
 
-    void define(const std::string& name, Value value) {
-        map_.insert_or_assign(name, std::move(value));
-    }
+    Environment(Environment* enclosing, boost::unordered_map<std::string, Value> map);
 
-    // optinal references when, eh?
-    Value* get(const std::string& name) {
-        if (map_.contains(name)) {
-            return &map_[name];
-        } else if (enclosing_) {
-            return enclosing_->get(name);
-        } else {
-            return nullptr;
-        }
-    }
+    void define(const std::string& name, Value value);
 
-    Value* assign(const std::string& name, Value value) {
-        if (map_.contains(name)) {
-            map_[name] = std::move(value);
-            return &map_[name];
-        } else if (enclosing_) {
-            return enclosing_->assign(name, std::move(value));
-        } else {
-            return nullptr;
+    ValueHandle get(const std::string& name);
+
+    ValueHandle get_at(size_t distance, const std::string& name);
+
+    ValueHandle assign(const std::string& name, Value value);
+
+    ValueHandle assign_at(size_t distance, const std::string& name, Value value);
+
+    Environment* enclosing() const noexcept { return enclosing_; }
+
+    const auto& map() const noexcept { return map_; }
+
+private:
+    Environment* ancestor(size_t distance) {
+        Environment* current{ this };
+        while (current && distance) {
+            current = current->enclosing_;
+            --distance;
         }
+        return current;
     }
 
 };

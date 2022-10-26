@@ -2,13 +2,13 @@
 #include <string>
 #include <functional>
 #include <utility>
-
+#include <boost/functional/hash.hpp>
 
 class FieldName {
 private:
     std::string name_;
 public:
-    FieldName(std::string name) : name_{ std::move(name) } {
+    explicit(false) FieldName(std::string name) : name_{ std::move(name) } {
         // FIXME: validate name
     }
 
@@ -17,6 +17,7 @@ public:
     }
 
     friend class std::hash<FieldName>;
+    friend class boost::hash<FieldName>;
 };
 
 template<>
@@ -26,3 +27,9 @@ struct std::hash<FieldName> {
     }
 };
 
+template<>
+struct boost::hash<FieldName> {
+    auto operator()(const FieldName& fname) const {
+        return std::hash<std::string>{}(fname.name_);
+    }
+};

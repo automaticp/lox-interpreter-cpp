@@ -4,6 +4,8 @@
     "dependencies": [
         "cxxopts",
         "doctest",
-        "fmt"
+        "fmt",
+        "boost-container",
+        "boost-unordered"
     ]
 }
