@@ -96,20 +96,23 @@ error_binary_without_left_operand = binary_op, expression;
 
 *Higher order = lower precedence*
 
+*N/I = Not Implemented*
+
 |Type|Order|Associativity|Form|
 |---|---|---|---|
 |literal|0|-|*literal*|
 |group|0|-|(*expr*)|
-|unary|1|RA|( + \| - \| ! )*expr*|
-|factor|2|LA|*expr* ( \* \| / ) *expr*|
-|term|3|LA|*expr* ( + \| - ) *expr*|
-|comp|4|LA|*expr* ( > \| >= \| < \| <= ) *expr*|
-|equal|5|LA| *expr* ( == \| != ) *expr*|
-|and|6|LA|*expr* and *expr*|
-|or|7|LA|*expr* or *expr*|
-|ternary|8|RA (values)| *expr* ? *expr* : *expr*|
-|assign|9|RA| *lvalue* = *expr*|
-|comma|10|LA| *expr*, *expr*|
+|call|1|LA|*expr*([ *expr*, ... ])|
+|unary|2|RA|( + \| - \| ! )*expr*|
+|factor|3|LA|*expr* ( \* \| / ) *expr*|
+|term|4|LA|*expr* ( + \| - ) *expr*|
+|comp|5|LA|*expr* ( > \| >= \| < \| <= ) *expr*|
+|equal|6|LA| *expr* ( == \| != ) *expr*|
+|and|7|LA|*expr* and *expr*|
+|or|8|LA|*expr* or *expr*|
+|ternary (N/I)|9|RA (values)| *expr* ? *expr* : *expr*|
+|assign|10|RA| *lvalue* = *expr*|
+|comma (N/I)|11|LA| *expr*, *expr*|
 
 
 
@@ -208,7 +211,7 @@ for_stmt = "for", "("
 
 # Functions
 
-# Call expression
+## Call expression
 
 ```EBNF
 unary_expr = unary_op, unary | call_expr;
@@ -218,3 +221,13 @@ call_expr = primary_expr, { "(", [ arguments ], ")" };
 arguments = expression, { ",", expression };
 ```
 
+
+## Function declaration
+
+```EBNF
+declaration = fun_decl | var_decl | statement;
+
+fun_decl = "fun", identifier, "(", [ parameters ], ")", block;
+
+parameters = identifier, { ",", identifier };
+```
