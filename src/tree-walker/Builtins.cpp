@@ -5,7 +5,8 @@
 #include "Resolver.hpp"
 #include <chrono>
 #include <utility>
-
+#include <functional>
+#include <random>
 
 Value builtin_clock(std::span<Value> /* args */) {
     auto time_point = std::chrono::high_resolution_clock::now();
@@ -16,6 +17,24 @@ Value builtin_clock(std::span<Value> /* args */) {
 Value builtin_typename(std::span<Value> args) {
     return std::string(type_name(args[0]));
 }
+
+Value builtin_rand(std::span<Value> /* args */) {
+    thread_local std::mt19937 engine{};
+    thread_local std::uniform_real_distribution<double> dist{};
+    return dist(engine);
+}
+
+Value builtin_randint(std::span<Value> args) {
+    thread_local std::mt19937 engine{};
+    if (!holds<double>(args[0]) || !holds<double>(args[1])) {
+        return nullptr;
+    }
+    const auto min = static_cast<long long>(std::get<double>(args[0]));
+    const auto max = static_cast<long long>(std::get<double>(args[1]));
+    std::uniform_int_distribution<long long int> dist{ min, max };
+    return static_cast<double>(dist(engine));
+}
+
 
 
 void setup_builtins(Environment& env, Resolver& resolver) {
@@ -42,6 +61,8 @@ void setup_builtins(Environment& env, Resolver& resolver) {
 
     define_builtin("clock", builtin_clock, 0);
     define_builtin("typename", builtin_typename, 1);
+    define_builtin("rand", builtin_rand, 0);
+    define_builtin("randint", builtin_randint, 2);
 
 }
 
