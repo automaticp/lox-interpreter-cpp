@@ -1,4 +1,5 @@
 #pragma once
+#include <concepts>
 #include <variant>
 #include <string>
 #include <cstddef>
@@ -17,9 +18,69 @@
 #include "Environment.hpp"
 #include "ValueDecl.hpp"
 
-// Define Callable and Object before anything triggers a template instantiation
+
+// This file defines the underlying Value variants.
+// The definitions here could be incomplete and/or inconsistent,
+// as the exact semantics of the language and it's implementation
+// are under constant re-evaluation.
 
 
+namespace detail {
+
+struct ValueTypeNameVisitor {
+    std::string_view operator()(const ValueHandle&) const {
+        return "ValueHandle";
+    }
+    std::string_view operator()(const Object&) const {
+        return "Object";
+    }
+    std::string_view operator()(const Function&) const {
+        return "Function";
+    }
+    std::string_view operator()(const BuiltinFunction&) const {
+        return "BuiltinFunction";
+    }
+    std::string_view operator()(const std::string&) const {
+        return "String";
+    }
+    std::string_view operator()(const double&) const {
+        return "Number";
+    }
+    std::string_view operator()(const bool&) const {
+        return "Boolean";
+    }
+    std::string_view operator()(const std::nullptr_t&) const {
+        return "Nil";
+    }
+};
+
+struct ValueToStringVisitor {
+    std::string operator()(const ValueHandle& val) const;
+    std::string operator()(const Object& /* val */) const {
+        return "?Object?";
+    }
+    std::string operator()(const Function& val) const;
+    std::string operator()(const BuiltinFunction& val) const;
+    std::string operator()(const std::string& val) const {
+        return fmt::format("\"{}\"", val);
+    }
+    std::string operator()(const double& val) const {
+        return std::string(num_to_string(val));
+    }
+    std::string operator()(const bool& val) const {
+        return { val ? "true" : "false" };
+    }
+    std::string operator()(const std::nullptr_t& /* val */) const {
+        return { "nil" };
+    }
+};
+
+
+} // namespace detail
+
+
+
+// Define Function, Object, etc. before anything triggers a template instantiation
 
 
 // A wrapper type used in mutable contexts: assignment, calls of functions with closures.
@@ -30,7 +91,7 @@ private:
 
 public:
     ValueHandle() = default;
-    explicit ValueHandle(Value& target) noexcept;
+    ValueHandle(Value& target) noexcept;
 
     Value* pointer() const noexcept {
         return handle_;
@@ -39,7 +100,8 @@ public:
         assert(handle_);
         return *handle_;
     }
-    // Copy construct from handle
+    // Copy construct from handle.
+    // See also free function named decay().
     Value decay() const noexcept;
 
     // if (value_handle.wraps<Function>()) { ... }
@@ -52,21 +114,30 @@ public:
     bool is_null() const noexcept { return handle_; }
     operator bool() const noexcept { return handle_; }
 
+    operator Value*() const noexcept { return handle_; }
+
+    Value& operator*() const noexcept {
+        return reference();
+    }
+
     bool operator==(const ValueHandle& other) const noexcept {
         return handle_ == other.handle_ && handle_ != nullptr;
     }
 };
 
 
-class ExprInterpreterVisitor;
 
+
+
+class ExprInterpreterVisitor;
 class FunStmt;
+
 
 class Function {
 private:
     Environment closure_;
     const FunStmt* declaration_;
-    friend class ValueToStringVisitor;
+    friend class detail::ValueToStringVisitor;
 public:
     Function(const FunStmt* declaration) : declaration_{ declaration } {}
 
@@ -86,12 +157,15 @@ public:
 };
 
 
+
+
+
 class BuiltinFunction {
 private:
     std::function<Value(std::span<Value>)> fun_;
     size_t arity_;
     std::string_view name_;
-    friend class ValueToStringVisitor;
+    friend class detail::ValueToStringVisitor;
 public:
     BuiltinFunction(std::string_view name, std::function<Value(std::span<Value>)> fun, size_t arity) :
         fun_{ std::move(fun) }, arity_{ arity }, name_{ name } {}
@@ -124,6 +198,12 @@ public:
 
 
 
+
+
+
+// Value 'Methods'
+
+
 template<typename ...Ts>
 inline bool holds(const Value& value) {
     return (... || std::holds_alternative<Ts>(value));
@@ -133,76 +213,44 @@ inline bool holds_same(const Value& lhs, const Value& rhs) {
     return lhs.index() == rhs.index();
 }
 
-inline bool is_equal(const Value& lhs, const Value& rhs) {
-    if (holds_same(lhs, rhs)) {
-        return lhs == rhs;
-    } else {
-        return false;
-    }
+
+inline std::string_view type_name(const Value& value) {
+    return std::visit(detail::ValueTypeNameVisitor{}, value);
 }
-
-
-namespace detail {
-
-struct ValueTypeNameVisitor {
-    std::string_view operator()(const ValueHandle&) const {
-        return "ValueHandle";
-    }
-    std::string_view operator()(const Object&) const {
-        return "Object";
-    }
-    std::string_view operator()(const Function&) const {
-        return "Function";
-    }
-    std::string_view operator()(const BuiltinFunction&) const {
-        return "BuiltinFunction";
-    }
-    std::string_view operator()(const std::string&) const {
-        return "String";
-    }
-    std::string_view operator()(const double&) const {
-        return "Number";
-    }
-    std::string_view operator()(const bool&) const {
-        return "Boolean";
-    }
-    std::string_view operator()(const std::nullptr_t&) const {
-        return "Nil";
-    }
-};
-
-} // namespace detail
-
-
-inline std::string_view type_name(const Value& val) {
-    return std::visit(detail::ValueTypeNameVisitor{}, val);
-}
-
-
-struct ValueToStringVisitor {
-    std::string operator()(const ValueHandle& val) const {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): Find me a better way, yeah
-        return fmt::format("?ValueHandle {:x}?", reinterpret_cast<uintptr_t>(val.pointer()));
-    }
-    std::string operator()(const Object& /* val */) const {
-        return "?Object?";
-    }
-    std::string operator()(const Function& val) const;
-    std::string operator()(const BuiltinFunction& val) const;
-    std::string operator()(const std::string& val) const {
-        return fmt::format("\"{}\"", val);
-    }
-    std::string operator()(const double& val) const {
-        return std::string(num_to_string(val));
-    }
-    std::string operator()(const bool& val) const {
-        return { val ? "true" : "false" };
-    }
-    std::string operator()(const std::nullptr_t& /* val */) const {
-        return { "nil" };
-    }
-};
 
 inline std::string to_string(const Value& value) {
-    return std::visit(ValueToStringVisitor{}, value);
+    return std::visit(detail::ValueToStringVisitor{}, value);
 }
+
+
+
+// Decays the ValueHandle into the underlying Value,
+// and transparently forwards other Value variants.
+//
+template<std::same_as<Value> ValueT>
+ValueT decay(ValueT&& val) {
+    if (holds<ValueHandle>(val)) {
+        return std::get<ValueHandle>(val).reference();
+    } else {
+        return std::forward<ValueT>(val);
+    }
+}
+// Due to reference collapsing, ValueT is deduced
+// to Value& when the argument is an lvalue,
+// and Value (not Value&&) when the argument is an rvalue.
+// Equivalent to defining:
+//
+// Value& decay(Value& val) { ... }
+// Value decay(Value&& val) { ... }
+//
+// Do not even think of returning ValueT&& -
+// that is a dangling reference to a local variable,
+// as the lifetime of an rvalue is extended only once:
+//
+// Value&& decay(Value&& val) { // <-- lifetime extended
+//     ...
+//     return val;
+// } // <-- val is destroyed here.
+//
+
+

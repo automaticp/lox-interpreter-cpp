@@ -121,9 +121,9 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
             check_type<double, double>(expr, lhs, rhs);
             return std::get<double>(lhs) <= std::get<double>(rhs);
         case eq_eq:
-            return is_equal(lhs, rhs);
+            return lhs == rhs;
         case bang_eq:
-            return !is_equal(lhs, rhs);
+            return lhs != rhs;
         default:
             break;
     }
@@ -141,6 +141,7 @@ ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
 
+    // FIXME now that the global scope is proper scope
     auto& depths = interpreter.resolver_.depth_map();
     auto it = depths.find(&expr);
     if (it != depths.end()) {
