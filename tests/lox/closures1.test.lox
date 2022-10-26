@@ -1,0 +1,21 @@
+/*
+Expected output:
+
+    1
+    2
+    3
+
+*/
+fun make_counter() {
+    var i = 0;
+    fun count() {
+        i = i + 1;
+        print i;
+    }
+    return count;
+}
+
+var c = make_counter();
+c();
+c();
+c();
