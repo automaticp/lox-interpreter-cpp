@@ -12,9 +12,18 @@
 
 
 
-
+// Interprets the expression and decays the result.
+// Decay collapses ValueHandle into the wrapped type.
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::evaluate(const IExpr& expr) const {
+    return decay(expr.accept(*this));
+}
+
+// Interprets the expression without decaying the result.
+// Used when value could be mutated through a reference:
+// in methods, closures, assignment, etc.
+ExprInterpreterVisitor::return_type
+ExprInterpreterVisitor::evaluate_without_decay(const IExpr& expr) const {
     return expr.accept(*this);
 }
 
@@ -134,7 +143,14 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
 
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
-    return evaluate(*expr.expr);
+    // Does not decay, so that:
+    //
+    // fun f() { ... }
+    //
+    // (f)();
+    //
+    // still evaluates f as reference.
+    return evaluate_without_decay(*expr.expr);
 }
 
 
@@ -144,19 +160,23 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
     // FIXME now that the global scope is proper scope
     auto& depths = interpreter.resolver_.depth_map();
     auto it = depths.find(&expr);
+
+    ValueHandle handle{};
+
     if (it != depths.end()) {
-        return *env.get_at(it->second, expr.identifier.lexeme);
+        handle = env.get_at(it->second, expr.identifier.lexeme);
     } else {
-        Value* val = interpreter.env_.get(expr.identifier.lexeme);
-        if (!val) {
+        handle = interpreter.env_.get(expr.identifier.lexeme);
+        if (!handle) {
             report_error_and_abort(
                 InterpreterError::undefined_variable,
                 expr, expr.identifier.lexeme
             );
         }
-        return *val;
     }
-
+    assert(handle);
+    // Return ValueHandle directly
+    return handle;
 }
 
 
@@ -166,7 +186,7 @@ ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
 
     auto it = depths.find(&expr);
     if (it != depths.end()) {
-        Value* val = env.assign_at(
+        ValueHandle val = env.assign_at(
             it->second,
             expr.identifier.lexeme,
             evaluate(*expr.rvalue)
@@ -174,7 +194,7 @@ ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
         assert(val); // This whole thing is so fragile, I hate it
         return *val;
     } else {
-        Value* val = interpreter.env_.assign(
+        ValueHandle val = interpreter.env_.assign(
             expr.identifier.lexeme,
             evaluate(*expr.rvalue)
         );
@@ -204,7 +224,8 @@ ExprInterpreterVisitor::operator()(const LogicalExpr& expr) const {
 ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
 
-    Value callee = evaluate(*expr.callee);
+    Value callee_maybe_handle = evaluate_without_decay(*expr.callee);
+    Value& callee = decay(callee_maybe_handle);
 
     std::vector<Value> args;
     args.reserve(expr.args.size());

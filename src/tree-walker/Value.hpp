@@ -9,6 +9,7 @@
 #include "Utils.hpp"
 #include <string_view>
 #include "FieldName.hpp"
+#include <type_traits>
 #include <functional>
 #include <vector>
 #include <cstdint>
@@ -227,9 +228,12 @@ inline std::string to_string(const Value& value) {
 // Decays the ValueHandle into the underlying Value,
 // and transparently forwards other Value variants.
 //
-template<std::same_as<Value> ValueT>
+template<typename ValueT> requires std::same_as<std::remove_reference_t<ValueT>, Value>
 ValueT decay(ValueT&& val) {
     if (holds<ValueHandle>(val)) {
+        // Do not forward this, as it will move the underlying value,
+        // 'breaking' the Value in the storage of it's Environment.
+        // Instead, copy construct when val is captured from rvalue.
         return std::get<ValueHandle>(val).reference();
     } else {
         return std::forward<ValueT>(val);

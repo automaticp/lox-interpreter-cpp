@@ -39,6 +39,8 @@ struct ExprInterpreterVisitor {
 protected:
 
     return_type evaluate(const IExpr& expr) const;
+    return_type evaluate_without_decay(const IExpr& expr) const;
+
     static bool is_truthful(const Value& value);
 
     template<typename T>
