@@ -112,7 +112,13 @@ public:
         return std::holds_alternative<T>(reference());
     }
 
-    bool is_null() const noexcept { return handle_; }
+    template<typename T>
+    T& unwrap_to() const noexcept {
+        assert(wraps<T>());
+        return std::get<T>(reference());
+    }
+
+    bool is_null() const noexcept { return !handle_; }
     operator bool() const noexcept { return handle_; }
 
     operator Value*() const noexcept { return handle_; }
@@ -150,6 +156,8 @@ public:
     Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
 
     size_t arity() const noexcept;
+
+    Environment& closure() noexcept { return closure_; }
 
     bool operator==(const Function& other) const noexcept {
         return declaration_ == other.declaration_;

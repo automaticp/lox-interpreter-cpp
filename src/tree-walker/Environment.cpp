@@ -10,8 +10,10 @@ Environment::Environment(Environment* enclosing, boost::unordered_map<std::strin
 
 
 
-void Environment::define(const std::string& name, Value value) {
-    map_.insert_or_assign(name, std::move(value));
+// Retruns a handle to the new element
+ValueHandle Environment::define(const std::string& name, Value value) {
+    auto [it, was_inserted] = map_.insert_or_assign(name, std::move(value));
+    return { it->second };
 }
 
 

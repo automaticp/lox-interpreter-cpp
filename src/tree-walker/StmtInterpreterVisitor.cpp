@@ -70,13 +70,18 @@ StmtInterpreterVisitor::operator()(const FunStmt& stmt) const {
         enclosing = enclosing->enclosing();
     }
 
-    env.define(
+    // Add this function to the current environment.
+    ValueHandle fun_handle = env.define(
         stmt.name.lexeme,
         Function{
             &stmt,
             std::move(closure)
         }
     );
+
+    // Also add a copy? of itself to the closure.
+    fun_handle.unwrap_to<Function>().closure().define(stmt.name.lexeme, fun_handle.decay());
+
 }
 
 StmtInterpreterVisitor::return_type

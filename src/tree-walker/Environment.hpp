@@ -19,7 +19,7 @@ public:
 
     Environment(Environment* enclosing, boost::unordered_map<std::string, Value> map);
 
-    void define(const std::string& name, Value value);
+    ValueHandle define(const std::string& name, Value value);
 
     ValueHandle get(const std::string& name);
 
