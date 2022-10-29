@@ -12,10 +12,14 @@
 // Use this declaration instead.
 
 
+using String = std::string;
+using Number = double;
+using Boolean = bool;
+using Nil = std::nullptr_t; // Could be std::monostate
+
 class Object;
 class Function;
-class Environment;
 class BuiltinFunction;
 class ValueHandle;
 
-using Value = std::variant<ValueHandle, Object, Function, BuiltinFunction, std::string, double, bool, std::nullptr_t>;
+using Value = std::variant<Nil, ValueHandle, Object, Function, BuiltinFunction, String, Number, Boolean>;
