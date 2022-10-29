@@ -3,6 +3,7 @@
 #include <variant>
 #include <string>
 #include <cstddef>
+#include <utility>
 #include <cassert>
 #include <memory>
 #include "Token.hpp"
@@ -210,12 +211,68 @@ public:
 
 
 
+
+template<typename T>
+concept ValueVisitor = requires(const T& visitor, const ValueVariant& value) {
+    std::visit(T{}, value);
+    std::visit(visitor, value);
+};
+
+
+
+class Value {
+private:
+    ValueVariant variant_;
+
+public:
+    template<typename ...Args>
+    explicit(false) Value(Args&&... args) : variant_{ args... } {}
+
+    auto index() const noexcept {
+        return variant_.index();
+    }
+
+    ValueType type() const noexcept {
+        assert(!variant_.valueless_by_exception());
+        return static_cast<ValueType>(index());
+    }
+
+
+    template<typename T>
+    bool is() const noexcept {
+        return std::holds_alternative<T>(variant_);
+    }
+
+    template<typename ...Ts>
+    bool is_any_of() const noexcept {
+        return (... || is<Ts>());
+    }
+
+    template<typename T>
+    T& as() { return std::get<T>(variant_); }
+
+    template<typename T>
+    T as() && { return std::move(std::get<T>(variant_)); }
+
+    template<typename T>
+    const T& as() const { return std::get<T>(variant_); }
+
+
+    template<ValueVisitor T>
+    auto accept(const T& visitor) const {
+        return std::visit(visitor, variant_);
+    }
+
+};
+
+
+
 // Value 'Methods'
 
 
 template<typename ...Ts>
 inline bool holds(const Value& value) {
-    return (... || std::holds_alternative<Ts>(value));
+    return (... || value.is<Ts>());
 }
 
 inline bool holds_same(const Value& lhs, const Value& rhs) {
@@ -224,11 +281,11 @@ inline bool holds_same(const Value& lhs, const Value& rhs) {
 
 
 inline std::string_view type_name(const Value& value) {
-    return std::visit(detail::ValueTypeNameVisitor{}, value);
+    return value.accept(detail::ValueTypeNameVisitor{});
 }
 
 inline std::string to_string(const Value& value) {
-    return std::visit(detail::ValueToStringVisitor{}, value);
+    return value.accept(detail::ValueToStringVisitor{});
 }
 
 
@@ -238,11 +295,11 @@ inline std::string to_string(const Value& value) {
 //
 template<typename ValueT> requires std::same_as<std::remove_reference_t<ValueT>, Value>
 ValueT decay(ValueT&& val) {
-    if (holds<ValueHandle>(val)) {
+    if (val.template is<ValueHandle>()) {
         // Do not forward this, as it will move the underlying value,
         // 'breaking' the Value in the storage of it's Environment.
         // Instead, copy construct when val is captured from rvalue.
-        return std::get<ValueHandle>(val).reference();
+        return val.template as<ValueHandle>().reference();
     } else {
         return std::forward<ValueT>(val);
     }
@@ -259,7 +316,7 @@ ValueT decay(ValueT&& val) {
 // that is a dangling reference to a local variable,
 // as the lifetime of an rvalue is extended only once:
 //
-// Value&& decay(Value&& val) { // <-- lifetime extended
+// Value&& decay(Value&& val) { // <-- lifetime extended to this scope
 //     ...
 //     return val;
 // } // <-- val is destroyed here.

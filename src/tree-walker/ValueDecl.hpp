@@ -12,14 +12,29 @@
 // Use this declaration instead.
 
 
+using Nil = std::monostate;
 using String = std::string;
 using Number = double;
 using Boolean = bool;
-using Nil = std::monostate;
 
 class Object;
 class Function;
 class BuiltinFunction;
 class ValueHandle;
 
-using Value = std::variant<Nil, ValueHandle, Object, Function, BuiltinFunction, String, Number, Boolean>;
+using ValueVariant = std::variant<Nil, ValueHandle, Object, Function, BuiltinFunction, String, Number, Boolean>;
+
+class Value;
+
+// A user-friendly alternative to variant::index().
+// Probably don't do 'using enum ValueType;'.
+enum class ValueType : size_t {
+    Nil = 0,
+    ValueHandle,
+    Object,
+    Function,
+    BuiltinFunction,
+    String,
+    Number,
+    Boolean
+};
