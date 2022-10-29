@@ -15,7 +15,7 @@
 using String = std::string;
 using Number = double;
 using Boolean = bool;
-using Nil = std::nullptr_t; // Could be std::monostate
+using Nil = std::monostate;
 
 class Object;
 class Function;

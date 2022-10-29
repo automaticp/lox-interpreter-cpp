@@ -174,7 +174,7 @@ private:
             init = expression();
         } else {
             init = std::make_unique<LiteralExpr>(
-                Token{TokenType::kw_nil, "nil", state_.current()->line, nullptr}
+                Token{TokenType::kw_nil, "nil", state_.current()->line, Nil{}}
             );
         }
 
@@ -271,7 +271,7 @@ private:
             value = expression();
         } else {
             value = std::make_unique<LiteralExpr>(
-                Token{ TokenType::kw_nil, "nil", state_.current()->line, nullptr }
+                Token{ TokenType::kw_nil, "nil", state_.current()->line, Nil{} }
             );
         }
 

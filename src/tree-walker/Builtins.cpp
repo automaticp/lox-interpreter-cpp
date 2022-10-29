@@ -27,7 +27,7 @@ Value builtin_rand(std::span<Value> /* args */) {
 Value builtin_randint(std::span<Value> args) {
     thread_local std::mt19937 engine{};
     if (!holds<double>(args[0]) || !holds<double>(args[1])) {
-        return nullptr;
+        return {};
     }
     const auto min = static_cast<long long>(std::get<double>(args[0]));
     const auto max = static_cast<long long>(std::get<double>(args[1]));

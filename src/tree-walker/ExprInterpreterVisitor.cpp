@@ -29,7 +29,7 @@ ExprInterpreterVisitor::evaluate_without_decay(const IExpr& expr) const {
 
 
 bool ExprInterpreterVisitor::is_truthful(const Value& value) {
-    if (holds<std::nullptr_t>(value)) {
+    if (holds<Nil>(value)) {
         return false;
     }
 
@@ -81,7 +81,7 @@ ExprInterpreterVisitor::operator()(const UnaryExpr& expr) const {
             // FIXME: report failure?
             break;
     }
-    return nullptr;
+    return {};
 }
 
 
@@ -137,7 +137,7 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
             break;
     }
 
-    return nullptr;
+    return {};
 }
 
 
@@ -249,7 +249,7 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
         );
     }
 
-    return { nullptr };
+    return {};
 }
 
 

@@ -50,7 +50,7 @@ struct ValueTypeNameVisitor {
     std::string_view operator()(const bool&) const {
         return "Boolean";
     }
-    std::string_view operator()(const std::nullptr_t&) const {
+    std::string_view operator()(const Nil&) const {
         return "Nil";
     }
 };
@@ -71,7 +71,7 @@ struct ValueToStringVisitor {
     std::string operator()(const bool& val) const {
         return { val ? "true" : "false" };
     }
-    std::string operator()(const std::nullptr_t& /* val */) const {
+    std::string operator()(const Nil& /* val */) const {
         return { "nil" };
     }
 };

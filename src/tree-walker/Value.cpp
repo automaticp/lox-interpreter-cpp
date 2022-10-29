@@ -51,7 +51,7 @@ Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std:
         return std::move(v);
     }
 
-    return { nullptr };
+    return {};
 }
 
 
