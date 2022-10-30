@@ -3,24 +3,15 @@
 #include <string>
 #include <cstddef>
 
-
-// Since 'Value' is not a class, but an alias,
-// we cannot predeclare it as incomplete type:
-//
-// class Value; // not allowed
-//
-// Use this declaration instead.
-
-
 using Nil = std::monostate;
+class Object;
+class ValueHandle;
+class Function;
+class BuiltinFunction;
 using String = std::string;
 using Number = double;
 using Boolean = bool;
 
-class Object;
-class Function;
-class BuiltinFunction;
-class ValueHandle;
 
 using ValueVariant = std::variant<Nil, ValueHandle, Object, Function, BuiltinFunction, String, Number, Boolean>;
 

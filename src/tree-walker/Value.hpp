@@ -21,7 +21,8 @@
 #include "ValueDecl.hpp"
 
 
-// This file defines the underlying Value variants.
+// This file defines the underlying Value variants
+// and the Value wrapper class itself.
 // The definitions here could be incomplete and/or inconsistent,
 // as the exact semantics of the language and it's implementation
 // are under constant re-evaluation.
@@ -42,13 +43,13 @@ struct ValueTypeNameVisitor {
     std::string_view operator()(const BuiltinFunction&) const {
         return "BuiltinFunction";
     }
-    std::string_view operator()(const std::string&) const {
+    std::string_view operator()(const String&) const {
         return "String";
     }
-    std::string_view operator()(const double&) const {
+    std::string_view operator()(const Number&) const {
         return "Number";
     }
-    std::string_view operator()(const bool&) const {
+    std::string_view operator()(const Boolean&) const {
         return "Boolean";
     }
     std::string_view operator()(const Nil&) const {
@@ -63,13 +64,13 @@ struct ValueToStringVisitor {
     }
     std::string operator()(const Function& val) const;
     std::string operator()(const BuiltinFunction& val) const;
-    std::string operator()(const std::string& val) const {
+    std::string operator()(const String& val) const {
         return fmt::format("\"{}\"", val);
     }
-    std::string operator()(const double& val) const {
+    std::string operator()(const Number& val) const {
         return std::string(num_to_string(val));
     }
-    std::string operator()(const bool& val) const {
+    std::string operator()(const Boolean& val) const {
         return { val ? "true" : "false" };
     }
     std::string operator()(const Nil& /* val */) const {
@@ -93,7 +94,7 @@ private:
 
 public:
     ValueHandle() = default;
-    ValueHandle(Value& target) noexcept;
+    explicit ValueHandle(Value& target) noexcept;
 
     Value* pointer() const noexcept {
         return handle_;
@@ -108,16 +109,10 @@ public:
 
     // if (value_handle.wraps<Function>()) { ... }
     template<typename T>
-    bool wraps() const noexcept {
-        if (is_null()) { return false; }
-        return std::holds_alternative<T>(reference());
-    }
+    bool wraps() const noexcept;
 
     template<typename T>
-    T& unwrap_to() const noexcept {
-        assert(wraps<T>());
-        return std::get<T>(reference());
-    }
+    T& unwrap_to() const noexcept;
 
     bool is_null() const noexcept { return !handle_; }
     operator bool() const noexcept { return handle_; }
@@ -213,24 +208,42 @@ public:
 
 
 template<typename T>
-concept ValueVisitor = requires(const T& visitor, const ValueVariant& value) {
+concept value_visitor = requires(const T& visitor, const ValueVariant& value) {
     std::visit(T{}, value);
     std::visit(visitor, value);
 };
 
 
+template <typename T, typename U>
+concept not_same_as_remove_cvref =
+    !std::same_as<
+        std::remove_cvref_t<T>,
+        std::remove_cvref_t<U>
+    >;
 
+
+
+// A wrapper class around a ValueVariant
+// that defines a more suitable interface
+// for common use patterns.
 class Value {
 private:
     ValueVariant variant_;
 
 public:
-    template<typename ...Args>
-    explicit(false) Value(Args&&... args) : variant_{ args... } {}
+    // Wrapper around single argument c-tors of the variant:
+    // converting c-tors and copy/move c-tors.
+    template<typename Alternative>
+    requires not_same_as_remove_cvref<Alternative, Value>
+    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload): constraint above
+    Value(Alternative&& val) : variant_{ std::forward<Alternative>(val) } {}
 
-    auto index() const noexcept {
-        return variant_.index();
-    }
+    // Nil constructor (aka std::monostate)
+    Value() = default;
+    // Value() : variant_{ Nil{} } {}
+
+
+    auto index() const noexcept { return variant_.index(); }
 
     ValueType type() const noexcept {
         assert(!variant_.valueless_by_exception());
@@ -248,19 +261,25 @@ public:
         return (... || is<Ts>());
     }
 
+
     template<typename T>
-    T& as() { return std::get<T>(variant_); }
+    T& as() & { return std::get<T>(variant_); }
 
     template<typename T>
     T as() && { return std::move(std::get<T>(variant_)); }
 
     template<typename T>
-    const T& as() const { return std::get<T>(variant_); }
+    const T& as() const& { return std::get<T>(variant_); }
 
 
-    template<ValueVisitor T>
+    template<value_visitor T>
     auto accept(const T& visitor) const {
         return std::visit(visitor, variant_);
+    }
+
+
+    bool operator==(const Value& other) const noexcept {
+        return variant_ == other.variant_;
     }
 
 };
@@ -269,11 +288,6 @@ public:
 
 // Value 'Methods'
 
-
-template<typename ...Ts>
-inline bool holds(const Value& value) {
-    return (... || value.is<Ts>());
-}
 
 inline bool holds_same(const Value& lhs, const Value& rhs) {
     return lhs.index() == rhs.index();
@@ -323,3 +337,19 @@ ValueT decay(ValueT&& val) {
 //
 
 
+
+
+// Other definitions, that rely on Value
+
+template<typename T>
+bool ValueHandle::wraps() const noexcept {
+    if (is_null()) { return false; }
+    return reference().is<T>();
+}
+
+
+template<typename T>
+T& ValueHandle::unwrap_to() const noexcept {
+    assert(wraps<T>());
+    return reference().as<T>();
+}

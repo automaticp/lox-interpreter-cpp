@@ -13,7 +13,7 @@
 
 ValueHandle::ValueHandle(Value& target) noexcept : handle_{ &target } {
     assert(
-        !holds<ValueHandle>(target) &&
+        !target.is<ValueHandle>() &&
         "Handle to a Handle is redundant"
     );
 }
@@ -69,7 +69,7 @@ namespace detail {
 
 std::string ValueToStringVisitor::operator()(const ValueHandle& val) const {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): Find me a better way, yeah
-    return fmt::format("?ValueHandle {:x}?", reinterpret_cast<uintptr_t>(val.pointer()));
+    return fmt::format("?ValueHandle 0x{:x}?", reinterpret_cast<uintptr_t>(val.pointer()));
 }
 
 std::string ValueToStringVisitor::operator()(const Function& val) const {
