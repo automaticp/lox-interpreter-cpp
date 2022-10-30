@@ -257,7 +257,7 @@ private:
             } else if (it->second == TokenType::kw_false) {
                 add_token(it->second, false);
             } else if (it->second == TokenType::kw_nil) {
-                add_token(it->second, nullptr);
+                add_token(it->second, Nil{});
             } else {
                 add_token(it->second);
             }
