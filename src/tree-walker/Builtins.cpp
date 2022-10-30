@@ -26,13 +26,13 @@ Value builtin_rand(std::span<Value> /* args */) {
 
 Value builtin_randint(std::span<Value> args) {
     thread_local std::mt19937 engine{};
-    if (!holds<double>(args[0]) || !holds<double>(args[1])) {
+    if (!args[0].is<Number>() || !args[1].is<Number>()) {
         return {};
     }
-    const auto min = static_cast<long long>(std::get<double>(args[0]));
-    const auto max = static_cast<long long>(std::get<double>(args[1]));
+    const auto min = static_cast<long long>(args[0].as<Number>());
+    const auto max = static_cast<long long>(args[1].as<Number>());
     std::uniform_int_distribution<long long int> dist{ min, max };
-    return static_cast<double>(dist(engine));
+    return static_cast<Number>(dist(engine));
 }
 
 

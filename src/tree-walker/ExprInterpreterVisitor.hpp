@@ -45,7 +45,7 @@ protected:
 
     template<typename T>
     void check_type(const IExpr& expr, const Value& val) const {
-        if (!holds<T>(val)) {
+        if (!val.is<T>()) {
             report_error_and_abort(
                 InterpreterError::unexpected_type, expr,
                 fmt::format("Expected {:s}, Encountered {:s}", type_name(Value{T{}}), type_name(val))

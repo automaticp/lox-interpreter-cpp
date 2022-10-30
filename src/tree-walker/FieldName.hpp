@@ -4,6 +4,8 @@
 #include <utility>
 #include <boost/functional/hash.hpp>
 
+
+// Why this class exists again?
 class FieldName {
 private:
     std::string name_;

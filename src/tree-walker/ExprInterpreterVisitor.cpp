@@ -7,6 +7,7 @@
 #include "Errors.hpp"
 #include "Environment.hpp"
 #include "Interpreter.hpp"
+#include "ValueDecl.hpp"
 #include <fmt/format.h>
 #include <variant>
 
@@ -29,12 +30,12 @@ ExprInterpreterVisitor::evaluate_without_decay(const IExpr& expr) const {
 
 
 bool ExprInterpreterVisitor::is_truthful(const Value& value) {
-    if (holds<Nil>(value)) {
+    if (value.is<Nil>()) {
         return false;
     }
 
-    if (holds<bool>(value)) {
-        return std::get<bool>(value);
+    if (value.is<Boolean>()) {
+        return value.as<Boolean>();
     } else {
         return true;
     }
@@ -68,11 +69,11 @@ ExprInterpreterVisitor::operator()(const UnaryExpr& expr) const {
 
     switch (expr.op) {
         case TokenType::minus:
-            check_type<double>(expr, val);
-            return -std::get<double>(val);
+            check_type<Number>(expr, val);
+            return -val.as<Number>();
             break;
         case TokenType::plus:
-            check_type<double>(expr, val);
+            check_type<Number>(expr, val);
             break;
         case TokenType::bang:
             return !is_truthful(val);
@@ -93,19 +94,19 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
     using enum TokenType;
     switch (expr.op) {
         case minus:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) - std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() - rhs.as<Number>();
         case slash:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) / std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() / rhs.as<Number>();
         case star:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) * std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() * rhs.as<Number>();
         case plus:
-            if (holds<double>(lhs) && holds<double>(rhs)) {
-                return std::get<double>(lhs) + std::get<double>(rhs);
-            } else if (holds<std::string>(lhs) && holds<std::string>(rhs)) {
-                return std::get<std::string>(lhs) + std::get<std::string>(rhs);
+            if (lhs.is<Number>() && rhs.is<Number>()) {
+                return lhs.as<Number>() + rhs.as<Number>();
+            } else if (lhs.is<String>() && rhs.is<String>()) {
+                return lhs.as<String>() + rhs.as<String>();
             } else {
                 report_error(
                     InterpreterError::unexpected_type, expr,
@@ -118,17 +119,17 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
             }
             break;
         case greater:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) > std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() > rhs.as<Number>();
         case greater_eq:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) >= std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() >= rhs.as<Number>();
         case less:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) < std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() < rhs.as<Number>();
         case less_eq:
-            check_type<double, double>(expr, lhs, rhs);
-            return std::get<double>(lhs) <= std::get<double>(rhs);
+            check_type<Number, Number>(expr, lhs, rhs);
+            return lhs.as<Number>() <= rhs.as<Number>();
         case eq_eq:
             return lhs == rhs;
         case bang_eq:
@@ -233,9 +234,9 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
         args.emplace_back(evaluate(*arg));
     }
 
-    if (holds<Function>(callee)) {
+    if (callee.is<Function>()) {
         return get_invokable<Function>(callee, args, expr)(*this, args);
-    } else if (holds<BuiltinFunction>(callee)) {
+    } else if (callee.is<BuiltinFunction>()) {
         return get_invokable<BuiltinFunction>(callee, args, expr)(args);
     } else {
         report_error_and_abort(
@@ -256,7 +257,7 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
 
 template<typename CallableValue>
 CallableValue& ExprInterpreterVisitor::get_invokable(Value& callee, std::vector<Value>& args, const CallExpr& expr) const {
-    CallableValue& function = std::get<CallableValue>(callee);
+    CallableValue& function = callee.as<CallableValue>();
 
     if (function.arity() != args.size()) {
         report_error_and_abort(
