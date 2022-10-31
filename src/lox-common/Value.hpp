@@ -131,8 +131,9 @@ public:
 
 
 
-
+// This dependency, while private now, should not exist at all
 class ExprInterpreterVisitor;
+// This dependency should be horizontal: exist in the same lib
 class FunStmt;
 
 
@@ -149,11 +150,34 @@ public:
         declaration_{ declaration }, closure_{ std::move(closure) } {}
 
 
-    Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
+    // You'd think that a Function type should define it's call operator,
+    // But the details of the implementation will be heavily
+    // dependent on the interpreter/backend. Originally, this class
+    // had such call method, that looked like this:
+    //
+    // Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
+    //
+    // which introduced backend dependency due to ExprInterpreterVisitor being a parameter.
+    // Instead, we declare a template 'operator()', that can be specialized for
+    // a particular backend (see below). Use that instead.
+
+    // Specialize like this:
+    //
+    // template<>
+    // Value Function::operator()<Interpreter>(const Interpreter& intrp, std::span<Value> args) {
+    //     ...
+    // }
+    //
+    template<typename BackendT>
+    Value operator()(BackendT&, std::span<Value> args);
+
+
 
     size_t arity() const noexcept;
 
     Environment& closure() noexcept { return closure_; }
+
+    const FunStmt* declaration() const noexcept { return declaration_; }
 
     bool operator==(const Function& other) const noexcept {
         return declaration_ == other.declaration_;
@@ -175,7 +199,10 @@ public:
     BuiltinFunction(std::string_view name, std::function<Value(std::span<Value>)> fun, size_t arity) :
         fun_{ std::move(fun) }, arity_{ arity }, name_{ name } {}
 
-    Value operator()(std::span<Value> args);
+
+    // FIXME: to span or not to span?
+    template<typename BackendT>
+    Value operator()(BackendT&, std::span<Value> args);
 
     size_t arity() const noexcept { return arity_; }
 
@@ -196,7 +223,8 @@ public:
     }
 
     // Not defined yet
-    Value operator()(const ExprInterpreterVisitor& interpreter, const std::vector<Value>& args);
+    template<typename BackendT>
+    Value operator()(BackendT&, std::span<Value> args);
 
 };
 

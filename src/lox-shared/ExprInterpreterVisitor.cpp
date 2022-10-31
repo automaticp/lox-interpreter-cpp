@@ -12,6 +12,40 @@
 #include <variant>
 
 
+// Specialization of Function call with the Interpreter
+template<>
+Value Function::operator()<Interpreter>(Interpreter& interpreter, std::span<Value> args) {
+    assert(declaration_);
+    // Environment from enclosing scope,
+    // captured by copy during construction of Function
+    Environment env{ &closure_ };
+
+    for (size_t i{ 0 }; i < args.size(); ++i) {
+        env.define(
+            declaration_->parameters[i].lexeme, std::move(args[i])
+        );
+    }
+
+    try {
+        interpreter.interpret(
+            declaration_->body, env
+        );
+    } catch (Value& v) {
+        return std::move(v);
+    }
+
+    return {};
+}
+
+
+template<>
+Value BuiltinFunction::operator()<Interpreter>(Interpreter&, std::span<Value> args) {
+    return fun_(args);
+}
+
+
+
+
 
 // Interprets the expression and decays the result.
 // Decay collapses ValueHandle into the wrapped type.
@@ -235,9 +269,9 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
     }
 
     if (callee.is<Function>()) {
-        return get_invokable<Function>(callee, args, expr)(*this, args);
+        return get_invokable<Function>(callee, args, expr)(this->interpreter, args);
     } else if (callee.is<BuiltinFunction>()) {
-        return get_invokable<BuiltinFunction>(callee, args, expr)(args);
+        return get_invokable<BuiltinFunction>(callee, args, expr)(this->interpreter, args);
     } else {
         report_error_and_abort(
             InterpreterError::unexpected_type, expr,
