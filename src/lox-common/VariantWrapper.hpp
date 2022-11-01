@@ -138,7 +138,8 @@ public:
     // Kind of hacky, but gets you out of trouble when
     // you need, for example, an Expr& but only have CallExpr&.
     // Similar to casting to 'pointer to base', but worse,
-    // because there's no 'base' in a variant.
+    // because there's no 'base' in a variant. Instead, we have
+    // this common wrapper type.
 };
 
 
