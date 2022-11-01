@@ -4,6 +4,8 @@
 #include <array>
 #include <charconv>
 #include <cassert>
+#include <concepts>
+#include <variant>
 
 
 template<typename EnumType>
@@ -24,3 +26,26 @@ inline std::string_view num_to_string(const double& num) {
 
     return { buffer.data(), ptr };
 }
+
+
+
+// Applies to std::variant with std::visit
+template<typename V, typename T>
+concept visitor_of =
+    requires(const V& visitor, const T& variant) {
+
+    std::visit(V{}, variant);
+    std::visit(visitor, variant);
+};
+
+
+
+template <typename T, typename U>
+concept not_same_as_remove_cvref =
+    !std::same_as<
+        std::remove_cvref_t<T>,
+        std::remove_cvref_t<U>
+    >;
+
+
+

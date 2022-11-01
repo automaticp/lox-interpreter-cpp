@@ -230,27 +230,6 @@ public:
 
 
 
-
-
-
-
-
-template<typename T>
-concept value_visitor = requires(const T& visitor, const ValueVariant& value) {
-    std::visit(T{}, value);
-    std::visit(visitor, value);
-};
-
-
-template <typename T, typename U>
-concept not_same_as_remove_cvref =
-    !std::same_as<
-        std::remove_cvref_t<T>,
-        std::remove_cvref_t<U>
-    >;
-
-
-
 // A wrapper class around a ValueVariant
 // that defines a more suitable interface
 // for common use patterns.
@@ -300,7 +279,7 @@ public:
     const T& as() const& { return std::get<T>(variant_); }
 
 
-    template<value_visitor T>
+    template<visitor_of<ValueVariant> T>
     auto accept(const T& visitor) const {
         return std::visit(visitor, variant_);
     }

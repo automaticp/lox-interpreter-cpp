@@ -1,5 +1,6 @@
 #pragma once
 #include "Token.hpp"
+#include "Utils.hpp"
 #include <variant>
 #include <memory>
 #include <string>
@@ -24,12 +25,6 @@ struct UnaryExpr {
 
 
 
-template <typename T, typename U>
-concept not_same_as_remove_cvref =
-    !std::same_as<
-        std::remove_cvref_t<T>,
-        std::remove_cvref_t<U>
-    >;
 
 class Expr {
 private:
@@ -43,7 +38,7 @@ public:
 
     auto index() const noexcept { return variant_.index(); }
 
-    template<typename V>
+    template<visitor_of<ExprVariant> V>
     auto accept(V&& visitor) const {
         return std::visit(std::forward<V>(visitor), variant_);
     }
