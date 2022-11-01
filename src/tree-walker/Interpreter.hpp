@@ -5,6 +5,8 @@
 #include "Expr.hpp"
 #include "ExprVisitors.hpp"
 #include "StmtVisitors.hpp"
+#include "ExprInterpreterVisitor.hpp"
+#include "StmtInterpreterVisitor.hpp"
 #include "Value.hpp"
 #include "Stmt.hpp"
 #include "Builtins.hpp"

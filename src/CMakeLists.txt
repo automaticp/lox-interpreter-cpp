@@ -50,12 +50,13 @@ add_library(lox::frontend ALIAS lox-frontend)
 
 
 # Tree walk interpreter backend and executable
-add_library(tree-walker INTERFACE)
-target_compile_features(tree-walker INTERFACE cxx_std_20)
-target_include_directories(tree-walker INTERFACE tree-walker/)
+file(GLOB TREE_WALKER_SOURCES CONFIGURE_DEPENDS tree-walker/*.cpp)
+add_library(tree-walker STATIC "${TREE_WALKER_SOURCES}")
+target_compile_features(tree-walker PUBLIC cxx_std_20)
+target_include_directories(tree-walker PUBLIC tree-walker/)
 
 target_link_libraries(tree-walker
-    INTERFACE
+    PUBLIC
         lox::frontend
         lox::common
         lox::shared

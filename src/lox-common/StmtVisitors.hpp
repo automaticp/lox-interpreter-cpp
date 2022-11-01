@@ -1,7 +1,5 @@
 #pragma once
 #include "ExprVisitors.hpp"
-#include "StmtInterpreterVisitor.hpp"
-#include "StmtResolveVisitor.hpp"
 
 class Stmt;
 class PrintStmt;
