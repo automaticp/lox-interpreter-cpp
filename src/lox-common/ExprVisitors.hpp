@@ -6,11 +6,10 @@
 #include <fmt/format.h>
 #include "Value.hpp"
 #include "Errors.hpp"
-#include "ExprResolveVisitor.hpp"
-#include "ExprInterpreterVisitor.hpp"
 
 
-class IExpr;
+
+class Expr;
 class LiteralExpr;
 class UnaryExpr;
 class BinaryExpr;
@@ -32,7 +31,7 @@ struct ExprASTPrinterVisitor {
     return_type operator()(const CallExpr& expr) const;
 
 private:
-    template<std::derived_from<IExpr> ...Es>
+    template<std::derived_from<Expr> ...Es>
     std::string parenthesize(std::string_view name, const Es&... exprs) const {
         std::stringstream ss;
         ss << '(' << name;

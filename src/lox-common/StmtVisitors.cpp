@@ -75,7 +75,7 @@ StmtASTPrinterVisitor::operator()(const FunStmt& stmt) const {
         return result;
     };
 
-    auto join_statements = [this](const std::vector<std::unique_ptr<IStmt>>& stmts) -> std::string {
+    auto join_statements = [this](const std::vector<std::unique_ptr<Stmt>>& stmts) -> std::string {
         std::string result;
         for (const auto& s : stmts) {
             result += s->accept(*this);

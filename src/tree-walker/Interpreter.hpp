@@ -5,7 +5,8 @@
 #include "Expr.hpp"
 #include "ExprVisitors.hpp"
 #include "StmtVisitors.hpp"
-#include "IExpr.hpp"
+#include "ExprInterpreterVisitor.hpp"
+#include "StmtInterpreterVisitor.hpp"
 #include "Value.hpp"
 #include "Stmt.hpp"
 #include "Builtins.hpp"
@@ -28,7 +29,7 @@ public:
         err_{ err }, resolver_{ resolver }, visitor_{ err, env_, *this }, env_{}
     {}
 
-    bool interpret(std::span<const std::unique_ptr<IStmt>> statements) {
+    bool interpret(std::span<const std::unique_ptr<Stmt>> statements) {
         try {
             for (const auto& statement : statements) {
                 visitor_.execute(*statement);
@@ -39,7 +40,7 @@ public:
         }
     }
 
-    bool interpret(std::span<const std::unique_ptr<IStmt>> statements, Environment& env) {
+    bool interpret(std::span<const std::unique_ptr<Stmt>> statements, Environment& env) {
         try {
             StmtInterpreterVisitor local_visitor{ err_, env, *this };
             for (const auto& statement : statements) {

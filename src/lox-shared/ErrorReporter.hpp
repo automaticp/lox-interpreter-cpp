@@ -5,8 +5,9 @@
 #include <vector>
 #include "Errors.hpp"
 #include "ExprVisitors.hpp"
-#include "IExpr.hpp"
-#include "IStmt.hpp"
+#include "StmtVisitors.hpp"
+#include "Expr.hpp"
+#include "Stmt.hpp"
 #include "Token.hpp"
 #include <fmt/format.h>
 
@@ -94,17 +95,17 @@ public:
         report_parser_error(type, token, details);
     }
 
-    void resolver_error(ResolverError type, const IExpr& expr, std::string_view details) {
+    void resolver_error(ResolverError type, const Expr& expr, std::string_view details) {
         resolver_errs_.push_back(type);
         report_resolver_error(type, expr, details);
     }
 
-    void resolver_error(ResolverError type, const IStmt& stmt, std::string_view details) {
+    void resolver_error(ResolverError type, const Stmt& stmt, std::string_view details) {
         resolver_errs_.push_back(type);
         report_resolver_error(type, stmt, details);
     }
 
-    void interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) {
+    void interpreter_error(InterpreterError type, const Expr& expr, std::string_view details) {
         interpreter_errs_.push_back(type);
         report_interpreter_error(type, expr, details);
     }
@@ -119,10 +120,10 @@ protected:
 
     virtual void report_parser_error(ParserError type, const Token& token, std::string_view details = "") = 0;
 
-    virtual void report_resolver_error(ResolverError type, const IExpr& expr, std::string_view details = "") = 0;
-    virtual void report_resolver_error(ResolverError type, const IStmt& stmt, std::string_view details = "") = 0;
+    virtual void report_resolver_error(ResolverError type, const Expr& expr, std::string_view details = "") = 0;
+    virtual void report_resolver_error(ResolverError type, const Stmt& stmt, std::string_view details = "") = 0;
 
-    virtual void report_interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details = "") = 0;
+    virtual void report_interpreter_error(InterpreterError type, const Expr& expr, std::string_view details = "") = 0;
 };
 
 
@@ -156,7 +157,7 @@ protected:
         );
     }
 
-    void report_resolver_error(ResolverError type, const IExpr& expr, std::string_view details) override {
+    void report_resolver_error(ResolverError type, const Expr& expr, std::string_view details) override {
         const Token& primary{ expr.accept(ExprGetPrimaryTokenVisitor{}) };
         os_ << fmt::format(
             "[Error @Resolver] at line {:d} in {:s} ({:s}):\n{:s}{:s}\n",
@@ -165,7 +166,7 @@ protected:
         );
     }
 
-    void report_resolver_error(ResolverError type, const IStmt& stmt, std::string_view details) override {
+    void report_resolver_error(ResolverError type, const Stmt& stmt, std::string_view details) override {
         os_ << fmt::format(
             "[Error @Resolver] in {:s}:\n{:s}{:s}\n", // FIXME: how to get the line of the statement?
             stmt.accept(StmtUserFriendlyNameVisitor{}),
@@ -173,7 +174,7 @@ protected:
         );
     }
 
-    void report_interpreter_error(InterpreterError type, const IExpr& expr, std::string_view details) override {
+    void report_interpreter_error(InterpreterError type, const Expr& expr, std::string_view details) override {
         const Token& primary{ expr.accept(ExprGetPrimaryTokenVisitor{}) };
         os_ << fmt::format(
             "[Error @Interpreter] at line {:d} in {:s} ({:s}):\n{:s}{:s}\n",

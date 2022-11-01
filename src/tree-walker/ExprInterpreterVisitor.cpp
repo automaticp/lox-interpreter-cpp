@@ -1,4 +1,4 @@
-#include "ExprVisitors.hpp"
+#include "ExprInterpreterVisitor.hpp"
 
 #include "Expr.hpp"
 #include "TokenType.hpp"
@@ -12,11 +12,45 @@
 #include <variant>
 
 
+// Specialization of Function call with the Interpreter
+template<>
+Value Function::operator()<Interpreter>(Interpreter& interpreter, std::span<Value> args) {
+    assert(declaration_);
+    // Environment from enclosing scope,
+    // captured by copy during construction of Function
+    Environment env{ &closure_ };
+
+    for (size_t i{ 0 }; i < args.size(); ++i) {
+        env.define(
+            declaration_->parameters[i].lexeme, std::move(args[i])
+        );
+    }
+
+    try {
+        interpreter.interpret(
+            declaration_->body, env
+        );
+    } catch (Value& v) {
+        return std::move(v);
+    }
+
+    return {};
+}
+
+
+template<>
+Value BuiltinFunction::operator()<Interpreter>(Interpreter&, std::span<Value> args) {
+    return fun_(args);
+}
+
+
+
+
 
 // Interprets the expression and decays the result.
 // Decay collapses ValueHandle into the wrapped type.
 ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::evaluate(const IExpr& expr) const {
+ExprInterpreterVisitor::evaluate(const Expr& expr) const {
     return decay(expr.accept(*this));
 }
 
@@ -24,7 +58,7 @@ ExprInterpreterVisitor::evaluate(const IExpr& expr) const {
 // Used when value could be mutated through a reference:
 // in methods, closures, assignment, etc.
 ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::evaluate_without_decay(const IExpr& expr) const {
+ExprInterpreterVisitor::evaluate_without_decay(const Expr& expr) const {
     return expr.accept(*this);
 }
 
@@ -42,7 +76,7 @@ bool ExprInterpreterVisitor::is_truthful(const Value& value) {
 }
 
 
-void ExprInterpreterVisitor::report_error(InterpreterError type, const IExpr& expr, std::string_view details) const {
+void ExprInterpreterVisitor::report_error(InterpreterError type, const Expr& expr, std::string_view details) const {
     err.interpreter_error(type, expr, details);
 }
 
@@ -160,7 +194,7 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
 
     // FIXME now that the global scope is proper scope
     auto& depths = interpreter.resolver_.depth_map();
-    auto it = depths.find(&expr);
+    auto it = depths.find(&Expr::from_alternative(expr));
 
     ValueHandle handle{};
 
@@ -185,7 +219,7 @@ ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
     auto& depths = interpreter.resolver_.depth_map();
 
-    auto it = depths.find(&expr);
+    auto it = depths.find(&Expr::from_alternative(expr));
     if (it != depths.end()) {
         ValueHandle val = env.assign_at(
             it->second,
@@ -235,9 +269,9 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
     }
 
     if (callee.is<Function>()) {
-        return get_invokable<Function>(callee, args, expr)(*this, args);
+        return get_invokable<Function>(callee, args, expr)(this->interpreter, args);
     } else if (callee.is<BuiltinFunction>()) {
-        return get_invokable<BuiltinFunction>(callee, args, expr)(args);
+        return get_invokable<BuiltinFunction>(callee, args, expr)(this->interpreter, args);
     } else {
         report_error_and_abort(
             InterpreterError::unexpected_type, expr,

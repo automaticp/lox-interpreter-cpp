@@ -7,6 +7,7 @@
 #include "ExprVisitors.hpp"
 #include "Resolver.hpp"
 #include "Builtins.hpp"
+#include "Frontend.hpp"
 #include <string>
 #include <optional>
 #include <fstream>

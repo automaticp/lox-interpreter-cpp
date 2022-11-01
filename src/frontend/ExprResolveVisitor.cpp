@@ -2,15 +2,15 @@
 #include "Errors.hpp"
 #include "ExprVisitors.hpp"
 
-#include "Interpreter.hpp"
+
 #include "Expr.hpp"
 #include "Resolver.hpp"
 
-void ExprResolveVisitor::resolve(const IExpr& expr) const {
+void ExprResolveVisitor::resolve(const Expr& expr) const {
     expr.accept(*this);
 }
 
-void ExprResolveVisitor::resolve_local(const IExpr& expr, const std::string& name) const {
+void ExprResolveVisitor::resolve_local(const Expr& expr, const std::string& name) const {
     size_t num_scopes{ resolver_.scopes().size() };
 
     for (size_t i{ 0 }; i < num_scopes; ++i) {
@@ -52,7 +52,7 @@ ExprResolveVisitor::operator()(const VariableExpr& expr) const {
         if (it != resolver_.top_scope().end() && it->second == ResolveState::declared) {
             err_.resolver_error(
                 ResolverError::initialization_from_self,
-                expr, ""
+                Expr::from_alternative(expr), ""
             );
         }
     }

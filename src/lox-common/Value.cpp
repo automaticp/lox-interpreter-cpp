@@ -2,8 +2,6 @@
 #include "ExprVisitors.hpp"
 #include "Environment.hpp"
 #include "Stmt.hpp"
-#include "Interpreter.hpp"
-#include "StmtVisitors.hpp"
 #include "ValueDecl.hpp"
 #include <memory>
 #include <cassert>
@@ -31,36 +29,7 @@ size_t Function::arity() const noexcept {
     return declaration_->parameters.size();
 }
 
-Value Function::operator()(const ExprInterpreterVisitor& interpret_visitor, std::vector<Value>& args) {
-    assert(declaration_);
-    // Environment from enclosing scope,
-    // captured by copy during construction of Function
-    Environment env{ &closure_ };
 
-    for (size_t i{ 0 }; i < args.size(); ++i) {
-        env.define(
-            declaration_->parameters[i].lexeme, std::move(args[i])
-        );
-    }
-
-    try {
-        interpret_visitor.interpreter.interpret(
-            declaration_->body, env
-        );
-    } catch (Value& v) {
-        return std::move(v);
-    }
-
-    return {};
-}
-
-
-
-
-
-Value BuiltinFunction::operator()(std::span<Value> args) {
-    return fun_(args);
-}
 
 
 

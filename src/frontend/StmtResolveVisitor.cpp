@@ -4,7 +4,7 @@
 #include "Stmt.hpp"
 #include "Resolver.hpp"
 
-void StmtResolveVisitor::resolve(const IStmt& stmt) const {
+void StmtResolveVisitor::resolve(const Stmt& stmt) const {
     stmt.accept(*this);
 }
 
@@ -21,7 +21,7 @@ void StmtResolveVisitor::resolve_function(const FunStmt& stmt) const {
 }
 
 
-bool StmtResolveVisitor::try_declare(const IStmt& stmt, const std::string& name) const {
+bool StmtResolveVisitor::try_declare(const Stmt& stmt, const std::string& name) const {
     bool success{ resolver_.declare(name) };
     if (!success) {
         err_.resolver_error(
@@ -86,7 +86,7 @@ StmtResolveVisitor::operator()(const ReturnStmt& stmt) const {
     if (!resolver_.is_in_function()) {
         err_.resolver_error(
             ResolverError::return_from_global_scope,
-            stmt, ""
+            Stmt::from_alternative(stmt), ""
         );
     }
 

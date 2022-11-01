@@ -19,6 +19,7 @@
 #include <fmt/format.h>
 #include "Environment.hpp"
 #include "ValueDecl.hpp"
+#include "VariantWrapper.hpp"
 
 
 // This file defines the underlying Value variants
@@ -131,8 +132,9 @@ public:
 
 
 
-
+// This dependency, while private now, should not exist at all
 class ExprInterpreterVisitor;
+// This dependency should be horizontal: exist in the same lib
 class FunStmt;
 
 
@@ -149,11 +151,34 @@ public:
         declaration_{ declaration }, closure_{ std::move(closure) } {}
 
 
-    Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
+    // You'd think that a Function type should define it's call operator,
+    // But the details of the implementation will be heavily
+    // dependent on the interpreter/backend. Originally, this class
+    // had such call method, that looked like this:
+    //
+    // Value operator()(const ExprInterpreterVisitor& interpreter, std::vector<Value>& args);
+    //
+    // which introduced backend dependency due to ExprInterpreterVisitor being a parameter.
+    // Instead, we declare a template 'operator()', that can be specialized for
+    // a particular backend (see below). Use that instead.
+
+    // Specialize like this:
+    //
+    // template<>
+    // Value Function::operator()<Interpreter>(const Interpreter& intrp, std::span<Value> args) {
+    //     ...
+    // }
+    //
+    template<typename BackendT>
+    Value operator()(BackendT&, std::span<Value> args);
+
+
 
     size_t arity() const noexcept;
 
     Environment& closure() noexcept { return closure_; }
+
+    const FunStmt* declaration() const noexcept { return declaration_; }
 
     bool operator==(const Function& other) const noexcept {
         return declaration_ == other.declaration_;
@@ -175,7 +200,10 @@ public:
     BuiltinFunction(std::string_view name, std::function<Value(std::span<Value>)> fun, size_t arity) :
         fun_{ std::move(fun) }, arity_{ arity }, name_{ name } {}
 
-    Value operator()(std::span<Value> args);
+
+    // FIXME: to span or not to span?
+    template<typename BackendT>
+    Value operator()(BackendT&, std::span<Value> args);
 
     size_t arity() const noexcept { return arity_; }
 
@@ -196,92 +224,32 @@ public:
     }
 
     // Not defined yet
-    Value operator()(const ExprInterpreterVisitor& interpreter, const std::vector<Value>& args);
+    template<typename BackendT>
+    Value operator()(BackendT&, std::span<Value> args);
 
 };
-
-
-
-
-
-
-
-
-template<typename T>
-concept value_visitor = requires(const T& visitor, const ValueVariant& value) {
-    std::visit(T{}, value);
-    std::visit(visitor, value);
-};
-
-
-template <typename T, typename U>
-concept not_same_as_remove_cvref =
-    !std::same_as<
-        std::remove_cvref_t<T>,
-        std::remove_cvref_t<U>
-    >;
 
 
 
 // A wrapper class around a ValueVariant
 // that defines a more suitable interface
 // for common use patterns.
-class Value {
-private:
-    ValueVariant variant_;
-
+class Value : public VariantWrapper<Value, ValueVariant> {
 public:
-    // Wrapper around single argument c-tors of the variant:
-    // converting c-tors and copy/move c-tors.
-    template<typename Alternative>
-    requires not_same_as_remove_cvref<Alternative, Value>
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload): constraint above
-    Value(Alternative&& val) : variant_{ std::forward<Alternative>(val) } {}
+    using VariantWrapper<Value, ValueVariant>::VariantWrapper;
 
     // Nil constructor (aka std::monostate)
     Value() = default;
     // Value() : variant_{ Nil{} } {}
-
-
-    auto index() const noexcept { return variant_.index(); }
 
     ValueType type() const noexcept {
         assert(!variant_.valueless_by_exception());
         return static_cast<ValueType>(index());
     }
 
-
-    template<typename T>
-    bool is() const noexcept {
-        return std::holds_alternative<T>(variant_);
-    }
-
-    template<typename ...Ts>
-    bool is_any_of() const noexcept {
-        return (... || is<Ts>());
-    }
-
-
-    template<typename T>
-    T& as() & { return std::get<T>(variant_); }
-
-    template<typename T>
-    T as() && { return std::move(std::get<T>(variant_)); }
-
-    template<typename T>
-    const T& as() const& { return std::get<T>(variant_); }
-
-
-    template<value_visitor T>
-    auto accept(const T& visitor) const {
-        return std::visit(visitor, variant_);
-    }
-
-
     bool operator==(const Value& other) const noexcept {
         return variant_ == other.variant_;
     }
-
 };
 
 

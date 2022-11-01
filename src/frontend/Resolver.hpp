@@ -1,7 +1,7 @@
 #pragma once
 #include "ExprResolveVisitor.hpp"
 #include "StmtResolveVisitor.hpp"
-#include "IStmt.hpp"
+#include "Stmt.hpp"
 #include "ErrorReporter.hpp"
 #include <memory>
 #include <vector>
@@ -10,7 +10,7 @@
 #include <string>
 #include <span>
 
-class IExpr;
+class Expr;
 
 
 enum class ResolveState : bool {
@@ -31,7 +31,7 @@ public:
     using map_t = boost::unordered_map<std::string, ResolveState>;
     using scope_stack_t = std::vector<map_t>;
     using scope_type_stack_t = std::vector<ScopeType>;
-    using depth_map_t = boost::unordered_map<const IExpr*, size_t>;
+    using depth_map_t = boost::unordered_map<const Expr*, size_t>;
 
 private:
     ErrorReporter& err_;
@@ -51,7 +51,7 @@ public:
         }
 
 
-    void resolve(std::span<std::unique_ptr<IStmt>> stmts) {
+    void resolve(std::span<std::unique_ptr<Stmt>> stmts) {
         for (const auto& stmt : stmts) {
             stmt->accept(visitor_);
         }
@@ -122,7 +122,7 @@ public:
     }
 
 
-    void set_depth(const IExpr& expr, size_t depth) {
+    void set_depth(const Expr& expr, size_t depth) {
         depth_map_[&expr] = depth;
     }
 

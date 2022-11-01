@@ -1,7 +1,7 @@
 #pragma once
 #include "ExprInterpreterVisitor.hpp"
 
-class IStmt;
+class Stmt;
 class PrintStmt;
 class ExpressionStmt;
 class VarStmt;
@@ -33,6 +33,6 @@ public:
     return_type operator()(const FunStmt& stmt) const;
     return_type operator()(const ReturnStmt& stmt) const;
 
-    void execute(const IStmt& stmt) const;
+    void execute(const Stmt& stmt) const;
 };
 
