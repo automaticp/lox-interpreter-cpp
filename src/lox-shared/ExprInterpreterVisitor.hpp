@@ -4,7 +4,7 @@
 #include <fmt/format.h>
 
 
-class IExpr;
+class Expr;
 class LiteralExpr;
 class UnaryExpr;
 class BinaryExpr;
@@ -38,13 +38,13 @@ struct ExprInterpreterVisitor {
     Interpreter& interpreter;
 protected:
 
-    return_type evaluate(const IExpr& expr) const;
-    return_type evaluate_without_decay(const IExpr& expr) const;
+    return_type evaluate(const Expr& expr) const;
+    return_type evaluate_without_decay(const Expr& expr) const;
 
     static bool is_truthful(const Value& value);
 
     template<typename T>
-    void check_type(const IExpr& expr, const Value& val) const {
+    void check_type(const Expr& expr, const Value& val) const {
         if (!val.is<T>()) {
             report_error_and_abort(
                 InterpreterError::unexpected_type, expr,
@@ -54,7 +54,7 @@ protected:
     }
 
     template<typename T1, typename T2>
-    void check_type(const IExpr& expr, const Value& val1, const Value& val2) const {
+    void check_type(const Expr& expr, const Value& val1, const Value& val2) const {
         check_type<T1>(expr, val1);
         check_type<T2>(expr, val2);
     }
@@ -63,9 +63,9 @@ protected:
         throw type;
     }
 
-    void report_error(InterpreterError type, const IExpr& expr, std::string_view details = "") const;
+    void report_error(InterpreterError type, const Expr& expr, std::string_view details = "") const;
 
-    void report_error_and_abort(InterpreterError type, const IExpr& expr, std::string_view details = "") const {
+    void report_error_and_abort(InterpreterError type, const Expr& expr, std::string_view details = "") const {
         report_error(type, expr, details);
         abort_by_exception(type);
     }

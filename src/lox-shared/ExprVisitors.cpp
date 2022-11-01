@@ -86,7 +86,7 @@ ExprGetPrimaryTokenVisitor::operator()(const BinaryExpr& expr) const {
 
 ExprGetPrimaryTokenVisitor::return_type
 ExprGetPrimaryTokenVisitor::operator()(const GroupedExpr& expr) const {
-    return expr.expr->accept(*this);
+    return expr.expr->accept(*this); // WARN: returning reference to a temporary
 }
 
 ExprGetPrimaryTokenVisitor::return_type

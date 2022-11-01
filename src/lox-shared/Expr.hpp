@@ -5,9 +5,9 @@
 #include "Token.hpp"
 #include "VariantWrapper.hpp"
 
-class IExpr;
+class Expr;
 
-using ExprBackref = WrapperBackreference<IExpr>;
+using ExprBackref = WrapperBackreference<Expr>;
 
 
 
@@ -23,9 +23,9 @@ public:
 struct UnaryExpr : ExprBackref {
 public:
     Token op;
-    std::unique_ptr<IExpr> operand;
+    std::unique_ptr<Expr> operand;
 
-    UnaryExpr(Token op, std::unique_ptr<IExpr> expr) :
+    UnaryExpr(Token op, std::unique_ptr<Expr> expr) :
         op{ std::move(op) }, operand{ std::move(expr) } {}
 };
 
@@ -33,19 +33,19 @@ public:
 struct BinaryExpr : ExprBackref {
 public:
     Token op;
-    std::unique_ptr<IExpr> lhs;
-    std::unique_ptr<IExpr> rhs;
+    std::unique_ptr<Expr> lhs;
+    std::unique_ptr<Expr> rhs;
 
-    BinaryExpr(Token op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
+    BinaryExpr(Token op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs) :
         op{ std::move(op) }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
 };
 
 
 struct GroupedExpr : ExprBackref {
 public:
-    std::unique_ptr<IExpr> expr;
+    std::unique_ptr<Expr> expr;
 
-    GroupedExpr(std::unique_ptr<IExpr> expr) :
+    GroupedExpr(std::unique_ptr<Expr> expr) :
         expr{ std::move(expr) } {}
 };
 
@@ -63,9 +63,9 @@ struct AssignExpr : ExprBackref {
 public:
     Token identifier;
     Token op;
-    std::unique_ptr<IExpr> rvalue;
+    std::unique_ptr<Expr> rvalue;
 
-    AssignExpr(Token identifier, Token op, std::unique_ptr<IExpr> rvalue) :
+    AssignExpr(Token identifier, Token op, std::unique_ptr<Expr> rvalue) :
         identifier{ std::move(identifier) }, op{ op }, rvalue{ std::move(rvalue) } {}
 
 };
@@ -74,21 +74,21 @@ public:
 struct LogicalExpr : ExprBackref {
 public:
     Token op;
-    std::unique_ptr<IExpr> lhs;
-    std::unique_ptr<IExpr> rhs;
+    std::unique_ptr<Expr> lhs;
+    std::unique_ptr<Expr> rhs;
 
-    LogicalExpr(Token op, std::unique_ptr<IExpr> lhs, std::unique_ptr<IExpr> rhs) :
+    LogicalExpr(Token op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs) :
         op{ std::move(op) }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) } {}
 };
 
 
 struct CallExpr : ExprBackref {
 public:
-    std::unique_ptr<IExpr> callee;
-    std::vector<std::unique_ptr<IExpr>> args;
+    std::unique_ptr<Expr> callee;
+    std::vector<std::unique_ptr<Expr>> args;
     Token rparen;
 
-    CallExpr(std::unique_ptr<IExpr> callee, std::vector<std::unique_ptr<IExpr>> args, Token rparen) :
+    CallExpr(std::unique_ptr<Expr> callee, std::vector<std::unique_ptr<Expr>> args, Token rparen) :
         callee{ std::move(callee) }, rparen{ std::move(rparen) }, args{ std::move(args) } {}
 };
 
@@ -104,9 +104,9 @@ using ExprVariant = std::variant<
 
 // ExprVariant wrapper
 // FIXME: rename from IExpr to Expr
-class IExpr : public VariantWrapper<IExpr, ExprVariant> {
+class Expr : public VariantWrapper<Expr, ExprVariant> {
 public:
-    using VariantWrapper<IExpr, ExprVariant>::VariantWrapper;
-    IExpr() = delete;
+    using VariantWrapper<Expr, ExprVariant>::VariantWrapper;
+    Expr() = delete;
 };
 

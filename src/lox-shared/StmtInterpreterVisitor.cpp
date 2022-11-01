@@ -93,7 +93,7 @@ StmtInterpreterVisitor::operator()(const ReturnStmt& stmt) const {
 
 
 
-void StmtInterpreterVisitor::execute(const IStmt& stmt) const {
+void StmtInterpreterVisitor::execute(const Stmt& stmt) const {
     stmt.accept(*this);
 }
 

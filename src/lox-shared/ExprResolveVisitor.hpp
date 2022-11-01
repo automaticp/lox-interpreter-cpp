@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-class IExpr;
+class Expr;
 class LiteralExpr;
 class UnaryExpr;
 class BinaryExpr;
@@ -35,7 +35,7 @@ protected:
     ErrorReporter& err_;
 
 protected:
-    void resolve(const IExpr& expr) const;
-    void resolve_local(const IExpr& expr, const std::string& name) const;
+    void resolve(const Expr& expr) const;
+    void resolve_local(const Expr& expr, const std::string& name) const;
 };
 

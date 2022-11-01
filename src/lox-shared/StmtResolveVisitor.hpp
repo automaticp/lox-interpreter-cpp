@@ -2,7 +2,7 @@
 #include "ExprResolveVisitor.hpp"
 
 
-class IStmt;
+class Stmt;
 class PrintStmt;
 class ExpressionStmt;
 class VarStmt;
@@ -31,9 +31,9 @@ public:
 
 private:
     using ExprResolveVisitor::resolve;
-    void resolve(const IStmt& stmt) const;
+    void resolve(const Stmt& stmt) const;
     void resolve_function(const FunStmt& stmt) const;
 
-    bool try_declare(const IStmt& stmt, const std::string& name) const;
+    bool try_declare(const Stmt& stmt, const std::string& name) const;
 };
 

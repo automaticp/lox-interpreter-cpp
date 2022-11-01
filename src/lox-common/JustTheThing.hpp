@@ -126,9 +126,9 @@ protected:
     ~IAdapterFactory() = default;
 };
 
-class IExpr : public IAdapterFactory {
+class Expr : public IAdapterFactory {
 public:
-    virtual ~IExpr() = default;
+    virtual ~Expr() = default;
 };
 
 template<typename CRTP, typename Base>
@@ -145,7 +145,7 @@ public:
 // For example
 class GroupedExpr : public AdapterFactory<GroupedExpr, IExpr> {
 public:
-    std::unique_ptr<IExpr> subexpr;
+    std::unique_ptr<Expr> subexpr;
 };
 
 
@@ -163,7 +163,7 @@ public:
 
 class Value {};
 
-inline Value evaluate(const IExpr& expr) {
+inline Value evaluate(const Expr& expr) {
     // Normally, you'd have something like
     //
     // expr.accept(ExprInterpretVisitor{});

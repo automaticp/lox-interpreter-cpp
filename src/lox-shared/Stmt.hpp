@@ -7,18 +7,18 @@
 #include <vector>
 
 
-class IStmt;
+class Stmt;
 
 
-using StmtBackref = WrapperBackreference<IStmt>;
+using StmtBackref = WrapperBackreference<Stmt>;
 
 
 
 struct ExpressionStmt : StmtBackref {
 public:
-    std::unique_ptr<IExpr> expr;
+    std::unique_ptr<Expr> expr;
 
-    ExpressionStmt(std::unique_ptr<IExpr> expr) :
+    ExpressionStmt(std::unique_ptr<Expr> expr) :
         expr{ std::move(expr) } {}
 };
 
@@ -26,9 +26,9 @@ public:
 
 struct PrintStmt : StmtBackref {
 public:
-    std::unique_ptr<IExpr> expr;
+    std::unique_ptr<Expr> expr;
 
-    PrintStmt(std::unique_ptr<IExpr> expr) :
+    PrintStmt(std::unique_ptr<Expr> expr) :
         expr{ std::move(expr) } {}
 };
 
@@ -36,9 +36,9 @@ public:
 struct VarStmt : StmtBackref {
 public:
     Token identifier;
-    std::unique_ptr<IExpr> init;
+    std::unique_ptr<Expr> init;
 
-    VarStmt(Token identifier, std::unique_ptr<IExpr> init) :
+    VarStmt(Token identifier, std::unique_ptr<Expr> init) :
         identifier{ std::move(identifier) },
         init{ std::move(init) } {}
 };
@@ -46,23 +46,23 @@ public:
 
 struct BlockStmt : StmtBackref {
 public:
-    std::vector<std::unique_ptr<IStmt>> statements;
+    std::vector<std::unique_ptr<Stmt>> statements;
 
-    BlockStmt(std::vector<std::unique_ptr<IStmt>> statements) :
+    BlockStmt(std::vector<std::unique_ptr<Stmt>> statements) :
         statements{ std::move(statements) } {}
 };
 
 
 struct IfStmt : StmtBackref {
 public:
-    std::unique_ptr<IExpr> condition;
-    std::unique_ptr<IStmt> then_branch;
-    std::unique_ptr<IStmt> else_branch;
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> then_branch;
+    std::unique_ptr<Stmt> else_branch;
 
     IfStmt(
-        std::unique_ptr<IExpr> condition,
-        std::unique_ptr<IStmt> then_branch,
-        std::unique_ptr<IStmt> else_branch
+        std::unique_ptr<Expr> condition,
+        std::unique_ptr<Stmt> then_branch,
+        std::unique_ptr<Stmt> else_branch
     ) : condition{ std::move(condition) },
         then_branch{ std::move(then_branch) },
         else_branch{ std::move(else_branch) } {}
@@ -71,10 +71,10 @@ public:
 
 struct WhileStmt : StmtBackref {
 public:
-    std::unique_ptr<IExpr> condition;
-    std::unique_ptr<IStmt> statement;
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> statement;
 
-    WhileStmt(std::unique_ptr<IExpr> condition, std::unique_ptr<IStmt> statement) :
+    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> statement) :
         condition{ std::move(condition) }, statement{ std::move(statement) } {}
 };
 
@@ -83,9 +83,9 @@ struct FunStmt : StmtBackref {
 public:
     Token name;
     std::vector<Token> parameters;
-    std::vector<std::unique_ptr<IStmt>> body;
+    std::vector<std::unique_ptr<Stmt>> body;
 
-    FunStmt(Token name, std::vector<Token> parameters, std::vector<std::unique_ptr<IStmt>> body) :
+    FunStmt(Token name, std::vector<Token> parameters, std::vector<std::unique_ptr<Stmt>> body) :
         name{ std::move(name) }, parameters{ std::move(parameters) }, body{ std::move(body) } {}
 };
 
@@ -93,9 +93,9 @@ public:
 struct ReturnStmt : StmtBackref {
 public:
     Token keyword;
-    std::unique_ptr<IExpr> expr;
+    std::unique_ptr<Expr> expr;
 
-    ReturnStmt(Token keyword, std::unique_ptr<IExpr> expr) :
+    ReturnStmt(Token keyword, std::unique_ptr<Expr> expr) :
         keyword{ std::move(keyword) }, expr{ std::move(expr) } {}
 };
 
@@ -113,9 +113,9 @@ using StmtVariant = std::variant<
 
 // StmtVariant wrapper
 // FIXME: rename from IStmt to Stmt
-class IStmt : public VariantWrapper<IStmt, StmtVariant> {
+class Stmt : public VariantWrapper<Stmt, StmtVariant> {
 public:
-    using VariantWrapper<IStmt, StmtVariant>::VariantWrapper;
-    IStmt() = delete;
+    using VariantWrapper<Stmt, StmtVariant>::VariantWrapper;
+    Stmt() = delete;
 };
 

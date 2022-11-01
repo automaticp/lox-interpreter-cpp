@@ -98,7 +98,7 @@ private:
 
 
     ErrorReporter& err_;
-    std::vector<std::unique_ptr<IStmt>> statements_;
+    std::vector<std::unique_ptr<Stmt>> statements_;
 
     ParserState state_;
 
@@ -112,7 +112,7 @@ public:
     Parser(ErrorReporter& err) : err_{ err } {}
 
     // returns a view of new statements
-    std::span<std::unique_ptr<IStmt>>
+    std::span<std::unique_ptr<Stmt>>
     parse_tokens(const std::vector<Token>& tokens) {
         prepare_tokens(tokens);
 
@@ -132,12 +132,12 @@ public:
         };
     }
 
-    const std::vector<std::unique_ptr<IStmt>>& peek_result() const {
+    const std::vector<std::unique_ptr<Stmt>>& peek_result() const {
         assert(is_eof());
         return statements_;
     }
 
-    [[nodiscard]] std::vector<std::unique_ptr<IStmt>> get_result() {
+    [[nodiscard]] std::vector<std::unique_ptr<Stmt>> get_result() {
         assert(is_eof());
         state_.reset();
         return std::move(statements_);
@@ -151,7 +151,7 @@ public:
 
 
 private:
-    std::unique_ptr<IStmt> declaration() {
+    std::unique_ptr<Stmt> declaration() {
         if (state_.match(TokenType::kw_var)) {
             return var_decl();
         } else if (state_.match(TokenType::kw_fun)) {
@@ -161,26 +161,26 @@ private:
         }
     }
 
-    std::unique_ptr<IStmt> var_decl() {
+    std::unique_ptr<Stmt> var_decl() {
         const Token& id = try_consume(
             TokenType::identifier, ParserError::expected_identifier
         );
 
         // FIXME: could be LiteralExpr(nil) or its own NullExpr;
-        std::unique_ptr<IExpr> init;
+        std::unique_ptr<Expr> init;
         if (state_.match(TokenType::eq)) {
             init = expression();
         } else {
-            init = IExpr::make_unique<LiteralExpr>(
+            init = Expr::make_unique<LiteralExpr>(
                 Token{TokenType::kw_nil, "nil", state_.current()->line, Nil{}}
             );
         }
 
         try_consume_semicolon();
-        return IStmt::make_unique<VarStmt>(id, std::move(init));
+        return Stmt::make_unique<VarStmt>(id, std::move(init));
     }
 
-    std::unique_ptr<IStmt> fun_decl() {
+    std::unique_ptr<Stmt> fun_decl() {
         using enum TokenType;
 
         const Token& id = try_consume(
@@ -212,14 +212,14 @@ private:
             lbrace, ParserError::missing_opening_brace
         );
 
-        return IStmt::make_unique<FunStmt>(
+        return Stmt::make_unique<FunStmt>(
             id,
             std::move(params),
             block()
         );
     }
 
-    std::unique_ptr<IStmt> statement() {
+    std::unique_ptr<Stmt> statement() {
         if (state_.match(TokenType::kw_if)) {
             return if_stmt();
         } else if (state_.match(TokenType::kw_return)){
@@ -237,7 +237,7 @@ private:
         }
     }
 
-    std::unique_ptr<IStmt> if_stmt() {
+    std::unique_ptr<Stmt> if_stmt() {
         try_consume(
             TokenType::lparen, ParserError::missing_opening_paren
         );
@@ -249,45 +249,45 @@ private:
         );
 
         auto then_branch = statement();
-        std::unique_ptr<IStmt> else_branch{ nullptr };
+        std::unique_ptr<Stmt> else_branch{ nullptr };
         if (state_.match(TokenType::kw_else)) {
             else_branch = statement();
         }
 
-        return IStmt::make_unique<IfStmt>(
+        return Stmt::make_unique<IfStmt>(
             std::move(condition),
             std::move(then_branch),
             std::move(else_branch)
         );
     }
 
-    std::unique_ptr<IStmt> return_stmt() {
+    std::unique_ptr<Stmt> return_stmt() {
         const Token& keyword{ state_.peek_previous() };
 
-        std::unique_ptr<IExpr> value;
+        std::unique_ptr<Expr> value;
         if (!state_.check(TokenType::semicolon)) {
             value = expression();
         } else {
-            value = IExpr::make_unique<LiteralExpr>(
+            value = Expr::make_unique<LiteralExpr>(
                 Token{ TokenType::kw_nil, "nil", state_.current()->line, Nil{} }
             );
         }
 
         try_consume_semicolon();
 
-        return IStmt::make_unique<ReturnStmt>(
+        return Stmt::make_unique<ReturnStmt>(
             keyword, std::move(value)
         );
     }
 
 
-    std::unique_ptr<IStmt> for_stmt() {
+    std::unique_ptr<Stmt> for_stmt() {
         try_consume(
             TokenType::lparen, ParserError::missing_opening_paren
         );
 
 
-        std::unique_ptr<IStmt> initializer{ nullptr };
+        std::unique_ptr<Stmt> initializer{ nullptr };
         if (state_.match(TokenType::semicolon)) {
             /* nothing, already null */
         } else if (state_.match(TokenType::kw_var)) {
@@ -297,11 +297,11 @@ private:
         }
 
 
-        std::unique_ptr<IExpr> condition{ nullptr };
+        std::unique_ptr<Expr> condition{ nullptr };
         if (!state_.check(TokenType::semicolon)) {
             condition = expression();
         } else {
-            condition = IExpr::make_unique<LiteralExpr>(
+            condition = Expr::make_unique<LiteralExpr>(
                 Token{
                     TokenType::kw_true, "true",
                     state_.current()->line, true
@@ -311,7 +311,7 @@ private:
         try_consume_semicolon();
 
 
-        std::unique_ptr<IExpr> increment{ nullptr };
+        std::unique_ptr<Expr> increment{ nullptr };
         if (!state_.check(TokenType::rparen)) {
             increment = expression();
         }
@@ -335,32 +335,32 @@ private:
 
         auto stmt = statement();
 
-        std::vector<std::unique_ptr<IStmt>> full_body;
+        std::vector<std::unique_ptr<Stmt>> full_body;
 
         if (initializer) {
             full_body.emplace_back(std::move(initializer));
         }
 
         if (increment) {
-            std::vector<std::unique_ptr<IStmt>> full_stmts;
+            std::vector<std::unique_ptr<Stmt>> full_stmts;
             full_stmts.emplace_back(std::move(stmt));
-            full_stmts.emplace_back(IStmt::make_unique<ExpressionStmt>(std::move(increment)));
-            stmt = IStmt::make_unique<BlockStmt>(std::move(full_stmts));
+            full_stmts.emplace_back(Stmt::make_unique<ExpressionStmt>(std::move(increment)));
+            stmt = Stmt::make_unique<BlockStmt>(std::move(full_stmts));
         }
 
-        auto loop = IStmt::make_unique<WhileStmt>(
+        auto loop = Stmt::make_unique<WhileStmt>(
             std::move(condition),
             std::move(stmt)
         );
 
         full_body.emplace_back(std::move(loop));
 
-        return IStmt::make_unique<BlockStmt>(
+        return Stmt::make_unique<BlockStmt>(
             std::move(full_body)
         );
     }
 
-    std::unique_ptr<IStmt> while_stmt() {
+    std::unique_ptr<Stmt> while_stmt() {
         try_consume(
             TokenType::lparen, ParserError::missing_opening_paren
         );
@@ -371,15 +371,15 @@ private:
             TokenType::rparen, ParserError::missing_closing_paren
         );
 
-        return IStmt::make_unique<WhileStmt>(
+        return Stmt::make_unique<WhileStmt>(
             std::move(condition),
             statement()
         );
     }
 
 
-    std::vector<std::unique_ptr<IStmt>> block() {
-        std::vector<std::unique_ptr<IStmt>> stmts;
+    std::vector<std::unique_ptr<Stmt>> block() {
+        std::vector<std::unique_ptr<Stmt>> stmts;
 
         while (!state_.is_eof() && !state_.check(TokenType::rbrace)) {
             stmts.emplace_back(declaration());
@@ -392,35 +392,35 @@ private:
         return stmts;
     }
 
-    std::unique_ptr<IStmt> block_stmt() {
-        return IStmt::make_unique<BlockStmt>(block());
+    std::unique_ptr<Stmt> block_stmt() {
+        return Stmt::make_unique<BlockStmt>(block());
     }
 
-    std::unique_ptr<IStmt> print_stmt() {
+    std::unique_ptr<Stmt> print_stmt() {
         auto expr = expression();
 
         try_consume_semicolon();
 
-        return IStmt::make_unique<PrintStmt>(std::move(expr));
+        return Stmt::make_unique<PrintStmt>(std::move(expr));
     }
 
-    std::unique_ptr<IStmt> expression_stmt() {
+    std::unique_ptr<Stmt> expression_stmt() {
         auto expr = expression();
 
         try_consume_semicolon();
 
-        return IStmt::make_unique<ExpressionStmt>(std::move(expr));
+        return Stmt::make_unique<ExpressionStmt>(std::move(expr));
     }
 
 
 
 
 
-    std::unique_ptr<IExpr> expression() {
+    std::unique_ptr<Expr> expression() {
         return assignment_expr();
     }
 
-    std::unique_ptr<IExpr> assignment_expr() {
+    std::unique_ptr<Expr> assignment_expr() {
         auto expr = or_expr();
 
         using enum TokenType;
@@ -429,7 +429,7 @@ private:
             auto rvalue = assignment_expr();
 
             if (expr->is<VariableExpr>()) {
-                return IExpr::make_unique<AssignExpr>(
+                return Expr::make_unique<AssignExpr>(
                     expr->as<VariableExpr>().identifier, std::move(op), std::move(rvalue)
                 );
             } else {
@@ -445,13 +445,13 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr> or_expr() {
+    std::unique_ptr<Expr> or_expr() {
         auto expr = and_expr();
 
         using enum TokenType;
         while (state_.match(kw_or)) {
             Token op{ state_.peek_previous() };
-            expr = IExpr::make_unique<LogicalExpr>(
+            expr = Expr::make_unique<LogicalExpr>(
                 op, std::move(expr), and_expr()
             );
         }
@@ -459,13 +459,13 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr> and_expr() {
+    std::unique_ptr<Expr> and_expr() {
         auto expr = equality_expr();
 
         using enum TokenType;
         while (state_.match(kw_and)) {
             Token op{ state_.peek_previous() };
-            expr = IExpr::make_unique<LogicalExpr>(
+            expr = Expr::make_unique<LogicalExpr>(
                 op, std::move(expr), equality_expr()
             );
         }
@@ -475,13 +475,13 @@ private:
 
 
 
-    std::unique_ptr<IExpr> equality_expr() {
+    std::unique_ptr<Expr> equality_expr() {
         auto expr = comparison_expr();
 
         using enum TokenType;
         while (state_.match(bang_eq, eq_eq)) {
             Token op{ state_.peek_previous() };
-            expr = IExpr::make_unique<BinaryExpr>(
+            expr = Expr::make_unique<BinaryExpr>(
                 op, std::move(expr), comparison_expr()
             );
         }
@@ -489,13 +489,13 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr> comparison_expr() {
+    std::unique_ptr<Expr> comparison_expr() {
         auto expr = term_expr();
 
         using enum TokenType;
         while (state_.match(greater, greater_eq, less, less_eq)) {
             Token op{ state_.peek_previous() };
-            expr = IExpr::make_unique<BinaryExpr>(
+            expr = Expr::make_unique<BinaryExpr>(
                 op, std::move(expr), term_expr()
             );
 
@@ -504,13 +504,13 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr> term_expr() {
+    std::unique_ptr<Expr> term_expr() {
         auto expr = factor_expr();
 
         using enum TokenType;
         while (state_.match(plus, minus)) {
             Token op{ state_.peek_previous() };
-            expr = IExpr::make_unique<BinaryExpr>(
+            expr = Expr::make_unique<BinaryExpr>(
                 op, std::move(expr), factor_expr()
             );
         }
@@ -518,13 +518,13 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr> factor_expr() {
+    std::unique_ptr<Expr> factor_expr() {
         auto expr = unary_expr();
 
         using enum TokenType;
         while (state_.match(star, slash)) {
             Token op{ state_.peek_previous() };
-            expr = IExpr::make_unique<BinaryExpr>(
+            expr = Expr::make_unique<BinaryExpr>(
                 op, std::move(expr), unary_expr()
             );
         }
@@ -532,12 +532,12 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr> unary_expr() {
+    std::unique_ptr<Expr> unary_expr() {
 
         using enum TokenType;
         if (state_.match(bang, minus, plus)) {
             Token op{ state_.peek_previous() };
-            return IExpr::make_unique<UnaryExpr>(
+            return Expr::make_unique<UnaryExpr>(
                 op, unary_expr()
             );
         } else {
@@ -545,7 +545,7 @@ private:
         }
     }
 
-    std::unique_ptr<IExpr> call_expr() {
+    std::unique_ptr<Expr> call_expr() {
         auto expr = primary_expr();
 
         while (true) {
@@ -559,9 +559,9 @@ private:
         return expr;
     }
 
-    std::unique_ptr<IExpr>
-    parse_call_expr(std::unique_ptr<IExpr> callee) {
-        std::vector<std::unique_ptr<IExpr>> args;
+    std::unique_ptr<Expr>
+    parse_call_expr(std::unique_ptr<Expr> callee) {
+        std::vector<std::unique_ptr<Expr>> args;
 
         if (!state_.check(TokenType::rparen)) {
             do {
@@ -573,7 +573,7 @@ private:
             TokenType::rparen, ParserError::missing_closing_paren
         );
 
-        return IExpr::make_unique<CallExpr>(
+        return Expr::make_unique<CallExpr>(
             std::move(callee),
             std::move(args),
             closing_paren
@@ -581,11 +581,11 @@ private:
     }
 
 
-    std::unique_ptr<IExpr> primary_expr() {
+    std::unique_ptr<Expr> primary_expr() {
         using enum TokenType;
         if (state_.match(string, number, kw_true, kw_false, kw_nil)) {
 
-            return IExpr::make_unique<LiteralExpr>(
+            return Expr::make_unique<LiteralExpr>(
                 state_.peek_previous()
             );
         } else if (state_.match(lparen)) {
@@ -594,11 +594,11 @@ private:
 
             try_consume(rparen, ParserError::missing_closing_paren);
 
-            return IExpr::make_unique<GroupedExpr>(
+            return Expr::make_unique<GroupedExpr>(
                 std::move(expr)
             );
         } else if (state_.match(identifier)) {
-            return IExpr::make_unique<VariableExpr>(
+            return Expr::make_unique<VariableExpr>(
                 state_.peek_previous()
             );
         }

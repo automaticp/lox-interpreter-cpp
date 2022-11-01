@@ -3,7 +3,7 @@
 #include "StmtInterpreterVisitor.hpp"
 #include "StmtResolveVisitor.hpp"
 
-class IStmt;
+class Stmt;
 class PrintStmt;
 class ExpressionStmt;
 class VarStmt;
