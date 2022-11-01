@@ -32,10 +32,9 @@ inline std::string_view num_to_string(const double& num) {
 // Applies to std::variant with std::visit
 template<typename V, typename T>
 concept visitor_of =
-    requires(const V& visitor, const T& variant) {
+    requires(V&& visitor, const T& variant) {
 
-    std::visit(V{}, variant);
-    std::visit(visitor, variant);
+    std::visit(std::forward<V>(visitor), variant);
 };
 
 
@@ -47,5 +46,13 @@ concept not_same_as_remove_cvref =
         std::remove_cvref_t<U>
     >;
 
+
+
+template <typename T, typename U>
+concept not_derived_from_remove_cvref =
+    !std::derived_from<
+        std::remove_cvref_t<T>,
+        std::remove_cvref_t<U>
+    >;
 
 

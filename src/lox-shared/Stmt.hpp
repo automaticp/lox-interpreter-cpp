@@ -1,32 +1,39 @@
 #pragma once
-#include "IStmt.hpp"
-#include "IExpr.hpp"
+#include "Expr.hpp"
 #include "Token.hpp"
+#include "VariantWrapper.hpp"
 #include <memory>
 #include <utility>
 #include <vector>
 
-struct ExpressionStmt : FullyVisitableStmt<ExpressionStmt> {
+
+class IStmt;
+
+
+using StmtBackref = WrapperBackreference<IStmt>;
+
+
+
+struct ExpressionStmt : StmtBackref {
 public:
     std::unique_ptr<IExpr> expr;
 
     ExpressionStmt(std::unique_ptr<IExpr> expr) :
         expr{ std::move(expr) } {}
-
 };
 
 
-struct PrintStmt : FullyVisitableStmt<PrintStmt> {
+
+struct PrintStmt : StmtBackref {
 public:
     std::unique_ptr<IExpr> expr;
 
     PrintStmt(std::unique_ptr<IExpr> expr) :
         expr{ std::move(expr) } {}
-
 };
 
 
-struct VarStmt : FullyVisitableStmt<VarStmt> {
+struct VarStmt : StmtBackref {
 public:
     Token identifier;
     std::unique_ptr<IExpr> init;
@@ -37,7 +44,7 @@ public:
 };
 
 
-struct BlockStmt : FullyVisitableStmt<BlockStmt> {
+struct BlockStmt : StmtBackref {
 public:
     std::vector<std::unique_ptr<IStmt>> statements;
 
@@ -46,7 +53,7 @@ public:
 };
 
 
-struct IfStmt : FullyVisitableStmt<IfStmt> {
+struct IfStmt : StmtBackref {
 public:
     std::unique_ptr<IExpr> condition;
     std::unique_ptr<IStmt> then_branch;
@@ -62,7 +69,7 @@ public:
 };
 
 
-struct WhileStmt : FullyVisitableStmt<WhileStmt> {
+struct WhileStmt : StmtBackref {
 public:
     std::unique_ptr<IExpr> condition;
     std::unique_ptr<IStmt> statement;
@@ -72,7 +79,7 @@ public:
 };
 
 
-struct FunStmt : FullyVisitableStmt<FunStmt> {
+struct FunStmt : StmtBackref {
 public:
     Token name;
     std::vector<Token> parameters;
@@ -83,7 +90,7 @@ public:
 };
 
 
-struct ReturnStmt : FullyVisitableStmt<ReturnStmt> {
+struct ReturnStmt : StmtBackref {
 public:
     Token keyword;
     std::unique_ptr<IExpr> expr;
@@ -91,3 +98,24 @@ public:
     ReturnStmt(Token keyword, std::unique_ptr<IExpr> expr) :
         keyword{ std::move(keyword) }, expr{ std::move(expr) } {}
 };
+
+
+
+
+
+
+using StmtVariant = std::variant<
+    ExpressionStmt, PrintStmt, VarStmt, BlockStmt,
+    IfStmt, WhileStmt, FunStmt, ReturnStmt
+>;
+
+
+
+// StmtVariant wrapper
+// FIXME: rename from IStmt to Stmt
+class IStmt : public VariantWrapper<IStmt, StmtVariant> {
+public:
+    using VariantWrapper<IStmt, StmtVariant>::VariantWrapper;
+    IStmt() = delete;
+};
+

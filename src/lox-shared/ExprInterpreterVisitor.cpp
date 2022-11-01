@@ -194,7 +194,7 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
 
     // FIXME now that the global scope is proper scope
     auto& depths = interpreter.resolver_.depth_map();
-    auto it = depths.find(&expr);
+    auto it = depths.find(&IExpr::from_alternative(expr));
 
     ValueHandle handle{};
 
@@ -219,7 +219,7 @@ ExprInterpreterVisitor::return_type
 ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
     auto& depths = interpreter.resolver_.depth_map();
 
-    auto it = depths.find(&expr);
+    auto it = depths.find(&IExpr::from_alternative(expr));
     if (it != depths.end()) {
         ValueHandle val = env.assign_at(
             it->second,

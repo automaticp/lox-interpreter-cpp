@@ -5,8 +5,9 @@
 #include <vector>
 #include "Errors.hpp"
 #include "ExprVisitors.hpp"
-#include "IExpr.hpp"
-#include "IStmt.hpp"
+#include "StmtVisitors.hpp"
+#include "Expr.hpp"
+#include "Stmt.hpp"
 #include "Token.hpp"
 #include <fmt/format.h>
 

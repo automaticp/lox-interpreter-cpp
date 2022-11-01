@@ -18,8 +18,9 @@ class Interpreter;
 
 
 
-struct StmtASTPrinterVisitor : protected ExprASTPrinterVisitor {
+struct StmtASTPrinterVisitor : public ExprASTPrinterVisitor {
 public:
+    using ExprASTPrinterVisitor::operator();
     using return_type = std::string;
     return_type operator()(const PrintStmt& stmt) const;
     return_type operator()(const ExpressionStmt& stmt) const;

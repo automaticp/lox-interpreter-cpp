@@ -1,7 +1,7 @@
 #pragma once
 #include "ExprResolveVisitor.hpp"
 #include "StmtResolveVisitor.hpp"
-#include "IStmt.hpp"
+#include "Stmt.hpp"
 #include "ErrorReporter.hpp"
 #include <memory>
 #include <vector>

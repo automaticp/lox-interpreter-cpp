@@ -86,7 +86,7 @@ StmtResolveVisitor::operator()(const ReturnStmt& stmt) const {
     if (!resolver_.is_in_function()) {
         err_.resolver_error(
             ResolverError::return_from_global_scope,
-            stmt, ""
+            IStmt::from_alternative(stmt), ""
         );
     }
 

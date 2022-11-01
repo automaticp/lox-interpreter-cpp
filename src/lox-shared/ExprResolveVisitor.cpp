@@ -52,7 +52,7 @@ ExprResolveVisitor::operator()(const VariableExpr& expr) const {
         if (it != resolver_.top_scope().end() && it->second == ResolveState::declared) {
             err_.resolver_error(
                 ResolverError::initialization_from_self,
-                expr, ""
+                IExpr::from_alternative(expr), ""
             );
         }
     }

@@ -2,13 +2,16 @@
 #include <utility>
 #include <memory>
 #include <vector>
-#include "LiteralValue.hpp"
-#include "TokenType.hpp"
-#include "IExpr.hpp"
 #include "Token.hpp"
+#include "VariantWrapper.hpp"
+
+class IExpr;
+
+using ExprBackref = WrapperBackreference<IExpr>;
 
 
-struct LiteralExpr : FullyVisitableExpr<LiteralExpr> {
+
+struct LiteralExpr : ExprBackref {
 public:
     Token token;
 
@@ -17,7 +20,7 @@ public:
 };
 
 
-struct UnaryExpr : FullyVisitableExpr<UnaryExpr> {
+struct UnaryExpr : ExprBackref {
 public:
     Token op;
     std::unique_ptr<IExpr> operand;
@@ -27,7 +30,7 @@ public:
 };
 
 
-struct BinaryExpr : FullyVisitableExpr<BinaryExpr> {
+struct BinaryExpr : ExprBackref {
 public:
     Token op;
     std::unique_ptr<IExpr> lhs;
@@ -38,7 +41,7 @@ public:
 };
 
 
-struct GroupedExpr : FullyVisitableExpr<GroupedExpr> {
+struct GroupedExpr : ExprBackref {
 public:
     std::unique_ptr<IExpr> expr;
 
@@ -47,7 +50,7 @@ public:
 };
 
 
-struct VariableExpr : FullyVisitableExpr<VariableExpr> {
+struct VariableExpr : ExprBackref {
 public:
     Token identifier;
 
@@ -56,7 +59,7 @@ public:
 };
 
 
-struct AssignExpr : FullyVisitableExpr<AssignExpr> {
+struct AssignExpr : ExprBackref {
 public:
     Token identifier;
     Token op;
@@ -68,7 +71,7 @@ public:
 };
 
 
-struct LogicalExpr : FullyVisitableExpr<LogicalExpr> {
+struct LogicalExpr : ExprBackref {
 public:
     Token op;
     std::unique_ptr<IExpr> lhs;
@@ -79,7 +82,7 @@ public:
 };
 
 
-struct CallExpr : FullyVisitableExpr<CallExpr> {
+struct CallExpr : ExprBackref {
 public:
     std::unique_ptr<IExpr> callee;
     std::vector<std::unique_ptr<IExpr>> args;
@@ -88,3 +91,22 @@ public:
     CallExpr(std::unique_ptr<IExpr> callee, std::vector<std::unique_ptr<IExpr>> args, Token rparen) :
         callee{ std::move(callee) }, rparen{ std::move(rparen) }, args{ std::move(args) } {}
 };
+
+
+
+
+
+using ExprVariant = std::variant<
+    LiteralExpr, UnaryExpr, BinaryExpr, GroupedExpr,
+    VariableExpr, AssignExpr, LogicalExpr, CallExpr
+>;
+
+
+// ExprVariant wrapper
+// FIXME: rename from IExpr to Expr
+class IExpr : public VariantWrapper<IExpr, ExprVariant> {
+public:
+    using VariantWrapper<IExpr, ExprVariant>::VariantWrapper;
+    IExpr() = delete;
+};
+

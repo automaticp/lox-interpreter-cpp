@@ -2,9 +2,7 @@
 #include "ErrorReporter.hpp"
 #include "Errors.hpp"
 #include "ExprVisitors.hpp"
-#include "IExpr.hpp"
 #include "Expr.hpp"
-#include "IStmt.hpp"
 #include "Stmt.hpp"
 #include "Token.hpp"
 #include "TokenType.hpp"
@@ -173,13 +171,13 @@ private:
         if (state_.match(TokenType::eq)) {
             init = expression();
         } else {
-            init = std::make_unique<LiteralExpr>(
+            init = IExpr::make_unique<LiteralExpr>(
                 Token{TokenType::kw_nil, "nil", state_.current()->line, Nil{}}
             );
         }
 
         try_consume_semicolon();
-        return std::make_unique<VarStmt>(id, std::move(init));
+        return IStmt::make_unique<VarStmt>(id, std::move(init));
     }
 
     std::unique_ptr<IStmt> fun_decl() {
@@ -214,7 +212,7 @@ private:
             lbrace, ParserError::missing_opening_brace
         );
 
-        return std::make_unique<FunStmt>(
+        return IStmt::make_unique<FunStmt>(
             id,
             std::move(params),
             block()
@@ -256,7 +254,7 @@ private:
             else_branch = statement();
         }
 
-        return std::make_unique<IfStmt>(
+        return IStmt::make_unique<IfStmt>(
             std::move(condition),
             std::move(then_branch),
             std::move(else_branch)
@@ -270,14 +268,14 @@ private:
         if (!state_.check(TokenType::semicolon)) {
             value = expression();
         } else {
-            value = std::make_unique<LiteralExpr>(
+            value = IExpr::make_unique<LiteralExpr>(
                 Token{ TokenType::kw_nil, "nil", state_.current()->line, Nil{} }
             );
         }
 
         try_consume_semicolon();
 
-        return std::make_unique<ReturnStmt>(
+        return IStmt::make_unique<ReturnStmt>(
             keyword, std::move(value)
         );
     }
@@ -303,7 +301,7 @@ private:
         if (!state_.check(TokenType::semicolon)) {
             condition = expression();
         } else {
-            condition = std::make_unique<LiteralExpr>(
+            condition = IExpr::make_unique<LiteralExpr>(
                 Token{
                     TokenType::kw_true, "true",
                     state_.current()->line, true
@@ -346,18 +344,18 @@ private:
         if (increment) {
             std::vector<std::unique_ptr<IStmt>> full_stmts;
             full_stmts.emplace_back(std::move(stmt));
-            full_stmts.emplace_back(std::make_unique<ExpressionStmt>(std::move(increment)));
-            stmt = std::make_unique<BlockStmt>(std::move(full_stmts));
+            full_stmts.emplace_back(IStmt::make_unique<ExpressionStmt>(std::move(increment)));
+            stmt = IStmt::make_unique<BlockStmt>(std::move(full_stmts));
         }
 
-        auto loop = std::make_unique<WhileStmt>(
+        auto loop = IStmt::make_unique<WhileStmt>(
             std::move(condition),
             std::move(stmt)
         );
 
         full_body.emplace_back(std::move(loop));
 
-        return std::make_unique<BlockStmt>(
+        return IStmt::make_unique<BlockStmt>(
             std::move(full_body)
         );
     }
@@ -373,7 +371,7 @@ private:
             TokenType::rparen, ParserError::missing_closing_paren
         );
 
-        return std::make_unique<WhileStmt>(
+        return IStmt::make_unique<WhileStmt>(
             std::move(condition),
             statement()
         );
@@ -395,7 +393,7 @@ private:
     }
 
     std::unique_ptr<IStmt> block_stmt() {
-        return std::make_unique<BlockStmt>(block());
+        return IStmt::make_unique<BlockStmt>(block());
     }
 
     std::unique_ptr<IStmt> print_stmt() {
@@ -403,7 +401,7 @@ private:
 
         try_consume_semicolon();
 
-        return std::make_unique<PrintStmt>(std::move(expr));
+        return IStmt::make_unique<PrintStmt>(std::move(expr));
     }
 
     std::unique_ptr<IStmt> expression_stmt() {
@@ -411,7 +409,7 @@ private:
 
         try_consume_semicolon();
 
-        return std::make_unique<ExpressionStmt>(std::move(expr));
+        return IStmt::make_unique<ExpressionStmt>(std::move(expr));
     }
 
 
@@ -430,10 +428,9 @@ private:
             Token op{ state_.peek_previous() };
             auto rvalue = assignment_expr();
 
-            auto vexpr = dynamic_cast<VariableExpr*>(expr.get());
-            if (vexpr) {
-                return std::make_unique<AssignExpr>(
-                    vexpr->identifier, std::move(op), std::move(rvalue)
+            if (expr->is<VariableExpr>()) {
+                return IExpr::make_unique<AssignExpr>(
+                    expr->as<VariableExpr>().identifier, std::move(op), std::move(rvalue)
                 );
             } else {
                 const Token& primary{ expr->accept(ExprGetPrimaryTokenVisitor{}) };
@@ -454,7 +451,7 @@ private:
         using enum TokenType;
         while (state_.match(kw_or)) {
             Token op{ state_.peek_previous() };
-            expr = std::make_unique<LogicalExpr>(
+            expr = IExpr::make_unique<LogicalExpr>(
                 op, std::move(expr), and_expr()
             );
         }
@@ -468,7 +465,7 @@ private:
         using enum TokenType;
         while (state_.match(kw_and)) {
             Token op{ state_.peek_previous() };
-            expr = std::make_unique<LogicalExpr>(
+            expr = IExpr::make_unique<LogicalExpr>(
                 op, std::move(expr), equality_expr()
             );
         }
@@ -484,7 +481,7 @@ private:
         using enum TokenType;
         while (state_.match(bang_eq, eq_eq)) {
             Token op{ state_.peek_previous() };
-            expr = std::make_unique<BinaryExpr>(
+            expr = IExpr::make_unique<BinaryExpr>(
                 op, std::move(expr), comparison_expr()
             );
         }
@@ -498,7 +495,7 @@ private:
         using enum TokenType;
         while (state_.match(greater, greater_eq, less, less_eq)) {
             Token op{ state_.peek_previous() };
-            expr = std::make_unique<BinaryExpr>(
+            expr = IExpr::make_unique<BinaryExpr>(
                 op, std::move(expr), term_expr()
             );
 
@@ -513,7 +510,7 @@ private:
         using enum TokenType;
         while (state_.match(plus, minus)) {
             Token op{ state_.peek_previous() };
-            expr = std::make_unique<BinaryExpr>(
+            expr = IExpr::make_unique<BinaryExpr>(
                 op, std::move(expr), factor_expr()
             );
         }
@@ -527,7 +524,7 @@ private:
         using enum TokenType;
         while (state_.match(star, slash)) {
             Token op{ state_.peek_previous() };
-            expr = std::make_unique<BinaryExpr>(
+            expr = IExpr::make_unique<BinaryExpr>(
                 op, std::move(expr), unary_expr()
             );
         }
@@ -540,7 +537,7 @@ private:
         using enum TokenType;
         if (state_.match(bang, minus, plus)) {
             Token op{ state_.peek_previous() };
-            return std::make_unique<UnaryExpr>(
+            return IExpr::make_unique<UnaryExpr>(
                 op, unary_expr()
             );
         } else {
@@ -576,7 +573,7 @@ private:
             TokenType::rparen, ParserError::missing_closing_paren
         );
 
-        return std::make_unique<CallExpr>(
+        return IExpr::make_unique<CallExpr>(
             std::move(callee),
             std::move(args),
             closing_paren
@@ -588,7 +585,7 @@ private:
         using enum TokenType;
         if (state_.match(string, number, kw_true, kw_false, kw_nil)) {
 
-            return std::make_unique<LiteralExpr>(
+            return IExpr::make_unique<LiteralExpr>(
                 state_.peek_previous()
             );
         } else if (state_.match(lparen)) {
@@ -597,11 +594,11 @@ private:
 
             try_consume(rparen, ParserError::missing_closing_paren);
 
-            return std::make_unique<GroupedExpr>(
+            return IExpr::make_unique<GroupedExpr>(
                 std::move(expr)
             );
         } else if (state_.match(identifier)) {
-            return std::make_unique<VariableExpr>(
+            return IExpr::make_unique<VariableExpr>(
                 state_.peek_previous()
             );
         }
