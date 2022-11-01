@@ -19,6 +19,7 @@
 #include <fmt/format.h>
 #include "Environment.hpp"
 #include "ValueDecl.hpp"
+#include "VariantWrapper.hpp"
 
 
 // This file defines the underlying Value variants
@@ -233,62 +234,22 @@ public:
 // A wrapper class around a ValueVariant
 // that defines a more suitable interface
 // for common use patterns.
-class Value {
-private:
-    ValueVariant variant_;
-
+class Value : public VariantWrapper<Value, ValueVariant> {
 public:
-    // Wrapper around single argument c-tors of the variant:
-    // converting c-tors and copy/move c-tors.
-    template<typename Alternative>
-    requires not_same_as_remove_cvref<Alternative, Value>
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload): constraint above
-    Value(Alternative&& val) : variant_{ std::forward<Alternative>(val) } {}
+    using VariantWrapper<Value, ValueVariant>::VariantWrapper;
 
     // Nil constructor (aka std::monostate)
     Value() = default;
     // Value() : variant_{ Nil{} } {}
-
-
-    auto index() const noexcept { return variant_.index(); }
 
     ValueType type() const noexcept {
         assert(!variant_.valueless_by_exception());
         return static_cast<ValueType>(index());
     }
 
-
-    template<typename T>
-    bool is() const noexcept {
-        return std::holds_alternative<T>(variant_);
-    }
-
-    template<typename ...Ts>
-    bool is_any_of() const noexcept {
-        return (... || is<Ts>());
-    }
-
-
-    template<typename T>
-    T& as() & { return std::get<T>(variant_); }
-
-    template<typename T>
-    T as() && { return std::move(std::get<T>(variant_)); }
-
-    template<typename T>
-    const T& as() const& { return std::get<T>(variant_); }
-
-
-    template<visitor_of<ValueVariant> T>
-    auto accept(const T& visitor) const {
-        return std::visit(visitor, variant_);
-    }
-
-
     bool operator==(const Value& other) const noexcept {
         return variant_ == other.variant_;
     }
-
 };
 
 

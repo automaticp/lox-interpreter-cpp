@@ -26,7 +26,11 @@ concept backreferenceable_to = requires(const Alternative& alt) {
 // - a static 'pointer to base'-like conversion for compliant alternatives.
 //
 // Derive publicly or else I'm not responsible.
-
+//
+// Also re-expose the constructors via:
+//
+// using VariantWrapper<...>::VariantWrapper;
+//
 template<typename CRTP, typename VariantT>
 class VariantWrapper {
 protected:
@@ -64,6 +68,9 @@ public:
     {
         set_this_as_backreference();
     }
+
+    // Default constructor because maybe you need one
+    VariantWrapper() = default;
 
 
     auto index() const noexcept { return variant_.index(); }
