@@ -1,5 +1,5 @@
 #pragma once
-#include "ErrorReporter2.hpp"
+#include "ErrorReporter.hpp"
 #include "ContextError.hpp"
 #include "ErrorSender.hpp"
 #include "IError.hpp"

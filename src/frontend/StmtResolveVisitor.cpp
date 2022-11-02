@@ -1,7 +1,7 @@
 #include "StmtResolveVisitor.hpp"
 
 #include "FrontendErrors.hpp"
-#include "ErrorReporter2.hpp"
+#include "ErrorReporter.hpp"
 #include "Stmt.hpp"
 #include "Resolver.hpp"
 #include "StmtVisitors.hpp"

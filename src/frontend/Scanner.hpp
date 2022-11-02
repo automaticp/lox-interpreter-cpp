@@ -3,7 +3,7 @@
 #include "TokenType.hpp"
 #include "FrontendErrors.hpp"
 #include "ErrorSender.hpp"
-#include "ErrorReporter2.hpp"
+#include "ErrorReporter.hpp"
 #include <vector>
 #include <string>
 #include <string_view>

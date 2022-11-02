@@ -1,6 +1,6 @@
 #pragma once
 #include "Environment.hpp"
-#include "ErrorReporter2.hpp"
+#include "ErrorReporter.hpp"
 #include "InterpreterError.hpp"
 #include "ErrorSender.hpp"
 #include "Expr.hpp"

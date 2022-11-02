@@ -4,7 +4,7 @@
 #include "Stmt.hpp"
 #include "ErrorSender.hpp"
 #include "FrontendErrors.hpp"
-#include "ErrorReporter2.hpp"
+#include "ErrorReporter.hpp"
 #include <memory>
 #include <vector>
 #include <stack>
