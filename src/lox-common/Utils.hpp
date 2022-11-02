@@ -1,6 +1,8 @@
 #pragma once
+#include <fmt/format.h>
 #include <type_traits>
 #include <string_view>
+#include <string>
 #include <array>
 #include <charconv>
 #include <cassert>
@@ -54,5 +56,31 @@ concept not_derived_from_remove_cvref =
         std::remove_cvref_t<T>,
         std::remove_cvref_t<U>
     >;
+
+
+
+
+
+
+
+namespace detail {
+
+// Utils for error reporting
+
+inline std::string_view details_sep(std::string_view details) {
+    constexpr size_t line_wrap_limit{ 16 }; // Chosen arbitrarily
+    return (details.size() < line_wrap_limit ? ": " : ":\n    ");
+}
+
+inline std::string details_tail(std::string_view details) {
+    if (details.empty()) return ".";
+    return fmt::format(
+        "{:s}{:s}.",
+        details_sep(details),
+        details
+    );
+}
+
+} // namespace detail
 
 
