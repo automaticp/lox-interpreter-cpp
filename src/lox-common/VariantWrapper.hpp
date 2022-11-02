@@ -78,7 +78,7 @@ public:
 
     // Accept visitor
     template<visitor_of<VariantT> V>
-    auto accept(V&& visitor) const {
+    decltype(auto) accept(V&& visitor) const {
         return std::visit(std::forward<V>(visitor), variant_);
     }
 

@@ -235,6 +235,7 @@ public:
 
 
 inline std::string name_of(const auto& expr_or_stmt) {
+    // Convert to string from string_view as well
     return std::string(expr_or_stmt.accept(UserFriendlyNameVisitor{}));
 }
 
@@ -264,7 +265,7 @@ public:
     }
 
     result_t operator()(const GroupedExpr& expr) const {
-        return expr.expr->accept(*this); // WARN: returning reference to a temporary
+        return expr.expr->accept(*this);
     }
 
     result_t operator()(const VariableExpr& expr) const {
@@ -284,5 +285,11 @@ public:
     }
 
 };
+
+
+
+inline decltype(auto) primary_token_of(const Expr& expr) {
+    return expr.accept(ExprGetPrimaryTokenVisitor{});
+}
 
 
