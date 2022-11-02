@@ -1,8 +1,7 @@
 #include "ResolveVisitor.hpp"
 #include "Resolver.hpp"
 
-#include "ExprVisitors.hpp"
-#include "StmtVisitors.hpp"
+#include "CommonVisitors.hpp"
 
 
 

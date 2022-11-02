@@ -6,7 +6,7 @@
 #include "Scanner.hpp"
 #include "Parser.hpp"
 #include "Interpreter.hpp"
-#include "ExprVisitors.hpp"
+#include "CommonVisitors.hpp"
 #include "Resolver.hpp"
 #include "Builtins.hpp"
 #include "Frontend.hpp"
@@ -106,7 +106,7 @@ public:
         if (is_debug_parser_mode()) {
             std::cout << "[Debug @Parser]:\n";
             for (const auto& stmt: new_stmts) {
-                std::cout << stmt->accept(StmtASTPrinterVisitor{}) << '\n';
+                std::cout << stmt->accept(ASTPrintVisitor{}) << '\n';
             }
         }
 

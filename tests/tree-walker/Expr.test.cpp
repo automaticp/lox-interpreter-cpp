@@ -1,13 +1,13 @@
 #include <doctest/doctest.h>
 #include <memory>
-#include "ExprVisitors.hpp"
+#include "CommonVisitors.hpp"
 #include "Expr.hpp"
 #include "Token.hpp"
 #include "TokenType.hpp"
 
 
 static auto print(const Expr& expr) {
-    return expr.accept(ExprASTPrinterVisitor{});
+    return expr.accept(ASTPrintVisitor{});
 }
 
 

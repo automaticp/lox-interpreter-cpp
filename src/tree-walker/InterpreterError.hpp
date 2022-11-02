@@ -2,7 +2,7 @@
 #include "IError.hpp"
 #include "Token.hpp"
 #include "Utils.hpp"
-#include "ExprVisitors.hpp"
+#include "CommonVisitors.hpp"
 #include "Expr.hpp"
 #include <boost/unordered_map.hpp>
 #include <fmt/format.h>
@@ -35,7 +35,7 @@ public:
     InterpreterError(Type type, const Expr& expr, std::string details) :
         type{ type },
         token{ expr.accept(ExprGetPrimaryTokenVisitor{}) },
-        expr_name{ expr.accept(ExprUserFriendlyNameVisitor{}) },
+        expr_name{ expr.accept(UserFriendlyNameVisitor{}) },
         details{ std::move(details) }
     {}
 

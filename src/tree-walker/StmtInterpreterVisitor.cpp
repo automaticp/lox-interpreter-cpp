@@ -1,7 +1,7 @@
 #include "StmtInterpreterVisitor.hpp"
 #include "Environment.hpp"
 #include "Stmt.hpp"
-#include "ExprVisitors.hpp"
+#include "CommonVisitors.hpp"
 #include "Token.hpp"
 #include "Value.hpp"
 

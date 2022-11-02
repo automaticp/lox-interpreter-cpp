@@ -2,7 +2,7 @@
 #include "ErrorReporter.hpp"
 #include "FrontendErrors.hpp"
 #include "ErrorSender.hpp"
-#include "ExprVisitors.hpp"
+#include "CommonVisitors.hpp"
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Token.hpp"
