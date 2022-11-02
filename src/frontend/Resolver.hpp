@@ -1,6 +1,5 @@
 #pragma once
-#include "ExprResolveVisitor.hpp"
-#include "StmtResolveVisitor.hpp"
+#include "ResolveVisitor.hpp"
 #include "Stmt.hpp"
 #include "ErrorSender.hpp"
 #include "FrontendErrors.hpp"
@@ -36,9 +35,8 @@ public:
     using depth_map_t = boost::unordered_map<const Expr*, size_t>;
 
 private:
-    StmtResolveVisitor visitor_;
-    friend StmtResolveVisitor;
-    friend ExprResolveVisitor;
+    friend ResolveVisitor;
+    ResolveVisitor visitor_;
 
     scope_stack_t scope_stack_;
     scope_type_stack_t scope_type_stack_;
