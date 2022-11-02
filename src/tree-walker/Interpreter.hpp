@@ -1,37 +1,37 @@
 #pragma once
-#include "Environment.hpp"
-#include "ErrorReporter.hpp"
+#include "InterpretVisitor.hpp"
 #include "InterpreterError.hpp"
 #include "ErrorSender.hpp"
+#include "Environment.hpp"
 #include "Expr.hpp"
-#include "CommonVisitors.hpp"
-#include "ExprInterpreterVisitor.hpp"
-#include "StmtInterpreterVisitor.hpp"
-#include "Value.hpp"
 #include "Stmt.hpp"
-#include "Builtins.hpp"
+#include "Value.hpp"
 #include "Resolver.hpp"
 #include <span>
+#include <memory>
+
+
 
 class Interpreter : private ErrorSender<InterpreterError> {
 private:
     Resolver& resolver_;
     Environment env_;
-    StmtInterpreterVisitor visitor_;
 
-    // Another hack that shows the fragility of the design
-    friend StmtInterpreterVisitor;
-    friend ExprInterpreterVisitor;
+    friend InterpretVisitor;
+    InterpretVisitor visitor_;
 
 public:
     Interpreter(ErrorReporter& err, Resolver& resolver) :
-        ErrorSender{ err }, resolver_{ resolver }, visitor_{ env_, *this }, env_{}
+        ErrorSender{ err },
+        resolver_{ resolver },
+        env_{},
+        visitor_{ *this, env_ }
     {}
 
     bool interpret(std::span<const std::unique_ptr<Stmt>> statements) {
         try {
             for (const auto& statement : statements) {
-                visitor_.execute(*statement);
+                statement->accept(visitor_);
             }
             return true;
         } catch (InterpreterError::Type) {
@@ -41,9 +41,9 @@ public:
 
     bool interpret(std::span<const std::unique_ptr<Stmt>> statements, Environment& env) {
         try {
-            StmtInterpreterVisitor local_visitor{ env, *this };
+            InterpretVisitor local_visitor{ *this, env };
             for (const auto& statement : statements) {
-                local_visitor.execute(*statement);
+                statement->accept(local_visitor);
             }
             return true;
         } catch (InterpreterError::Type) {
@@ -58,3 +58,68 @@ private:
         throw type;
     }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Am I the only one who finds the word 'Interpreter' really hard to spell?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Interrprpperpepreprter

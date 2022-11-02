@@ -1,16 +1,26 @@
-#include "ExprInterpreterVisitor.hpp"
+#include "InterpretVisitor.hpp"
 
-#include "Expr.hpp"
-#include "TokenType.hpp"
-#include "Value.hpp"
 #include "Environment.hpp"
 #include "Interpreter.hpp"
-#include "ValueDecl.hpp"
+#include "InterpreterError.hpp"
+#include "Value.hpp"
 #include <fmt/format.h>
-#include <variant>
+#include <vector>
+
+
+
+
+
+
+
 
 
 // Specialization of Function call with the Interpreter
+
+
+
+
+
 template<>
 Value Function::operator()<Interpreter>(Interpreter& interpreter, std::span<Value> args) {
     assert(declaration_);
@@ -45,23 +55,38 @@ Value BuiltinFunction::operator()<Interpreter>(Interpreter&, std::span<Value> ar
 
 
 
+
+
+
+
+// Private methods
+
+
+
+
+
 // Interprets the expression and decays the result.
 // Decay collapses ValueHandle into the wrapped type.
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::evaluate(const Expr& expr) const {
+Value InterpretVisitor::evaluate(const Expr& expr) const {
     return decay(expr.accept(*this));
 }
 
 // Interprets the expression without decaying the result.
 // Used when value could be mutated through a reference:
 // in methods, closures, assignment, etc.
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::evaluate_without_decay(const Expr& expr) const {
+Value InterpretVisitor::evaluate_without_decay(const Expr& expr) const {
     return expr.accept(*this);
 }
 
 
-bool ExprInterpreterVisitor::is_truthful(const Value& value) {
+void InterpretVisitor::execute(const Stmt& stmt) const {
+    stmt.accept(*this);
+}
+
+
+
+
+bool InterpretVisitor::is_truthful(const Value& value) {
     if (value.is<Nil>()) {
         return false;
     }
@@ -74,14 +99,54 @@ bool ExprInterpreterVisitor::is_truthful(const Value& value) {
 }
 
 
-void ExprInterpreterVisitor::report_error(InterpreterError::Type type, const Expr& expr, std::string_view details) const {
-    interpreter.send_error(type, expr, std::string(details));
+
+template<typename T>
+void InterpretVisitor::check_type(const Expr& expr, const Value& val) const {
+    if (!val.is<T>()) {
+        report_error_and_abort(
+            InterpreterError::Type::unexpected_type, expr,
+            fmt::format("Expected {:s}, Encountered {:s}", type_name(Value{T{}}), type_name(val))
+        );
+    }
 }
 
 
-void ExprInterpreterVisitor::report_error_and_abort(InterpreterError::Type type, const Expr& expr, std::string_view details) const {
+template<typename T1, typename T2>
+void InterpretVisitor::check_type(const Expr& expr, const Value& val1, const Value& val2) const {
+    check_type<T1>(expr, val1);
+    check_type<T2>(expr, val2);
+}
+
+
+
+
+void InterpretVisitor::report_error(InterpreterError::Type type, const Expr& expr, std::string_view details) const {
+    interpreter_.send_error(type, expr, std::string(details));
+}
+
+
+void InterpretVisitor::report_error_and_abort(InterpreterError::Type type, const Expr& expr, std::string_view details) const {
     report_error(type, expr, details);
-    interpreter.abort_by_exception(type);
+    interpreter_.abort_by_exception(type);
+}
+
+
+template<typename CallableValue>
+CallableValue& InterpretVisitor::get_invokable(Value& callee, std::vector<Value>& args, const CallExpr& expr) const {
+    CallableValue& function = callee.as<CallableValue>();
+
+    if (function.arity() != args.size()) {
+        report_error_and_abort(
+            InterpreterError::Type::wrong_num_of_arguments, expr,
+            fmt::format(
+                "Expected {}, Encountered {}",
+                function.arity(),
+                args.size()
+            )
+        );
+    }
+
+    return function;
 }
 
 
@@ -89,8 +154,15 @@ void ExprInterpreterVisitor::report_error_and_abort(InterpreterError::Type type,
 
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const LiteralExpr& expr) const {
+
+// Expr visitor overloads
+
+
+
+
+
+
+Value InterpretVisitor::operator()(const LiteralExpr& expr) const {
     assert(expr.token.literal.has_value());
     return {
         std::visit(
@@ -101,8 +173,9 @@ ExprInterpreterVisitor::operator()(const LiteralExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const UnaryExpr& expr) const {
+
+
+Value InterpretVisitor::operator()(const UnaryExpr& expr) const {
     Value val{ evaluate(*expr.operand) };
 
     switch (expr.op) {
@@ -124,8 +197,9 @@ ExprInterpreterVisitor::operator()(const UnaryExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
+
+
+Value InterpretVisitor::operator()(const BinaryExpr& expr) const {
     Value lhs{ evaluate(*expr.lhs) };
     Value rhs{ evaluate(*expr.rhs) };
 
@@ -146,14 +220,13 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
             } else if (lhs.is<String>() && rhs.is<String>()) {
                 return lhs.as<String>() + rhs.as<String>();
             } else {
-                report_error(
+                report_error_and_abort(
                     InterpreterError::Type::unexpected_type, expr,
                     fmt::format(
                         "Expected a pair of Numbers or Strings, Encountered {:s} and {:s}",
                         type_name(lhs), type_name(rhs)
                     )
                 );
-                interpreter.abort_by_exception(InterpreterError::Type::unexpected_type);
             }
             break;
         case greater:
@@ -180,8 +253,9 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
+
+
+Value InterpretVisitor::operator()(const GroupedExpr& expr) const {
     // Does not decay, so that:
     //
     // fun f() { ... }
@@ -193,19 +267,20 @@ ExprInterpreterVisitor::operator()(const GroupedExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
+
+
+Value InterpretVisitor::operator()(const VariableExpr& expr) const {
 
     // FIXME now that the global scope is proper scope
-    auto& depths = interpreter.resolver_.depth_map();
+    auto& depths = interpreter_.resolver_.depth_map();
     auto it = depths.find(&Expr::from_alternative(expr));
 
     ValueHandle handle{};
 
     if (it != depths.end()) {
-        handle = env.get_at(it->second, expr.identifier.lexeme);
+        handle = env_.get_at(it->second, expr.identifier.lexeme);
     } else {
-        handle = interpreter.env_.get(expr.identifier.lexeme);
+        handle = interpreter_.env_.get(expr.identifier.lexeme);
         if (!handle) {
             report_error_and_abort(
                 InterpreterError::Type::undefined_variable,
@@ -219,13 +294,14 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
-    auto& depths = interpreter.resolver_.depth_map();
+
+
+Value InterpretVisitor::operator()(const AssignExpr& expr) const {
+    auto& depths = interpreter_.resolver_.depth_map();
 
     auto it = depths.find(&Expr::from_alternative(expr));
     if (it != depths.end()) {
-        ValueHandle val = env.assign_at(
+        ValueHandle val = env_.assign_at(
             it->second,
             expr.identifier.lexeme,
             evaluate(*expr.rvalue)
@@ -233,7 +309,7 @@ ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
         assert(val); // This whole thing is so fragile, I hate it
         return *val;
     } else {
-        ValueHandle val = interpreter.env_.assign(
+        ValueHandle val = interpreter_.env_.assign(
             expr.identifier.lexeme,
             evaluate(*expr.rvalue)
         );
@@ -246,8 +322,9 @@ ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const LogicalExpr& expr) const {
+
+
+Value InterpretVisitor::operator()(const LogicalExpr& expr) const {
     Value lhs{ evaluate(*expr.lhs) };
 
     if (expr.op.type == TokenType::kw_or) {
@@ -260,8 +337,9 @@ ExprInterpreterVisitor::operator()(const LogicalExpr& expr) const {
 }
 
 
-ExprInterpreterVisitor::return_type
-ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
+
+
+Value InterpretVisitor::operator()(const CallExpr& expr) const {
 
     Value callee_maybe_handle = evaluate_without_decay(*expr.callee);
     Value& callee = decay(callee_maybe_handle);
@@ -273,9 +351,9 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
     }
 
     if (callee.is<Function>()) {
-        return get_invokable<Function>(callee, args, expr)(this->interpreter, args);
+        return get_invokable<Function>(callee, args, expr)(this->interpreter_, args);
     } else if (callee.is<BuiltinFunction>()) {
-        return get_invokable<BuiltinFunction>(callee, args, expr)(this->interpreter, args);
+        return get_invokable<BuiltinFunction>(callee, args, expr)(this->interpreter_, args);
     } else {
         report_error_and_abort(
             InterpreterError::Type::unexpected_type, expr,
@@ -293,20 +371,114 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
 
 
 
-template<typename CallableValue>
-CallableValue& ExprInterpreterVisitor::get_invokable(Value& callee, std::vector<Value>& args, const CallExpr& expr) const {
-    CallableValue& function = callee.as<CallableValue>();
 
-    if (function.arity() != args.size()) {
-        report_error_and_abort(
-            InterpreterError::Type::wrong_num_of_arguments, expr,
-            fmt::format(
-                "Expected {}, Encountered {}",
-                function.arity(),
-                args.size()
-            )
-        );
+
+
+
+
+// Stmt visitor overloads
+
+
+
+
+
+
+
+void InterpretVisitor::operator()(const PrintStmt& stmt) const {
+    auto value = evaluate(*stmt.expr);
+    std::cout << to_string(value) << '\n';
+}
+
+
+
+
+void InterpretVisitor::operator()(const ExpressionStmt& stmt) const {
+    evaluate(*stmt.expr);
+}
+
+
+
+
+void InterpretVisitor::operator()(const VarStmt& stmt) const {
+    env_.define(stmt.identifier.lexeme, evaluate(*stmt.init));
+}
+
+
+
+
+void InterpretVisitor::operator()(const BlockStmt& stmt) const {
+    Environment block_env{ &env_ };
+    InterpretVisitor block_visitor{ interpreter_, block_env };
+
+    for (const auto& statement : stmt.statements) {
+        block_visitor.execute(*statement);
+    }
+}
+
+
+
+
+void InterpretVisitor::operator()(const IfStmt& stmt) const {
+    if (is_truthful(evaluate(*stmt.condition))) {
+        execute(*stmt.then_branch);
+    } else if (stmt.else_branch) {
+        execute(*stmt.else_branch);
+    }
+}
+
+
+
+
+void InterpretVisitor::operator()(const WhileStmt& stmt) const {
+    while (is_truthful(evaluate(*stmt.condition))) {
+        execute(*stmt.statement);
+    }
+}
+
+
+
+
+void InterpretVisitor::operator()(const FunStmt& stmt) const {
+    // Hail Mary closure that copies EVERYTHING from outer scopes,
+    // essentially, storing the state of the entire program at capture time.
+    // Absolutely horrible, but should work.
+    //
+    // First, intialize with the copy of the current scope.
+    Environment closure{ nullptr, env_.map() };
+
+    // Ther recursively copy values for symbols not yet in closure,
+    // starting from the inner-most enclosing scope.
+    Environment* enclosing{ env_.enclosing() };
+    while (enclosing) {
+        for (const auto& elem : enclosing->map()) {
+            if (!closure.get(elem.first)) {
+                closure.define(elem.first, elem.second);
+            }
+        }
+        enclosing = enclosing->enclosing();
     }
 
-    return function;
+    // Add this function to the current environment.
+    ValueHandle fun_handle = env_.define(
+        stmt.name.lexeme,
+        Function{
+            &stmt,
+            std::move(closure)
+        }
+    );
+
+    // Also add a copy? of itself to the closure.
+    fun_handle.unwrap_to<Function>().closure().define(stmt.name.lexeme, fun_handle.decay());
+
 }
+
+
+
+
+void InterpretVisitor::operator()(const ReturnStmt& stmt) const {
+    // Walk up the call stack with exceptions.
+    // To be caught in the Function::operator()
+    throw evaluate(*stmt.expr);
+}
+
+
