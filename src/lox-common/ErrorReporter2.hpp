@@ -1,5 +1,6 @@
 #pragma once
 #include "Token.hpp"
+#include "IError.hpp"
 #include <boost/unordered_map.hpp>
 #include <fmt/core.h>
 #include <string_view>
@@ -10,36 +11,6 @@
 #include <cassert>
 #include <iostream>
 #include <algorithm>
-
-// The only thing that statically defines
-// the set of all possible error types.
-// Could be removed, maybe, along with
-// the category() method.
-enum class ErrorCategory {
-    context,
-    scanner,
-    parser,
-    import,
-    resolver,
-    interpreter,
-    other
-};
-
-
-
-
-class IError {
-public:
-    virtual ErrorCategory category() const = 0;
-    virtual std::string message() const = 0;
-
-    IError() = default;
-    IError(const IError&) = default;
-    IError(IError&&) = default;
-    IError& operator=(const IError&) = default;
-    IError& operator=(IError&&) = default;
-    virtual ~IError() = default;
-};
 
 
 
