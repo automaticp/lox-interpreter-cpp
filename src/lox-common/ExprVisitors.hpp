@@ -5,7 +5,6 @@
 #include <concepts>
 #include <fmt/format.h>
 #include "Value.hpp"
-#include "Errors.hpp"
 
 
 
@@ -72,3 +71,5 @@ struct ExprUserFriendlyNameVisitor {
     return_type operator()(const CallExpr& expr) const;
 };
 
+
+std::string name_of(const Expr& expr);

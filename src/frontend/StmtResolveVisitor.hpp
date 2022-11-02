@@ -26,14 +26,14 @@ public:
     return_type operator()(const FunStmt& stmt) const;
     return_type operator()(const ReturnStmt& stmt) const;
 
-    StmtResolveVisitor(Resolver& resolver, ErrorReporter& err) :
-        ExprResolveVisitor(resolver, err) {}
+    StmtResolveVisitor(Resolver& resolver) :
+        ExprResolveVisitor{ resolver } {}
 
 private:
     using ExprResolveVisitor::resolve;
     void resolve(const Stmt& stmt) const;
     void resolve_function(const FunStmt& stmt) const;
 
-    bool try_declare(const Stmt& stmt, const std::string& name) const;
+    bool try_declare(const VarStmt& stmt, const std::string& name) const;
 };
 

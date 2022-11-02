@@ -1,6 +1,7 @@
 #pragma once
 #include "ErrorReporter.hpp"
-#include "Errors.hpp"
+#include "FrontendErrors.hpp"
+#include "ErrorSender.hpp"
 #include "ExprVisitors.hpp"
 #include "Expr.hpp"
 #include "Stmt.hpp"
@@ -15,7 +16,7 @@
 #include <span>
 
 
-class Parser {
+class Parser : private ErrorSender<ParserError> {
 private:
     class ParserState {
     public:
@@ -97,7 +98,6 @@ private:
     };
 
 
-    ErrorReporter& err_;
     std::vector<std::unique_ptr<Stmt>> statements_;
 
     ParserState state_;
@@ -109,7 +109,7 @@ private:
 
 
 public:
-    Parser(ErrorReporter& err) : err_{ err } {}
+    Parser(ErrorReporter& err) : ErrorSender{ err } {}
 
     // returns a view of new statements
     std::span<std::unique_ptr<Stmt>>
@@ -121,7 +121,7 @@ public:
         while (!state_.is_eof()) {
             try {
                 statements_.emplace_back(declaration());
-            } catch (ParserError) {
+            } catch (ParserError::Type) {
                 synchronize_on_next_statement();
             }
         }
@@ -163,7 +163,7 @@ private:
 
     std::unique_ptr<Stmt> var_decl() {
         const Token& id = try_consume(
-            TokenType::identifier, ParserError::expected_identifier
+            TokenType::identifier, ParserError::Type::expected_identifier
         );
 
         // FIXME: could be LiteralExpr(nil) or its own NullExpr;
@@ -184,11 +184,11 @@ private:
         using enum TokenType;
 
         const Token& id = try_consume(
-            identifier, ParserError::expected_identifier
+            identifier, ParserError::Type::expected_identifier
         );
 
         try_consume(
-            lparen, ParserError::missing_opening_paren
+            lparen, ParserError::Type::missing_opening_paren
         );
 
         std::vector<Token> params;
@@ -197,19 +197,19 @@ private:
                 params.emplace_back(
                     try_consume(
                         identifier,
-                        ParserError::expected_identifier
+                        ParserError::Type::expected_identifier
                     )
                 );
             } while (state_.match(comma));
         }
 
         try_consume(
-            rparen, ParserError::missing_closing_paren
+            rparen, ParserError::Type::missing_closing_paren
         );
 
 
         try_consume(
-            lbrace, ParserError::missing_opening_brace
+            lbrace, ParserError::Type::missing_opening_brace
         );
 
         return Stmt::make_unique<FunStmt>(
@@ -239,13 +239,13 @@ private:
 
     std::unique_ptr<Stmt> if_stmt() {
         try_consume(
-            TokenType::lparen, ParserError::missing_opening_paren
+            TokenType::lparen, ParserError::Type::missing_opening_paren
         );
 
         auto condition = expression();
 
         try_consume(
-            TokenType::rparen, ParserError::missing_closing_paren
+            TokenType::rparen, ParserError::Type::missing_closing_paren
         );
 
         auto then_branch = statement();
@@ -283,7 +283,7 @@ private:
 
     std::unique_ptr<Stmt> for_stmt() {
         try_consume(
-            TokenType::lparen, ParserError::missing_opening_paren
+            TokenType::lparen, ParserError::Type::missing_opening_paren
         );
 
 
@@ -317,7 +317,7 @@ private:
         }
 
         try_consume(
-            TokenType::rparen, ParserError::missing_closing_paren
+            TokenType::rparen, ParserError::Type::missing_closing_paren
         );
 
 
@@ -362,13 +362,13 @@ private:
 
     std::unique_ptr<Stmt> while_stmt() {
         try_consume(
-            TokenType::lparen, ParserError::missing_opening_paren
+            TokenType::lparen, ParserError::Type::missing_opening_paren
         );
 
         auto condition = expression();
 
         try_consume(
-            TokenType::rparen, ParserError::missing_closing_paren
+            TokenType::rparen, ParserError::Type::missing_closing_paren
         );
 
         return Stmt::make_unique<WhileStmt>(
@@ -386,7 +386,7 @@ private:
         }
 
         try_consume(
-            TokenType::rbrace, ParserError::missing_closing_brace
+            TokenType::rbrace, ParserError::Type::missing_closing_brace
         );
 
         return stmts;
@@ -435,7 +435,7 @@ private:
             } else {
                 const Token& primary{ expr->accept(ExprGetPrimaryTokenVisitor{}) };
                 report_error(
-                    ParserError::invalid_assignment_target,
+                    ParserError::Type::invalid_assignment_target,
                     primary,
                     primary.lexeme
                 );
@@ -570,7 +570,7 @@ private:
         }
 
         const Token& closing_paren = try_consume(
-            TokenType::rparen, ParserError::missing_closing_paren
+            TokenType::rparen, ParserError::Type::missing_closing_paren
         );
 
         return Expr::make_unique<CallExpr>(
@@ -592,7 +592,7 @@ private:
 
             auto expr = expression();
 
-            try_consume(rparen, ParserError::missing_closing_paren);
+            try_consume(rparen, ParserError::Type::missing_closing_paren);
 
             return Expr::make_unique<GroupedExpr>(
                 std::move(expr)
@@ -603,7 +603,7 @@ private:
             );
         }
 
-        report_error_and_abort(ParserError::unknown_primary_expression);
+        report_error_and_abort(ParserError::Type::unknown_primary_expression);
         return { nullptr };
     }
 
@@ -611,7 +611,7 @@ private:
 
 
 
-    const Token& try_consume(TokenType expected, ParserError fail_error) {
+    const Token& try_consume(TokenType expected, ParserError::Type fail_error) {
         if (!state_.match(expected)) {
             report_error_and_abort(fail_error);
         }
@@ -620,7 +620,7 @@ private:
 
     const Token& try_consume_semicolon() {
         return try_consume(
-            TokenType::semicolon, ParserError::missing_semicolon
+            TokenType::semicolon, ParserError::Type::missing_semicolon
         );
     }
 
@@ -659,24 +659,22 @@ private:
 
 
 
+    void abort_by_exception(ParserError::Type type) const noexcept(false) {
+        throw type;
+    }
 
-    void abort_parsing_by_throwing_last_error() noexcept(false) {
-        throw err_.get_parser_errors().back();
+    void report_error(ParserError::Type type, std::string_view details = "") {
+        send_error(type, state_.peek(), std::string(details));
+    }
+
+    void report_error(ParserError::Type type, const Token& token, std::string_view details = "") {
+        send_error(type, token, std::string(details));
     }
 
 
-    void report_error(ParserError type, std::string_view details = "") {
-        err_.parser_error(type, state_.peek(), details);
-    }
-
-    void report_error(ParserError type, const Token& token, std::string_view details = "") {
-        err_.parser_error(type, token, details);
-    }
-
-
-    void report_error_and_abort(ParserError type, std::string_view details = "") {
+    void report_error_and_abort(ParserError::Type type, std::string_view details = "") {
         report_error(type, details);
-        abort_parsing_by_throwing_last_error();
+        abort_by_exception(type);
     }
 };
 

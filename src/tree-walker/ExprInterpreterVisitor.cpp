@@ -3,8 +3,6 @@
 #include "Expr.hpp"
 #include "TokenType.hpp"
 #include "Value.hpp"
-#include "ErrorReporter.hpp"
-#include "Errors.hpp"
 #include "Environment.hpp"
 #include "Interpreter.hpp"
 #include "ValueDecl.hpp"
@@ -76,8 +74,14 @@ bool ExprInterpreterVisitor::is_truthful(const Value& value) {
 }
 
 
-void ExprInterpreterVisitor::report_error(InterpreterError type, const Expr& expr, std::string_view details) const {
-    err.interpreter_error(type, expr, details);
+void ExprInterpreterVisitor::report_error(InterpreterError::Type type, const Expr& expr, std::string_view details) const {
+    interpreter.send_error(type, expr, std::string(details));
+}
+
+
+void ExprInterpreterVisitor::report_error_and_abort(InterpreterError::Type type, const Expr& expr, std::string_view details) const {
+    report_error(type, expr, details);
+    interpreter.abort_by_exception(type);
 }
 
 
@@ -143,13 +147,13 @@ ExprInterpreterVisitor::operator()(const BinaryExpr& expr) const {
                 return lhs.as<String>() + rhs.as<String>();
             } else {
                 report_error(
-                    InterpreterError::unexpected_type, expr,
+                    InterpreterError::Type::unexpected_type, expr,
                     fmt::format(
                         "Expected a pair of Numbers or Strings, Encountered {:s} and {:s}",
                         type_name(lhs), type_name(rhs)
                     )
                 );
-                abort_by_exception(InterpreterError::unexpected_type);
+                interpreter.abort_by_exception(InterpreterError::Type::unexpected_type);
             }
             break;
         case greater:
@@ -204,7 +208,7 @@ ExprInterpreterVisitor::operator()(const VariableExpr& expr) const {
         handle = interpreter.env_.get(expr.identifier.lexeme);
         if (!handle) {
             report_error_and_abort(
-                InterpreterError::undefined_variable,
+                InterpreterError::Type::undefined_variable,
                 expr, expr.identifier.lexeme
             );
         }
@@ -235,7 +239,7 @@ ExprInterpreterVisitor::operator()(const AssignExpr& expr) const {
         );
 
         if (!val) {
-            report_error_and_abort(InterpreterError::undefined_variable, expr, expr.identifier.lexeme);
+            report_error_and_abort(InterpreterError::Type::undefined_variable, expr, expr.identifier.lexeme);
         }
         return *val;
     }
@@ -274,7 +278,7 @@ ExprInterpreterVisitor::operator()(const CallExpr& expr) const {
         return get_invokable<BuiltinFunction>(callee, args, expr)(this->interpreter, args);
     } else {
         report_error_and_abort(
-            InterpreterError::unexpected_type, expr,
+            InterpreterError::Type::unexpected_type, expr,
             fmt::format(
                 "Expected {} or {}, Encountered {}",
                 type_name(Value(Function{ nullptr })),
@@ -295,7 +299,7 @@ CallableValue& ExprInterpreterVisitor::get_invokable(Value& callee, std::vector<
 
     if (function.arity() != args.size()) {
         report_error_and_abort(
-            InterpreterError::wrong_num_of_arguments, expr,
+            InterpreterError::Type::wrong_num_of_arguments, expr,
             fmt::format(
                 "Expected {}, Encountered {}",
                 function.arity(),

@@ -144,3 +144,8 @@ StmtUserFriendlyNameVisitor::return_type
 StmtUserFriendlyNameVisitor::operator()(const ReturnStmt&) const {
     return "Return Statement";
 }
+
+
+std::string name_of(const Stmt& stmt) {
+    return std::string(stmt.accept(StmtUserFriendlyNameVisitor{}));
+}

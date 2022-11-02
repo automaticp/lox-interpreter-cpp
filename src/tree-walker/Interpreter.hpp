@@ -1,7 +1,8 @@
 #pragma once
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
-#include "Errors.hpp"
+#include "InterpreterError.hpp"
+#include "ErrorSender.hpp"
 #include "Expr.hpp"
 #include "ExprVisitors.hpp"
 #include "StmtVisitors.hpp"
@@ -13,9 +14,8 @@
 #include "Resolver.hpp"
 #include <span>
 
-class Interpreter {
+class Interpreter : private ErrorSender<InterpreterError> {
 private:
-    ErrorReporter& err_;
     Resolver& resolver_;
     Environment env_;
     StmtInterpreterVisitor visitor_;
@@ -26,7 +26,7 @@ private:
 
 public:
     Interpreter(ErrorReporter& err, Resolver& resolver) :
-        err_{ err }, resolver_{ resolver }, visitor_{ err, env_, *this }, env_{}
+        ErrorSender{ err }, resolver_{ resolver }, visitor_{ env_, *this }, env_{}
     {}
 
     bool interpret(std::span<const std::unique_ptr<Stmt>> statements) {
@@ -35,23 +35,27 @@ public:
                 visitor_.execute(*statement);
             }
             return true;
-        } catch (InterpreterError) {
+        } catch (InterpreterError::Type) {
             return false;
         }
     }
 
     bool interpret(std::span<const std::unique_ptr<Stmt>> statements, Environment& env) {
         try {
-            StmtInterpreterVisitor local_visitor{ err_, env, *this };
+            StmtInterpreterVisitor local_visitor{ env, *this };
             for (const auto& statement : statements) {
                 local_visitor.execute(*statement);
             }
             return true;
-        } catch (InterpreterError) {
+        } catch (InterpreterError::Type) {
             return false;
         }
     }
 
     Environment& get_global_environment() noexcept { return env_; }
 
+private:
+    void abort_by_exception(InterpreterError::Type type) const noexcept(false) {
+        throw type;
+    }
 };

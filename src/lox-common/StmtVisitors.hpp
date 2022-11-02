@@ -44,3 +44,5 @@ public:
     return_type operator()(const ReturnStmt& stmt) const;
 };
 
+
+std::string name_of(const Stmt& stmt);

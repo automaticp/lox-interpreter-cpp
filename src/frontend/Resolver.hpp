@@ -2,6 +2,8 @@
 #include "ExprResolveVisitor.hpp"
 #include "StmtResolveVisitor.hpp"
 #include "Stmt.hpp"
+#include "ErrorSender.hpp"
+#include "FrontendErrors.hpp"
 #include "ErrorReporter.hpp"
 #include <memory>
 #include <vector>
@@ -26,7 +28,7 @@ enum class ScopeType {
 
 
 
-class Resolver {
+class Resolver : private ErrorSender<ResolverError> {
 public:
     using map_t = boost::unordered_map<std::string, ResolveState>;
     using scope_stack_t = std::vector<map_t>;
@@ -34,8 +36,9 @@ public:
     using depth_map_t = boost::unordered_map<const Expr*, size_t>;
 
 private:
-    ErrorReporter& err_;
     StmtResolveVisitor visitor_;
+    friend StmtResolveVisitor;
+    friend ExprResolveVisitor;
 
     scope_stack_t scope_stack_;
     scope_type_stack_t scope_type_stack_;
@@ -46,7 +49,7 @@ private:
 
 public:
     Resolver(ErrorReporter& err) :
-        err_{ err }, visitor_{ *this, err } {
+        ErrorSender{ err }, visitor_{ *this } {
             push_scope(ScopeType::global);
         }
 

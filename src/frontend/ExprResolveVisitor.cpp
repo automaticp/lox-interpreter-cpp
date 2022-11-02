@@ -1,5 +1,6 @@
 #include "ExprResolveVisitor.hpp"
-#include "Errors.hpp"
+#include "FrontendErrors.hpp"
+#include "ErrorReporter.hpp"
 #include "ExprVisitors.hpp"
 
 
@@ -20,7 +21,12 @@ void ExprResolveVisitor::resolve_local(const Expr& expr, const std::string& name
         }
     }
     // Not resolved
-    err_.resolver_error(ResolverError::undefined_variable, expr, name);
+    resolver_.send_error(
+        ResolverError::Type::undefined_variable,
+        expr.accept(ExprGetPrimaryTokenVisitor{}),
+        name_of(expr),
+        name
+    );
 }
 
 ExprResolveVisitor::return_type
@@ -50,9 +56,11 @@ ExprResolveVisitor::operator()(const VariableExpr& expr) const {
     if (!resolver_.is_in_global_scope()) {
         auto it = resolver_.top_scope().find(expr.identifier.lexeme);
         if (it != resolver_.top_scope().end() && it->second == ResolveState::declared) {
-            err_.resolver_error(
-                ResolverError::initialization_from_self,
-                Expr::from_alternative(expr), ""
+            resolver_.send_error(
+                ResolverError::Type::initialization_from_self,
+                expr.identifier,
+                name_of(Expr::from_alternative(expr)),
+                ""
             );
         }
     }

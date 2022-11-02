@@ -1,8 +1,10 @@
 #include "StmtResolveVisitor.hpp"
 
-#include "Errors.hpp"
+#include "FrontendErrors.hpp"
+#include "ErrorReporter.hpp"
 #include "Stmt.hpp"
 #include "Resolver.hpp"
+#include "StmtVisitors.hpp"
 
 void StmtResolveVisitor::resolve(const Stmt& stmt) const {
     stmt.accept(*this);
@@ -21,11 +23,13 @@ void StmtResolveVisitor::resolve_function(const FunStmt& stmt) const {
 }
 
 
-bool StmtResolveVisitor::try_declare(const Stmt& stmt, const std::string& name) const {
+bool StmtResolveVisitor::try_declare(const VarStmt& stmt, const std::string& name) const {
     bool success{ resolver_.declare(name) };
     if (!success) {
-        err_.resolver_error(
-            ResolverError::local_variable_redeclaration, stmt,
+        resolver_.send_error(
+            ResolverError::Type::local_variable_redeclaration,
+            stmt.identifier,
+            name_of(Stmt::from_alternative(stmt)),
             name
         );
     }
@@ -84,9 +88,11 @@ StmtResolveVisitor::operator()(const FunStmt& stmt) const {
 StmtResolveVisitor::return_type
 StmtResolveVisitor::operator()(const ReturnStmt& stmt) const {
     if (!resolver_.is_in_function()) {
-        err_.resolver_error(
-            ResolverError::return_from_global_scope,
-            Stmt::from_alternative(stmt), ""
+        resolver_.send_error(
+            ResolverError::Type::return_from_global_scope,
+            stmt.keyword,
+            name_of(Stmt::from_alternative(stmt)),
+            ""
         );
     }
 
