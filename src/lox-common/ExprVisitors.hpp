@@ -71,3 +71,5 @@ struct ExprUserFriendlyNameVisitor {
     return_type operator()(const CallExpr& expr) const;
 };
 
+
+std::string name_of(const Expr& expr);

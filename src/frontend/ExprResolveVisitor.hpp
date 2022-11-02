@@ -28,11 +28,10 @@ public:
     return_type operator()(const LogicalExpr& expr) const;
     return_type operator()(const CallExpr& expr) const;
 
-    ExprResolveVisitor(Resolver& resolver, ErrorReporter& err) :
-        resolver_{ resolver }, err_{ err } {}
+    ExprResolveVisitor(Resolver& resolver) :
+        resolver_{ resolver } {}
 protected:
     Resolver& resolver_;
-    ErrorReporter& err_;
 
 protected:
     void resolve(const Expr& expr) const;

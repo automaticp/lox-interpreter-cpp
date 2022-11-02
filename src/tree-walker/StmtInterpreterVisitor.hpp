@@ -19,8 +19,8 @@ class Interpreter;
 struct StmtInterpreterVisitor : protected ExprInterpreterVisitor {
 //
 public:
-    StmtInterpreterVisitor(ErrorReporter& err, Environment& env, Interpreter& interpreter) :
-        ExprInterpreterVisitor{ err, env, interpreter }
+    StmtInterpreterVisitor(Environment& env, Interpreter& interpreter) :
+        ExprInterpreterVisitor{ env, interpreter }
     {}
 
     using return_type = void;

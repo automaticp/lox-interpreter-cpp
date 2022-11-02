@@ -26,7 +26,7 @@ StmtInterpreterVisitor::operator()(const VarStmt& stmt) const {
 StmtInterpreterVisitor::return_type
 StmtInterpreterVisitor::operator()(const BlockStmt& stmt) const {
     Environment block_env{ &env };
-    StmtInterpreterVisitor block_visitor{ err, block_env, interpreter };
+    StmtInterpreterVisitor block_visitor{ block_env, interpreter };
 
     for (const auto& statement : stmt.statements) {
         block_visitor.execute(*statement);

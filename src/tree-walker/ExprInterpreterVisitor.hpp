@@ -1,6 +1,6 @@
 #pragma once
 #include "Value.hpp"
-#include "Errors.hpp"
+#include "InterpreterError.hpp"
 #include <fmt/format.h>
 
 
@@ -30,10 +30,9 @@ struct ExprInterpreterVisitor {
     return_type operator()(const LogicalExpr& expr) const;
     return_type operator()(const CallExpr& expr) const;
 
-    ExprInterpreterVisitor(ErrorReporter& err, Environment& env, Interpreter& interpreter) :
-        err{ err }, env{ env }, interpreter{ interpreter }  {}
+    ExprInterpreterVisitor(Environment& env, Interpreter& interpreter) :
+        env{ env }, interpreter{ interpreter }  {}
 
-    ErrorReporter& err;
     Environment& env;
     Interpreter& interpreter;
 protected:
@@ -47,7 +46,7 @@ protected:
     void check_type(const Expr& expr, const Value& val) const {
         if (!val.is<T>()) {
             report_error_and_abort(
-                InterpreterError::unexpected_type, expr,
+                InterpreterError::Type::unexpected_type, expr,
                 fmt::format("Expected {:s}, Encountered {:s}", type_name(Value{T{}}), type_name(val))
             );
         }
@@ -59,16 +58,9 @@ protected:
         check_type<T2>(expr, val2);
     }
 
-    void abort_by_exception(InterpreterError type) const noexcept(false) {
-        throw type;
-    }
+    void report_error(InterpreterError::Type type, const Expr& expr, std::string_view details = "") const;
 
-    void report_error(InterpreterError type, const Expr& expr, std::string_view details = "") const;
-
-    void report_error_and_abort(InterpreterError type, const Expr& expr, std::string_view details = "") const {
-        report_error(type, expr, details);
-        abort_by_exception(type);
-    }
+    void report_error_and_abort(InterpreterError::Type type, const Expr& expr, std::string_view details = "") const;
 
     template<typename CallableValue>
     CallableValue& get_invokable(Value& callee, std::vector<Value>& args, const CallExpr& expr) const;

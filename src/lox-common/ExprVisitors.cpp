@@ -152,3 +152,9 @@ ExprUserFriendlyNameVisitor::return_type
 ExprUserFriendlyNameVisitor::operator()(const CallExpr&) const {
     return "Call Expression";
 }
+
+
+
+std::string name_of(const Expr& expr) {
+    return std::string(expr.accept(ExprUserFriendlyNameVisitor{}));
+}

@@ -46,6 +46,9 @@ public:
         return !errors_.empty();
     }
 
+    const std::vector<std::unique_ptr<IError>>&
+    get_errors() const noexcept { return errors_; }
+
     ErrorReporter(const ErrorReporter&) = delete;
     ErrorReporter& operator=(const ErrorReporter&) = delete;
     ErrorReporter(ErrorReporter&&) = default;

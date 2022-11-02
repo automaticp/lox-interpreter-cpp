@@ -1,5 +1,4 @@
 #include "Scanner.hpp"
-#include "ErrorReporter.hpp"
 #include <doctest/doctest.h>
 #include <iostream>
 

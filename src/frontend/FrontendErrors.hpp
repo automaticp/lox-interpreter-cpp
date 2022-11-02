@@ -126,8 +126,8 @@ private:
 public:
     Type type;
     Token token;
-    std::string details;
     std::string expr_or_stmt_name;
+    std::string details;
 
     ResolverError(Type type, Token token, std::string expr_or_stmt_name, std::string details) :
         type{ type },

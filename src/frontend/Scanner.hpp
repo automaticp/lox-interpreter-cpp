@@ -1,18 +1,19 @@
 #pragma once
+#include "Token.hpp"
+#include "TokenType.hpp"
+#include "FrontendErrors.hpp"
+#include "ErrorSender.hpp"
+#include "ErrorReporter2.hpp"
 #include <vector>
 #include <string>
 #include <string_view>
 #include <cassert>
 #include <utility>
-#include "Errors.hpp"
-#include "Token.hpp"
-#include "ErrorReporter.hpp"
-#include "TokenType.hpp"
 
-class Scanner {
+
+class Scanner : private ErrorSender<ScannerError> {
 private:
     std::string source_;
-    ErrorReporter& err_;
     std::vector<Token> tokens_;
 
     class ScannerState {
@@ -85,7 +86,7 @@ private:
     ScannerState state_{ source_.cbegin(), source_.cend(), 1 };
 
 public:
-    Scanner(std::string_view source, ErrorReporter& err) : source_{ source }, err_{ err } {}
+    Scanner(std::string_view source, ErrorReporter& err) : source_{ source }, ErrorSender{ err } {}
 
     const std::vector<Token>& scan_tokens() {
 
@@ -146,7 +147,9 @@ private:
                 } else if (is_alpha(c)) {
                     add_identifier_token();
                 } else {
-                    report_error(ScannerError::unexpected_character, std::string{c});
+                    report_error(
+                        ScannerError::Type::unexpected_character, std::string{c}
+                    );
                 }
                 break;
         }
@@ -204,7 +207,9 @@ private:
         }
 
         if (state_.is_end()) {
-            report_error(ScannerError::unterminated_string_literal, state_.lexeme());
+            report_error(
+                ScannerError::Type::unterminated_string_literal, state_.lexeme()
+            );
             return;
         }
 
@@ -234,7 +239,9 @@ private:
                     state_.advance();
                 }
             } else {
-                report_error(ScannerError::unterminated_number_literal, state_.lexeme());
+                report_error(
+                    ScannerError::Type::unterminated_number_literal, state_.lexeme()
+                );
                 return;
             }
         }
@@ -266,14 +273,12 @@ private:
         }
     }
 
-    void report_error(ScannerError type, std::string_view details = "") {
-        err_.scanner_error(type, state_.line(), details);
+    void report_error(ScannerError::Type type, std::string_view details = "") {
+        send_error(
+            type, state_.line(), std::string(details)
+        );
     }
 
-
-    ErrorReporter& get_error_reporter() noexcept {
-        return err_;
-    }
 
 private:
     static bool is_digit(char c) noexcept {

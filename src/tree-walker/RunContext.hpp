@@ -1,6 +1,8 @@
 #pragma once
-#include "ErrorReporter.hpp"
-#include "Errors.hpp"
+#include "ErrorReporter2.hpp"
+#include "ContextError.hpp"
+#include "ErrorSender.hpp"
+#include "IError.hpp"
 #include "Scanner.hpp"
 #include "Parser.hpp"
 #include "Interpreter.hpp"
@@ -14,12 +16,11 @@
 #include <iostream>
 #include <utility>
 
-class RunContext {
+class RunContext : private ErrorSender<ContextError> {
 private:
     bool is_debug_scanner_;
     bool is_debug_parser_;
     std::optional<std::string> filename_;
-    ErrorReporter& err_;
     Parser parser_;
     Resolver resolver_;
     Interpreter interpreter_;
@@ -27,7 +28,7 @@ public:
     RunContext(ErrorReporter& err_reporter,
         bool is_debug_scanner, bool is_debug_parser,
         std::optional<std::string> filename = std::nullopt) :
-        err_{ err_reporter },
+        ErrorSender{ err_reporter },
         parser_{ err_reporter },
         resolver_{ err_reporter },
         interpreter_{ err_reporter, resolver_ },
@@ -75,16 +76,16 @@ public:
         if (text) {
             run(text.value());
         } else {
-            err_.context_error(ContextError::unable_to_open_file, filename_.value());
+            send_error(ContextError::Type::unable_to_open_file, filename_.value());
         }
     }
 
 
     void run(const std::string& text) {
 
-        err_.reset();
+        error_reporter().reset();
 
-        Scanner scanner{ text, err_ };
+        Scanner scanner{ text, error_reporter() };
 
         const auto& tokens = scanner.scan_tokens();
 
@@ -95,7 +96,8 @@ public:
             }
         }
 
-        if (err_.had_scanner_errors()) {
+        // This error checking is eww, tbh
+        if (error_reporter().had_errors_of_category(ErrorCategory::scanner)) {
             return;
         }
 
@@ -108,13 +110,13 @@ public:
             }
         }
 
-        if (err_.had_parser_errors()) {
+        if (error_reporter().had_errors_of_category(ErrorCategory::parser)) {
             return;
         }
 
         resolver_.resolve(new_stmts);
 
-        if (err_.had_resolver_errors()) {
+        if (error_reporter().had_errors_of_category(ErrorCategory::resolver)) {
             return;
         }
 
