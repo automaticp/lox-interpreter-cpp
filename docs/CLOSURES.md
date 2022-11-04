@@ -421,8 +421,7 @@ if (lexical_distance < num_of_scopes) {
         // Report assignment to non-local variable
         // ...
     } else {
-        resolver.set_depth(expr,
-            lexical_distance, closure_distance);
+        resolver.set_depth(expr, lexical_distance);
     }
 } else {
     // Report undefined variable
