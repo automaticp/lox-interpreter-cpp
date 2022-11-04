@@ -13,10 +13,20 @@
 
 class Expr;
 
-
 enum class ResolveState : bool {
     declared = false,
     defined = true
+
+    // There's no real 'declared' state in lox itself,
+    // any declaration without init expression
+    // implicitly intializes the declared name to nil.
+    // The real purpose of the 'declared' state is to be able to
+    // do static analysis when the name has already been declared with
+    //   var foo = <init expression>;
+    // but the <init expression> hasn't yet been evaluated.
+    // This finds it's use in producing the initialization_from_self error,
+    // in cases where the same name appears on both sides of the init statement:
+    //   var foo = foo + 1; // Error
 };
 
 enum class ScopeType {
@@ -42,6 +52,7 @@ private:
     scope_type_stack_t scope_type_stack_;
     depth_map_t depth_map_;
 
+    // Hacky but eeeh
     bool is_in_function_prev_{ false };
     bool is_in_function_{ false };
 

@@ -468,6 +468,9 @@ void InterpretVisitor::operator()(const FunStmt& stmt) const {
     );
 
     // Also add a copy? of itself to the closure.
+    // FIXME:
+    // The copy does not have a copy of itself!
+    // Recursion breaks! aaaa help meeeee
     fun_handle.unwrap_to<Function>().closure().define(stmt.name.lexeme, fun_handle.decay());
 
 }
