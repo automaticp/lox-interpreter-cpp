@@ -26,6 +26,7 @@ target_include_directories(lox-frontend PUBLIC frontend/)
 target_link_libraries(lox-frontend
     PUBLIC
         lox::common
+        cxxopts::cxxopts
         Boost::boost
         Boost::container
 )
@@ -55,6 +56,5 @@ target_compile_features(lox-twi PRIVATE cxx_std_20)
 target_link_libraries(lox-twi
     PRIVATE
         lox::tree-walker
-        cxxopts::cxxopts
 )
 
