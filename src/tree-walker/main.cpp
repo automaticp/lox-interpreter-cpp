@@ -13,18 +13,24 @@ int main(int argc, char* argv[]) {
 
     std::ios::sync_with_stdio(false);
 
+    StreamErrorReporter err_reporter{ std::cerr };
+
     CLIArgsParser arg_parser{
-        "lox-twi", "lox tree-walk interpreter"
+        "lox-twi", "lox tree-walk interpreter", err_reporter
     };
 
     auto args = arg_parser.parse(argc, argv);
+
+    if (args.parse_failed) {
+        std::cout << arg_parser.options().help() << '\n';
+        return 1;
+    }
 
     if (args.show_help) {
         std::cout << arg_parser.options().help() << '\n';
         return 0;
     }
 
-    StreamErrorReporter err_reporter{ std::cerr };
 
     RunContext context{
         err_reporter,

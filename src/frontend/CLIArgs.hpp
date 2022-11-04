@@ -1,5 +1,9 @@
 #pragma once
+#include "ErrorReporter.hpp"
+#include "IError.hpp"
+#include <ErrorSender.hpp>
 #include <cxxopts.hpp>
+#include <fmt/format.h>
 #include <optional>
 #include <string>
 #include <utility>
@@ -9,21 +13,39 @@
 // Not mandatory, but could be reused for different backends.
 
 struct CLIArgs {
-    cxxopts::ParseResult result;
-    std::optional<std::string> filename;
-    bool show_help;
-    bool debug_scanner;
-    bool debug_parser;
+    cxxopts::ParseResult result{};
+    std::optional<std::string> filename{};
+    bool parse_failed{};
+    bool show_help{};
+    bool debug_scanner{};
+    bool debug_parser{};
+};
+
+class CLIArgsError : public IError {
+private:
+    std::string message_;
+
+public:
+    CLIArgsError(std::string message) : message_{ std::move(message) } {}
+
+    ErrorCategory category() const override {
+        return ErrorCategory::context; // FIXME: it's own category maybe?
+    }
+
+    std::string message() const override {
+        return fmt::format("[Error @Context]:\n{:s}\n", message_);
+    }
 };
 
 
-class CLIArgsParser {
+class CLIArgsParser : private ErrorSender<CLIArgsError> {
 private:
     cxxopts::Options opts_;
 
 public:
-    CLIArgsParser(std::string program, std::string help_string) :
-        opts_{ std::move(program), std::move(help_string) }
+    CLIArgsParser(std::string program, std::string help_string, ErrorReporter& err) :
+        opts_{ std::move(program), std::move(help_string) },
+        ErrorSender{ err }
     {
         opts_.add_options()
         ("h,help", "Show help and exit")
@@ -32,61 +54,70 @@ public:
             cxxopts::value<std::vector<std::string>>()->implicit_value("scanner,parser")
         )
         ("file", "Input file to be parsed", cxxopts::value<std::string>());
+
         opts_.parse_positional("file");
         opts_.positional_help("file");
     }
 
 
     CLIArgs parse(int argc, char* argv[]) { // NOLINT
-        auto result = opts_.parse(argc, argv);
+        CLIArgs args{};
 
-        auto [debug_scanner, debug_parser] =
-            resolve_debug_flags(result);
-        bool show_help = result.count("help");
+        try {
+            args.result = opts_.parse(argc, argv);
+        } catch (cxxopts::OptionParseException& e) {
+            send_error(e.what());
+            args.parse_failed = true;
+            return args;
+        }
 
-        // FIXME: Maybe report a ContextError when the
-        // arg parser fails?
+        if (!resolve_debug_flags(args)) {
+            args.parse_failed = true;
+            return args;
+        }
 
-        auto filename =
+        args.show_help = args.result.count("help");
+
+        args.filename =
             std::invoke(
-                [&result]() -> std::optional<std::string> {
+                [&args]() -> std::optional<std::string> {
 
-                    if (result.count("file")) {
-                        return result["file"].as<std::string>();
+                    if (args.result.count("file")) {
+                        return args.result["file"].as<std::string>();
                     } else {
                         return {};
                     }
                 }
             );
 
-        return {
-            // NOLINTNEXTLINE: ParseResult is move-assignable, but not move-constructable. An oversight, perhaps?
-            .result=std::move(result),
-            .filename=std::move(filename),
-            .show_help=show_help,
-            .debug_scanner=debug_scanner,
-            .debug_parser=debug_parser
-        };
+        return args;
     }
 
     cxxopts::Options& options() noexcept { return opts_; }
 
 private:
-    std::tuple<bool, bool> resolve_debug_flags(cxxopts::ParseResult& optres) {
-        bool is_scanner_debug{ false };
-        bool is_parser_debug{ false };
-        if (optres.count("debug")) {
-            auto debug_args =
-                optres["debug"].as<std::vector<std::string>>();
+    bool resolve_debug_flags(CLIArgs& args) {
+        bool failed{ false };
+
+        if (args.result.count("debug")) {
+
+            decltype(auto) debug_args = args.result["debug"].as<std::vector<std::string>>();
+
             for (const auto& arg : debug_args) {
                 if (arg == "scanner") {
-                    is_scanner_debug = true;
+                    args.debug_scanner = true;
                 } else if (arg == "parser") {
-                    is_parser_debug = true;
+                    args.debug_parser = true;
+                } else {
+                    send_error(
+                        fmt::format("Unknown debug option: '{:s}'", arg)
+                    );
+                    // Don't immediately return, report all errors first.
+                    failed = true;
                 }
             }
         }
-        return { is_scanner_debug, is_parser_debug };
+        return !failed;
     }
 
 };
