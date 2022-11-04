@@ -11,6 +11,8 @@
 
 int main(int argc, char* argv[]) {
 
+    std::ios::sync_with_stdio(false);
+
     CLIArgsParser arg_parser{
         "lox-twi", "lox tree-walk interpreter"
     };
