@@ -9,27 +9,30 @@ Environment::Environment(Environment* enclosing, boost::unordered_map<std::strin
         enclosing_{ enclosing }, map_{ std::move(map) } {}
 
 
+// Returns a handle to a Value in a local map.
+// Does not recurse to the enclosing environments.
+//
+// If the value at map_[name] is a ValueHandle, decays it
+// so as to not form the handle to a handle.
+// Otherwise, just returns a handle to the Value.
+ValueHandle Environment::make_handle(decltype(map_)::mapped_type& target) {
+    return ValueHandle{ decay(target) };
+}
+
 
 // Retruns a handle to the new element
 ValueHandle Environment::define(const std::string& name, Value value) {
     auto [it, was_inserted] = map_.insert_or_assign(name, std::move(value));
-    return ValueHandle{ it->second };
+    return make_handle(it->second);
 }
 
 
-// Due to ValueHandle having different, but deceivingly
-// similar constructors, which ones of them are invoked
-// is clarified in the comments below.
-
 ValueHandle Environment::get(const std::string& name) {
     if (map_.contains(name)) {
-        // ValueHandle(Value&) **From ref**
-        return ValueHandle{ map_[name] };
+        return make_handle(map_[name]);
     } else if (enclosing_) {
-        // ValueHandle(const ValueHandle&) **Copy**
         return enclosing_->get(name);
     } else {
-        // ValueHandle() **Empty handle**
         return {};
     }
 }
@@ -37,11 +40,11 @@ ValueHandle Environment::get(const std::string& name) {
 ValueHandle Environment::assign(const std::string& name, Value value) {
     if (map_.contains(name)) {
         map_[name] = std::move(value);
-        return ValueHandle{ map_[name] }; // From ref
+        return make_handle(map_[name]);
     } else if (enclosing_) {
-        return enclosing_->assign(name, std::move(value)); // Copy
+        return enclosing_->assign(name, std::move(value));
     } else {
-        return {}; // Empty handle
+        return {};
     }
 }
 
@@ -49,7 +52,7 @@ ValueHandle Environment::assign(const std::string& name, Value value) {
 ValueHandle Environment::get_at(size_t distance, const std::string& name) {
     assert(ancestor(distance));
     assert(ancestor(distance)->map_.contains(name));
-    return ValueHandle{ ancestor(distance)->map_[name] }; // From ref
+    return make_handle(ancestor(distance)->map_[name]);
 }
 
 
@@ -58,5 +61,5 @@ ValueHandle Environment::assign_at(size_t distance, const std::string& name, Val
     assert(ancestor(distance)->map_.contains(name));
     Value& value_ref = ancestor(distance)->map_[name];
     value_ref = std::move(value);
-    return ValueHandle{ value_ref }; // From ref
+    return make_handle(value_ref);
 }

@@ -34,6 +34,8 @@ public:
     const auto& map() const noexcept { return map_; }
 
 private:
+    static ValueHandle make_handle(decltype(map_)::mapped_type& name);
+
     Environment* ancestor(size_t distance) {
         Environment* current{ this };
         while (current && distance) {
