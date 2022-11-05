@@ -438,17 +438,8 @@ void InterpretVisitor::operator()(const WhileStmt& stmt) const {
 
 
 
-void InterpretVisitor::operator()(const FunStmt& stmt) const {
-    // Hail Mary closure that copies EVERYTHING from outer scopes,
-    // essentially, storing the state of the entire program at capture time.
-    // Absolutely horrible, but should work.
-    //
-    // First, intialize with the copy of the current scope.
-    Environment closure{ nullptr, env_.map() };
-
-    // Ther recursively copy values for symbols not yet in closure,
-    // starting from the inner-most enclosing scope.
-    Environment* enclosing{ env_.enclosing() };
+static void flatten_into_closure(Environment& closure, const Environment* starting) {
+    const Environment* enclosing{ starting };
     while (enclosing) {
         for (const auto& elem : enclosing->map()) {
             if (!closure.get(elem.first)) {
@@ -457,6 +448,20 @@ void InterpretVisitor::operator()(const FunStmt& stmt) const {
         }
         enclosing = enclosing->enclosing();
     }
+}
+
+
+void InterpretVisitor::operator()(const FunStmt& stmt) const {
+    // Hail Mary closure that copies EVERYTHING from outer scopes,
+    // essentially, storing the state of the entire program at capture time.
+    // Absolutely horrible, but should work.
+
+    // First, intialize without any enclosing scopes.
+    Environment closure{ nullptr };
+
+    // Ther recursively copy values for symbols not yet in closure,
+    // starting from the current scope.
+    flatten_into_closure(closure, &env_);
 
     // Add this function to the current environment.
     ValueHandle fun_handle = env_.define(
@@ -467,11 +472,14 @@ void InterpretVisitor::operator()(const FunStmt& stmt) const {
         }
     );
 
-    // Also add a copy? of itself to the closure.
-    // FIXME:
-    // The copy does not have a copy of itself!
-    // Recursion breaks! aaaa help meeeee
-    fun_handle.unwrap_to<Function>().closure().define(stmt.name.lexeme, fun_handle.decay());
+    // Add a ValueHandle of the function to the closure.
+    // The ValueHandle will properly decay
+    // in the Environmet::get() method.
+    fun_handle.unwrap_to<Function>().closure().define(
+        stmt.name.lexeme, fun_handle
+    );
+    // Beware: copying the Function into it's own closure
+    // will leak memory. Do not copy/decay it here.
 
 }
 
