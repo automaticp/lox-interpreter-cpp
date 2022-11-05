@@ -15,7 +15,7 @@ void ResolveVisitor::resolve(const Stmt& stmt) const {
     stmt.accept(*this);
 }
 
-// I'm tired, forgive me for the next 4 functions
+// I'm tired, forgive me for the next 2 functions
 
 size_t ResolveVisitor::distance_to_enclosing_fun_scope() const {
     size_t num_scopes{ resolver_.scopes().size() };
@@ -66,40 +66,6 @@ void ResolveVisitor::resolve_local(const Expr& expr, const std::string& name) co
     }
 }
 
-void ResolveVisitor::resolve_local_as_assignment_target(const Expr& expr, const std::string& name) const {
-    // Similar to the resolve_local(), except we forbid mutating closures.
-
-    size_t lexical_distance{ distance_to_var_decl(name) };
-
-    if (lexical_distance < resolver_.scopes().size()) { // Validate that it's declared at all
-
-        // Everything above this limit is declared outside of the
-        // local scope of the enclosing function, and would end up
-        // in the closure. We forbid assignment to such variables.
-        size_t locals_depth_limit{ distance_to_enclosing_fun_scope() };
-
-        if (lexical_distance > locals_depth_limit) {
-            resolver_.send_error(
-                ResolverError::Type::assignment_to_nonlocal,
-                primary_token_of(expr),
-                name_of(expr),
-                name
-            );
-            return;
-        }
-
-        resolver_.set_depth(expr, lexical_distance);
-
-    } else /* not resolved */ {
-
-        resolver_.send_error(
-            ResolverError::Type::undefined_variable,
-            expr.accept(ExprGetPrimaryTokenVisitor{}),
-            name_of(expr),
-            name
-        );
-    }
-}
 
 
 void ResolveVisitor::resolve_function(const FunStmt& stmt) const {
@@ -171,7 +137,7 @@ void ResolveVisitor::operator()(const VariableExpr& expr) const {
 
 void ResolveVisitor::operator()(const AssignExpr& expr) const {
     resolve(*expr.rvalue);
-    resolve_local_as_assignment_target(expr, expr.identifier.lexeme);
+    resolve_local(expr, expr.identifier.lexeme);
 }
 
 void ResolveVisitor::operator()(const LogicalExpr& expr) const {

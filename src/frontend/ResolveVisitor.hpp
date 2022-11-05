@@ -41,8 +41,6 @@ public:
 private:
     void resolve(const Expr& expr) const;
     void resolve_local(const Expr& expr, const std::string& name) const;
-    void resolve_local_as_assignment_target(const Expr& expr, const std::string& name) const;
-
 
     void resolve(const Stmt& stmt) const;
     void resolve_function(const FunStmt& stmt) const;

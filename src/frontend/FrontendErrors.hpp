@@ -113,7 +113,6 @@ public:
         local_variable_redeclaration,
         return_from_global_scope,
         undefined_variable,
-        assignment_to_nonlocal,
     };
 
 private:
@@ -122,7 +121,6 @@ private:
         {Type::local_variable_redeclaration, "Redeclaration of a local variable"},
         {Type::return_from_global_scope, "Return from global scope"},
         {Type::undefined_variable, "Undefined variable"},
-        {Type::assignment_to_nonlocal, "Assignment to a non-local variable is forbidden"},
     };
 
 public:
