@@ -52,7 +52,7 @@ public:
 ```
 
 As you can see, the closure itself has no enclosing environments.
-The function must consume all the neccessary defenitions from the enclosing scopes at *capture time*, and 'flatten' them into a it's closure.
+The function must consume all the neccessary defenitions from the enclosing scopes at *capture time*, and 'flatten' them into it's closure.
 
 
 # Specification
@@ -444,5 +444,180 @@ TODO
 # Recursion and closures
 
 Ohhhh, the *fun* part...
+
+Another pressing matter is the problem of recursive function calls, but namely, recursive calls when functions support closures. First problem arises when we just want to do recursion:
+
+```lox
+fun f(n) {
+    if (n < 1) return 0;
+    return f(n - 1);
+}
+
+print f(3);
+```
+Seems simple, right?
+
+So simple that it just fails the assertion and terminates in debug mode. We were about to access a null pointer instead of a valid function.
+
+Well, because we chose to go with closures instead of honest-to-god stack-based functions, our functions actually have no way of knowing anything about the enclosing environment. And they shouldn't, since the lifetime of that environment might end before the lifetime of the `Function` object does.
+
+Which is why at the point of declaration, we capture the enclosing environment into the closure of the declared function:
+
+```c++
+void InterpretVisitor::operator()(const FunStmt& stmt) const {
+
+    // 1. Initialize closure with no enclosing environment.
+    Environment closure{ nullptr };
+
+    // 2. Recursively copy values for symbols not yet in closure,
+    // starting from the current scope.
+    flatten_into_closure(closure, &env_);
+
+    // 3. Add this function to the current environment.
+    env_.define(
+        stmt.name.lexeme,
+        Function{
+            &stmt,
+            std::move(closure)
+        }
+    );
+}
+```
+
+Where `flatten_into_closure` could be defined as:
+
+```c++
+static void flatten_into_closure(Environment& closure,
+                                 const Environment* starting) {
+
+    const Environment* enclosing{ starting };
+    while (enclosing) {
+        for (const auto& elem : enclosing->map()) {
+            if (!closure.get(elem.first)) {
+                closure.define(elem.first, elem.second);
+            }
+        }
+        enclosing = enclosing->enclosing();
+    }
+}
+```
+
+Uh, aren't we forgetting something here? Step 2 copies all the definitions of the enclosing scope into the closure, but the function itself is only going to be defined in that scope at step 3. We just skipped defining the function itself in it's own closure.
+
+"Well", you say, "just swap steps 2 and 3, you silly":
+
+```c++
+void InterpretVisitor::operator()(const FunStmt& stmt) const {
+
+    // Step 1 is no longer needed,
+    // as nothing is done to the closure until the last step.
+
+    // 1. Add this function to the current environment,
+    // and keep a handle to it for now.
+    ValueHandle fun_handle = env_.define(
+        stmt.name.lexeme,
+        Function{
+            &stmt,
+            Environment{ nullptr } // Explicit for the sake of example
+        }
+    );
+
+    // 2. Recursively copy values for symbols not yet in closure,
+    // starting from the current scope.
+    Environment& closure = fun_handle.unwrap_to<Function>().closure();
+
+    flatten_into_closure(closure, &env_);
+}
+```
+
+Uh, aren't we forgetting something here? *Deja vu* ensues...
+
+Lets trace it in steps:
+
+```
+var i = 0;
+{
+    // Current scope
+
+    fun f(n) {
+        if (n < 1) return i;
+        return f(n - 1);
+    }
+}
+
+```
+
+
+1. We define the function with the name `f` in the current scope.
+2. Then we *copy* all the names from enclosing scopes, *starting from the current one*.
+3. Wait...
+
+That means we copy `f` into it's own closure before it's closure captured `i`. The copy of `f` will not have `i` in it's closure, undefined variable error is the best you can hope for here.
+
+
+In a last attempt to salvage this sinking ship, you go back to the original 3-step implementation and add another, *fourth* step:
+
+
+```c++
+void InterpretVisitor::operator()(const FunStmt& stmt) const {
+
+    // 1. Initialize closure with no enclosing environment.
+    Environment closure{ nullptr };
+
+    // 2. Recursively copy values for symbols not yet in closure,
+    // starting from the current scope.
+    flatten_into_closure(closure, &env_);
+
+    // 3. Add this function to the current environment,
+    // and keep the handle.
+    ValueHandle fun_handle = env_.define(
+        stmt.name.lexeme,
+        Function{
+            &stmt,
+            std::move(closure)
+        }
+    );
+
+    // 4. Add the function to the closure of itself.
+    Environment& closure = fun_handle.unwrap_to<Function>().closure();
+
+    closure.define(stmt.name.lexeme, fun_handle.decay());
+}
+```
+
+But what is that `fun_handle.decay()` call? The problem is that no `Environment` can emplace a `ValueHandle` directly due to a funny constraint found in a `ValueHandle` constructor:
+
+```c++
+ValueHandle::ValueHandle(Value& target) noexcept : handle_{ &target } {
+    assert(
+        !target.is<ValueHandle>() &&
+        "Handle to a Handle is redundant"
+    );
+}
+```
+
+This exists here for a good reason, the `ValueHandle`'s design forbids forming a handle to a handle: we're trying to form a reference to a real value, not mimic multiple indirection analagous to `Value**`. But in the current implementation of `Environment` if we emplace a `ValueHandle` directly into the environment, the `Environment::get()` method will try to construct the terrible *handle to a handle*:
+
+```c++
+ValueHandle Environment::get(const std::string& name) {
+    if (map_.contains(name)) {
+        return ValueHandle{ map_[name] };
+        // map_[name] could be ValueHandle itself.
+    } else {
+        // Try getting it from enclosing environments
+    }
+}
+```
+
+One way to avoid this, is to never emplace `ValueHandle` into the environment directly, but *decay* it before that, creating *a copy* of the underlying value.
+
+You might have already noticed the pattern, but the word *copy* comes up alarmingly often. Our last attempt still copies the function from it's handle before adding itself to it's own closure. Guess what's going to be missing from the closure of that copy. Yeah, *the function*.
+
+We just invented a language with a maximum recursion depth of *one*.
+
+I'm going to excersize my right to be bold and proclaim that **strict copy semantics for functions make recursion impossible**. Similar to recursive variants, we'll have to break the link with indirection. Otherwise, if you think about it, what we're really doing is we require each function to have a copy of itself, which should have a copy of itself, which should have a copy of itself, which should... Yeah.
+
+We'll have to cheat, that is, we'll have to store a `ValueHandle` in the environment.
+
 
 TODO
