@@ -228,7 +228,7 @@ public:
 // Not implemented yet.
 class Object {
 private:
-    boost::unordered_map<FieldName, Value> fields_;
+    // boost::unordered_map<FieldName, Value> fields_;
 public:
     bool operator==(const Object& /* other */) const {
         return false;
