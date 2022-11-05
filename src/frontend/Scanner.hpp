@@ -219,7 +219,7 @@ private:
 
         add_token(
             TokenType::string,
-            std::string(quoted_literal.substr(1, quoted_literal.size() - 2))
+            String(quoted_literal.substr(1, quoted_literal.size() - 2))
         );
     }
 

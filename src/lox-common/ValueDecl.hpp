@@ -2,13 +2,18 @@
 #include <variant>
 #include <string>
 #include <cstddef>
+#include <boost/container/string.hpp>
 
 using Nil = std::monostate;
 class Object;
 class ValueHandle;
 class Function;
 class BuiltinFunction;
-using String = std::string;
+// boost::container::string guarantees a 24-byte footprint
+// and 23-byte short-string storage on 64-bit machines,
+// whereas libstdc++ std::string is 32-byte with only 16 bytes
+// for short-string optimization.
+using String = boost::container::string;
 using Number = double;
 using Boolean = bool;
 

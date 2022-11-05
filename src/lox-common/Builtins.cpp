@@ -14,7 +14,7 @@ Value builtin_clock(std::span<Value> /* args */) {
 }
 
 Value builtin_typename(std::span<Value> args) {
-    return std::string(type_name(args[0]));
+    return String(type_name(args[0]));
 }
 
 Value builtin_rand(std::span<Value> /* args */) {
