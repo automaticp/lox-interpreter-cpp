@@ -132,24 +132,36 @@ public:
 
 
 
-// This dependency, while private now, should not exist at all
-class ExprInterpreterVisitor;
-// This dependency should be horizontal: exist in the same lib
 class FunStmt;
 
 
 class Function {
 private:
-    Environment closure_;
-    const FunStmt* declaration_;
-    friend class detail::ValueToStringVisitor;
+    class Impl {
+    private:
+        Environment closure_;
+        const FunStmt* declaration_;
+        friend Function;
+
+    public:
+        Impl(const FunStmt* declaration) : declaration_{ declaration } {}
+
+        // Copy construct closure
+        Impl(const FunStmt* declaration, Environment closure) :
+            declaration_{ declaration }, closure_{ std::move(closure) } {}
+
+    }; // class Impl
+
+
+    std::shared_ptr<Impl> pimpl_;
+    // Never emplace the copy of the Function into it's closure.
+    // That leaks memory because the closure keeps the Impl alive.
+
 public:
-    Function(const FunStmt* declaration) : declaration_{ declaration } {}
-
-    // Copy construct closure
-    Function(const FunStmt* declaration, Environment closure) :
-        declaration_{ declaration }, closure_{ std::move(closure) } {}
-
+    template<typename ...Args>
+    Function(Args&&... args) :
+        pimpl_{ std::make_shared<Impl>(std::forward<Args>(args)...) }
+    {}
 
     // You'd think that a Function type should define it's call operator,
     // But the details of the implementation will be heavily
@@ -173,15 +185,14 @@ public:
     Value operator()(BackendT&, std::span<Value> args);
 
 
-
     size_t arity() const noexcept;
 
-    Environment& closure() noexcept { return closure_; }
+    Environment& closure() noexcept { return pimpl_->closure_; }
 
-    const FunStmt* declaration() const noexcept { return declaration_; }
+    const FunStmt* declaration() const noexcept { return pimpl_->declaration_; }
 
     bool operator==(const Function& other) const noexcept {
-        return declaration_ == other.declaration_;
+        return pimpl_.get() == other.pimpl_.get();
     }
 
 };

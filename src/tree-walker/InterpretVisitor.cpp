@@ -23,20 +23,20 @@
 
 template<>
 Value Function::operator()<Interpreter>(Interpreter& interpreter, std::span<Value> args) {
-    assert(declaration_);
+    assert(declaration());
     // Environment from enclosing scope,
     // captured by copy during construction of Function
-    Environment env{ &closure_ };
+    Environment env{ &closure() };
 
     for (size_t i{ 0 }; i < args.size(); ++i) {
         env.define(
-            declaration_->parameters[i].lexeme, std::move(args[i])
+            declaration()->parameters[i].lexeme, std::move(args[i])
         );
     }
 
     try {
         interpreter.interpret(
-            declaration_->body, env
+            declaration()->body, env
         );
     } catch (Value& v) {
         return std::move(v);
