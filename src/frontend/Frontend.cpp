@@ -25,18 +25,17 @@ void setup_builtins(Environment& env, Resolver& resolver) {
 
     auto define_builtin =
         [&env, &resolver](
-            std::string_view name, std::function<Value(std::span<Value>)> fun, size_t arity
+            const char* name, builtin_function_t fun, size_t arity
         ) {
 
-        // name is passed by string_view due to BuiltinFunction storing a string_view.
-        // If I were to pass const string&, then the view would be dangling.
+        // name is passed by const char* due to BuiltinFunction storing a const char*.
         std::string name_string{ name };
 
         bool success = resolver.declare(name_string);
         assert(success && "This should definetly not happen.");
         resolver.define(name_string);
 
-        env.define(std::string(name), BuiltinFunction{ name, std::move(fun), arity });
+        env.define(name_string, BuiltinFunction{ name, fun, arity });
 
         // Also, just wondering, why the std::string(std::string_view) constructor is explicit?
         // Like, annoying.

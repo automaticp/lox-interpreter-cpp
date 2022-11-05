@@ -6,6 +6,7 @@
 #include <utility>
 #include <cassert>
 #include <memory>
+#include "Builtins.hpp"
 #include "Token.hpp"
 #include "Utils.hpp"
 #include <string_view>
@@ -203,13 +204,13 @@ public:
 
 class BuiltinFunction {
 private:
-    std::function<Value(std::span<Value>)> fun_;
+    builtin_function_t fun_;
+    const char* name_; // Smaller footprint than string_view
     size_t arity_;
-    std::string_view name_;
     friend class detail::ValueToStringVisitor;
 public:
-    BuiltinFunction(std::string_view name, std::function<Value(std::span<Value>)> fun, size_t arity) :
-        fun_{ std::move(fun) }, arity_{ arity }, name_{ name } {}
+    BuiltinFunction(const char* name, builtin_function_t fun, size_t arity) :
+        fun_{ fun }, arity_{ arity }, name_{ name } {}
 
 
     // FIXME: to span or not to span?
