@@ -615,7 +615,7 @@ You might have already noticed the pattern, but the word *copy* comes up alarmin
 
 We just invented a language with a maximum recursion depth of *one*.
 
-I'm going to excersize my right to be bold and proclaim that **strict copy semantics for functions make recursion impossible**. Similar to recursive variants, we'll have to break the link with indirection. Otherwise, if you think about it, what we're really doing is we require each function to have a copy of itself, which should have a copy of itself, which should have a copy of itself, which should... Yeah.
+I'm going to excersize my right to be bold and proclaim that **strict copy semantics for functions with closures make recursion impossible**. Similar to recursive variants, we'll have to break the link with indirection. Otherwise, if you think about it, what we're really doing is we require each function to have a copy of itself, which should have a copy of itself, which should have a copy of itself, which should... Yeah.
 
 We'll have to cheat, that is, we'll have to store a `ValueHandle` in the environment.
 
