@@ -71,6 +71,11 @@ public:
 
 private:
     std::unique_ptr<Stmt> declaration() {
+        // Skip import statements
+        while (state_.match(TokenType::kw_import)) {
+            skip_import();
+        }
+
         if (state_.match(TokenType::kw_var)) {
             return var_decl();
         } else if (state_.match(TokenType::kw_fun)) {
@@ -78,6 +83,13 @@ private:
         } else {
             return statement();
         }
+    }
+
+    void skip_import() {
+        bool match_succeded{ state_.match(TokenType::string) };
+        assert(match_succeded &&
+            "If this failed, then the Importer didn't do it's job");
+        try_consume_semicolon();
     }
 
     std::unique_ptr<Stmt> var_decl() {
@@ -567,6 +579,7 @@ private:
                 case kw_while:
                 case kw_print:
                 case kw_return:
+                case kw_import:
                     return;
                 default:
                     break;
