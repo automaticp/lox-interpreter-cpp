@@ -10,10 +10,10 @@
 
 class Token {
 public:
-    const TokenType type;
-    const std::string lexeme;
-    const size_t line;
-    const std::optional<LiteralValue> literal;
+    TokenType type;
+    std::string lexeme;
+    size_t line;
+    std::optional<LiteralValue> literal;
 
     Token(TokenType type, std::string_view lexeme, size_t line, std::optional<LiteralValue> literal = std::nullopt) :
         type{ type }, lexeme{ lexeme }, line{ line }, literal{ std::move(literal) } {}

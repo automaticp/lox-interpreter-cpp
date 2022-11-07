@@ -20,11 +20,11 @@ private:
     public:
         using iter_t = std::string::const_iterator;
     private:
-        const iter_t beg_;
+        iter_t beg_;
         iter_t cur_;
         iter_t token_beg_;
-        const iter_t end_;
-        size_t line_;
+        iter_t end_;
+        size_t line_{};
 
     public:
         ScannerState(iter_t beg, iter_t end, size_t start_line) :
