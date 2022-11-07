@@ -38,7 +38,7 @@ public:
 
     bool is_end() const noexcept { return cur_ == end_; }
 
-    bool is_eof() const noexcept { return cur_->type == TokenType::eof; }
+    bool is_eof() const noexcept { return cur_->type() == TokenType::eof; }
 
     bool is_begin() const noexcept { return cur_ == beg_; }
 
@@ -76,7 +76,7 @@ public:
     }
 
     bool check(TokenType type) const noexcept {
-        return peek().type == type;
+        return peek().type() == type;
     }
 
     bool match(TokenType expected) noexcept {

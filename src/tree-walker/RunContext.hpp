@@ -91,7 +91,9 @@ public:
 
         Scanner scanner{ error_reporter() };
 
-        auto tokens = scanner.scan_tokens(text);
+        auto tokens = is_file_mode() ?
+            scanner.scan_tokens(text, filename_.value()) :
+            scanner.scan_tokens(text);
 
         if (is_debug_scanner_mode()) {
             std::cout << "[Debug @Scanner]:\n";

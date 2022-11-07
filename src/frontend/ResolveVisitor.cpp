@@ -71,8 +71,8 @@ void ResolveVisitor::resolve_local(const Expr& expr, const std::string& name) co
 void ResolveVisitor::resolve_function(const FunStmt& stmt) const {
     resolver_.push_scope(ScopeType::function);
     for (const Token& param : stmt.parameters) {
-        resolver_.declare(param.lexeme);
-        resolver_.define(param.lexeme);
+        resolver_.declare(param.lexeme());
+        resolver_.define(param.lexeme());
     }
     for (const auto& statement : stmt.body) {
         resolve(*statement);
@@ -121,7 +121,7 @@ void ResolveVisitor::operator()(const GroupedExpr& expr) const {
 void ResolveVisitor::operator()(const VariableExpr& expr) const {
 
     if (!resolver_.is_in_global_scope()) {
-        auto it = resolver_.top_scope().find(expr.identifier.lexeme);
+        auto it = resolver_.top_scope().find(expr.identifier.lexeme());
         if (it != resolver_.top_scope().end() && it->second == ResolveState::declared) {
             resolver_.send_error(
                 ResolverError::Type::initialization_from_self,
@@ -132,12 +132,12 @@ void ResolveVisitor::operator()(const VariableExpr& expr) const {
         }
     }
 
-    resolve_local(expr, expr.identifier.lexeme);
+    resolve_local(expr, expr.identifier.lexeme());
 }
 
 void ResolveVisitor::operator()(const AssignExpr& expr) const {
     resolve(*expr.rvalue);
-    resolve_local(expr, expr.identifier.lexeme);
+    resolve_local(expr, expr.identifier.lexeme());
 }
 
 void ResolveVisitor::operator()(const LogicalExpr& expr) const {
@@ -167,9 +167,9 @@ void ResolveVisitor::operator()(const ExpressionStmt& stmt) const {
 }
 
 void ResolveVisitor::operator()(const VarStmt& stmt) const {
-    if (try_declare(stmt, stmt.identifier.lexeme)) {
+    if (try_declare(stmt, stmt.identifier.lexeme())) {
         resolve(*stmt.init);
-        resolver_.define(stmt.identifier.lexeme);
+        resolver_.define(stmt.identifier.lexeme());
     }
 }
 
@@ -193,8 +193,8 @@ void ResolveVisitor::operator()(const WhileStmt& stmt) const {
 }
 
 void ResolveVisitor::operator()(const FunStmt& stmt) const {
-    resolver_.declare(stmt.name.lexeme);
-    resolver_.define(stmt.name.lexeme);
+    resolver_.declare(stmt.name.lexeme());
+    resolver_.define(stmt.name.lexeme());
     resolve_function(stmt);
 }
 

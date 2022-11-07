@@ -103,7 +103,10 @@ private:
             init = expression();
         } else {
             init = Expr::make_unique<LiteralExpr>(
-                Token{TokenType::kw_nil, "nil", state_.current()->line, Nil{}}
+                Token{
+                    TokenType::kw_nil, "nil",
+                    state_.current()->location(), Nil{}
+                }
             );
         }
 
@@ -200,7 +203,10 @@ private:
             value = expression();
         } else {
             value = Expr::make_unique<LiteralExpr>(
-                Token{ TokenType::kw_nil, "nil", state_.current()->line, Nil{} }
+                Token{
+                    TokenType::kw_nil, "nil",
+                    state_.current()->location(), Nil{}
+                }
             );
         }
 
@@ -235,7 +241,7 @@ private:
             condition = Expr::make_unique<LiteralExpr>(
                 Token{
                     TokenType::kw_true, "true",
-                    state_.current()->line, true
+                    state_.current()->location(), true
                 }
             );
         }
@@ -368,7 +374,7 @@ private:
                 report_error(
                     ParserError::Type::invalid_assignment_target,
                     primary,
-                    primary.lexeme
+                    primary.lexeme()
                 );
             }
         }
@@ -566,11 +572,11 @@ private:
         while(!state_.is_eof()) {
 
             const Token& prev{ state_.advance() };
-            if (prev.type == semicolon) {
+            if (prev.type() == semicolon) {
                 return;
             }
 
-            switch (state_.peek().type) {
+            switch (state_.peek().type()) {
                 case kw_class:
                 case kw_fun:
                 case kw_var:

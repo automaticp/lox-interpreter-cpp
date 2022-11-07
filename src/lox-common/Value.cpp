@@ -42,7 +42,7 @@ std::string ValueToStringVisitor::operator()(const ValueHandle& val) const {
 }
 
 std::string ValueToStringVisitor::operator()(const Function& val) const {
-    return fmt::format("?Function {}?", val.declaration()->name.lexeme);
+    return fmt::format("?Function {}?", val.declaration()->name.lexeme());
 }
 
 std::string ValueToStringVisitor::operator()(const BuiltinFunction& val) const {

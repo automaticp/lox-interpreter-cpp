@@ -28,11 +28,11 @@ private:
 
 public:
     Type type;
-    size_t line;
+    SourceLocation location;
     std::string details;
 
-    ScannerError(Type type, size_t line, std::string details) :
-        type{ type }, line{ line }, details{ std::move(details) }
+    ScannerError(Type type, SourceLocation location, std::string details) :
+        type{ type }, location{ std::move(location) }, details{ std::move(details) }
     {}
 
     ErrorCategory category() const override {
@@ -41,8 +41,9 @@ public:
 
     std::string message() const override {
         return fmt::format(
-            "[Error @Scanner] at line {:d}\n{:s}{:s}\n",
-            line, messages_.at(type),
+            "[Error @Scanner] at {:s}\n{:s}{:s}\n",
+            detail::location_info(location),
+            messages_.at(type),
             detail::details_tail(details)
         );
     }
@@ -75,11 +76,11 @@ private:
 
 public:
     Type type;
-    size_t line;
+    SourceLocation location;
     std::string details;
 
-    ImporterError(Type type, size_t line, std::string details) :
-        type{ type }, line{ line }, details{ std::move(details) }
+    ImporterError(Type type, SourceLocation location, std::string details) :
+        type{ type }, location{ std::move(location) }, details{ std::move(details) }
     {}
 
     ErrorCategory category() const override {
@@ -88,8 +89,9 @@ public:
 
     std::string message() const override {
         return fmt::format(
-            "[Error @Importer] at line {:d}\n{:s}{:s}\n",
-            line, messages_.at(type),
+            "[Error @Importer] at {:s}\n{:s}{:s}\n",
+            detail::location_info(location),
+            messages_.at(type),
             detail::details_tail(details)
         );
     }
@@ -143,9 +145,11 @@ public:
 
     std::string message() const override {
         return fmt::format(
-            "[Error @Parser] at line {:d} token {:s}:\n{:s}{:s}\n",
-            token.line, token.lexeme,
-            messages_.at(type), detail::details_tail(details)
+            "[Error @Parser] at {:s} token {:s}:\n{:s}{:s}\n",
+            detail::location_info(token.location()),
+            token.lexeme(),
+            messages_.at(type),
+            detail::details_tail(details)
         );
     }
 
@@ -192,9 +196,12 @@ public:
 
     std::string message() const override {
         return fmt::format(
-            "[Error @Resolver] at line {:d} in {:s} ({:s}):\n{:s}{:s}\n",
-            token.line, expr_or_stmt_name, token.lexeme,
-            messages_.at(type), detail::details_tail(details)
+            "[Error @Resolver] at {:s} in {:s} ({:s}):\n{:s}{:s}\n",
+            detail::location_info(token.location()),
+            expr_or_stmt_name,
+            token.lexeme(),
+            messages_.at(type),
+            detail::details_tail(details)
         );
     }
 
