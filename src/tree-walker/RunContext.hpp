@@ -106,8 +106,7 @@ public:
 
         tokens = importer_.resolve_imports(tokens);
 
-        // This error checking is eww, tbh
-        if (error_reporter().had_errors_of_category(ErrorCategory::import)) {
+        if (importer_.has_failed()) {
             return;
         }
 
@@ -121,6 +120,7 @@ public:
             }
         }
 
+        // This error checking is eww, tbh
         if (error_reporter().had_errors_of_category(ErrorCategory::parser)) {
             return;
         }

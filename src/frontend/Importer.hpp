@@ -206,6 +206,7 @@ private:
 
     std::vector<std::filesystem::path> imported_this_pass_;
     std::vector<std::filesystem::path> imported_files_;
+    bool has_failed_{};
 
 public:
     explicit Importer(ErrorReporter& err) : ErrorSender{ err } {}
@@ -220,6 +221,7 @@ public:
             append_imported_this_pass_on_success();
             return new_tokens;
         } catch (ImporterError::Type) {
+            has_failed_ = true;
             return {};
         }
     }
@@ -228,6 +230,9 @@ public:
     void mark_imported(std::filesystem::path filepath) {
         imported_files_.emplace_back(std::move(filepath));
     }
+
+    // Validate that the last call to resolve_imports() succeded
+    bool has_failed() const noexcept { return has_failed_; }
 
 
 
@@ -276,6 +281,7 @@ private:
     // Resets the per-call state.
     void begin_new_import_pass() {
         imported_this_pass_.clear();
+        has_failed_ = false;
     }
 
 
