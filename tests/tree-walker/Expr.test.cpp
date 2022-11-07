@@ -17,10 +17,11 @@ TEST_CASE("literals") {
 
     using enum TokenType;
 
-    LiteralExpr l_string{ Token{ string, "\"hello\"", 0, "hello" } };
-    LiteralExpr l_number{ Token{ number, "5.6", 0, 5.6 } };
-    LiteralExpr l_boolean{ Token{ kw_true, "true", 0, true } };
-    LiteralExpr l_nil{ Token{ kw_nil, "nil", 0, nullptr } };
+    // It's neccessary to wrap them in Expr in order to set the backref.
+    Expr l_string{ LiteralExpr{ Token{ string, "\"hello\"", 0, "hello" } } };
+    Expr l_number{ LiteralExpr{ Token{ number, "5.6", 0, 5.6 } } };
+    Expr l_boolean{ LiteralExpr{ Token{ kw_true, "true", 0, true } } };
+    Expr l_nil{ LiteralExpr{ Token{ kw_nil, "nil", 0, Nil{} } } };
 
     CHECK(print(l_string)   == "\"hello\"");
     CHECK(print(l_number)   == "5.6");
@@ -34,15 +35,15 @@ TEST_CASE("unary") {
 
     using enum TokenType;
 
-    UnaryExpr u_not_true{
+    Expr u_not_true{ UnaryExpr{
         Token{ bang, "!", 0 },
         Expr::make_unique<LiteralExpr>(Token{ kw_true, "true", 0, true})
-    };
+    } };
 
-    UnaryExpr u_minus_num{
+    Expr u_minus_num{ UnaryExpr{
         Token{ minus, "-", 0 },
         Expr::make_unique<LiteralExpr>(Token{ number, "5.6", 0, 5.6 })
-    };
+    } };
 
     CHECK(print(u_not_true) == "(! true)");
     CHECK(print(u_minus_num) == "(- 5.6)");
@@ -54,23 +55,23 @@ TEST_CASE("binary") {
 
     using enum TokenType;
 
-    BinaryExpr b_num_times_num{
+    Expr b_num_times_num{ BinaryExpr{
         Token{ star, "*", 0 },
         Expr::make_unique<LiteralExpr>(Token{ number, "5.6", 0,5.6 }),
         Expr::make_unique<LiteralExpr>(Token{ number, "0.1", 0, 0.1 })
-    };
+    } };
 
-    BinaryExpr b_false_and_true{
+    Expr b_false_and_true{ BinaryExpr{
         Token{ kw_and, "and", 0 },
         Expr::make_unique<LiteralExpr>(Token{ kw_false, "false", 0, false }),
         Expr::make_unique<LiteralExpr>(Token{ kw_true, "true", 0, true})
-    };
+    } };
 
-    BinaryExpr b_hello_plus_world{
+    Expr b_hello_plus_world{ BinaryExpr{
         Token{ plus, "+", 0 },
         Expr::make_unique<LiteralExpr>(Token{ string, "\"hello\"", 0, "hello" }),
         Expr::make_unique<LiteralExpr>(Token{ string, "\"world\"", 0, "world" })
-    };
+    } };
 
     CHECK(print(b_num_times_num) == "(* 5.6 0.1)");
     CHECK(print(b_false_and_true) == "(and false true)");
@@ -81,9 +82,9 @@ TEST_CASE("binary") {
 
 TEST_CASE("group") {
 
-    GroupedExpr g_nil{
-        Expr::make_unique<LiteralExpr>(Token{ TokenType::kw_nil, "nil", 0, nullptr })
-    };
+    Expr g_nil{ GroupedExpr{
+        Expr::make_unique<LiteralExpr>(Token{ TokenType::kw_nil, "nil", 0, Nil{} })
+    } };
 
     CHECK(print(g_nil) == "(group nil)");
 
@@ -93,7 +94,7 @@ TEST_CASE("compound") {
 
     using enum TokenType;
 
-    BinaryExpr c{
+    Expr c{ BinaryExpr{
         Token{ star, "*", 0},
         Expr::make_unique<UnaryExpr>(
             Token{ minus, "-", 0 },
@@ -102,7 +103,7 @@ TEST_CASE("compound") {
         Expr::make_unique<GroupedExpr>(
             Expr::make_unique<LiteralExpr>(Token{ number, "45.67", 0, 45.67 })
         )
-    };
+    } };
 
     CHECK(print(c) == "(* (- 123) (group 45.67))");
 
