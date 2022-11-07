@@ -1,12 +1,13 @@
 #pragma once
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <array>
 #include <string>
 #include <unordered_map>
 #include "Utils.hpp"
 
-enum class TokenType : size_t {
+enum class TokenType : uint8_t {
 
     // Single-character
     lparen = 0, rparen, lbrace, rbrace,
