@@ -45,9 +45,12 @@ public:
 
     std::string message() const override {
         return fmt::format(
-            "[Error @Interpreter] at line {:d} in {:s} ({:s}):\n{:s}{:s}\n",
-            token.line, expr_name, token.lexeme,
-            messages_.at(type), detail::details_tail(details)
+            "[Error @Interpreter] at {:s} in {:s} ({:s}):\n{:s}{:s}\n",
+            detail::location_info(token.location()),
+            expr_name,
+            token.lexeme(),
+            messages_.at(type),
+            detail::details_tail(details)
         );
     }
 

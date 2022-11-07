@@ -1,4 +1,5 @@
 #pragma once
+#include "SourceLocation.hpp"
 #include <fmt/format.h>
 #include <type_traits>
 #include <string_view>
@@ -80,6 +81,22 @@ inline std::string details_tail(std::string_view details) {
         details
     );
 }
+
+
+inline std::string location_info(const SourceLocation& location) {
+    if (location.has_file()) {
+        return fmt::format(
+            "{:s}:{:d}:{:d}",
+            location.file().string(), location.line, location.column
+        );
+    } else {
+        return fmt::format(
+            "{:d}:{:d}",
+            location.line, location.column
+        );
+    }
+}
+
 
 } // namespace detail
 
