@@ -1,0 +1,4 @@
+import "math.lox";
+import "sqr.lox";
+
+print add(5, sqr(5)); // 30

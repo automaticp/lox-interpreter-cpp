@@ -9,9 +9,10 @@ TEST_CASE("init-expressions") {
     StreamErrorReporter err{ std::cerr };
 
     SUBCASE("number") {
-        Scanner s{ R"(var num = 56;)", err };
+        Scanner s{ err };
 
-        const auto& tokens = s.scan_tokens();
+        auto tokens = s.scan_tokens(R"(var num = 56;)");
+        Scanner::append_eof(tokens);
 
         REQUIRE(tokens.size() == 6);
 
@@ -24,9 +25,10 @@ TEST_CASE("init-expressions") {
     }
 
     SUBCASE("string") {
-        Scanner s{ R"(var str = "Hello, World!";)", err };
+        Scanner s{ err };
 
-        const auto& tokens = s.scan_tokens();
+        auto tokens = s.scan_tokens(R"(var str = "Hello, World!";)");
+        Scanner::append_eof(tokens);
 
         REQUIRE(tokens.size() == 6);
 
@@ -46,16 +48,16 @@ TEST_CASE("multiline") {
 
     SUBCASE("if-statement-with-comments") {
 
-        Scanner s{
+        Scanner s{ err };
+
+        auto tokens = s.scan_tokens(
             "// super algorithm\n"
             "if (a > 5) {\n"
             "  /* reduce /***/ */\n"
             "  a = a / 5;\n"
-            "}",
-            err
-        };
-
-        const auto& tokens = s.scan_tokens();
+            "}"
+        );
+        Scanner::append_eof(tokens);
 
         REQUIRE(tokens.size() == 15);
 

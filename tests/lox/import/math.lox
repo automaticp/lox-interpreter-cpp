@@ -1,0 +1,16 @@
+
+fun add(a, b) {
+    return a + b;
+}
+
+fun sub(a, b) {
+    return a - b;
+}
+
+fun mult(a, b) {
+    return a * b;
+}
+
+fun div(a, b) {
+    return a / b;
+}

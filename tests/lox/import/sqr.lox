@@ -1,0 +1,5 @@
+import "math.lox";
+
+fun sqr(x) {
+    return mult(x, x);
+}

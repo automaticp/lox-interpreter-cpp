@@ -13,20 +13,19 @@
 
 class Scanner : private ErrorSender<ScannerError> {
 private:
-    std::string source_;
-    std::vector<Token> tokens_;
-
     class ScannerState {
     public:
         using iter_t = std::string::const_iterator;
     private:
-        const iter_t beg_;
+        iter_t beg_;
         iter_t cur_;
         iter_t token_beg_;
-        const iter_t end_;
-        size_t line_;
+        iter_t end_;
+        size_t line_{};
 
     public:
+        ScannerState() = default;
+
         ScannerState(iter_t beg, iter_t end, size_t start_line) :
             beg_{ beg }, cur_{ beg }, end_{ end },
             line_{ start_line }
@@ -83,20 +82,50 @@ private:
 
     };
 
-    ScannerState state_{ source_.cbegin(), source_.cend(), 1 };
+    std::vector<Token> tokens_;
+    ScannerState state_;
+    bool did_produce_error_{};
+
+    void prepare_source(const std::string& text) {
+        state_ = { text.cbegin(), text.cend(), 1 };
+        did_produce_error_ = false;
+    }
 
 public:
-    Scanner(std::string_view source, ErrorReporter& err) : source_{ source }, ErrorSender{ err } {}
+    Scanner(ErrorReporter& err) : ErrorSender{ err } {}
 
-    const std::vector<Token>& scan_tokens() {
+    [[nodiscard]]
+    std::vector<Token> scan_tokens(const std::string& source_text) {
+
+        prepare_source(source_text);
 
         while (!state_.is_end()) {
             state_.new_token();
             scan_token();
         }
-        add_eof_token();
+        // Don't add eof here, add it manually
+        // after resolving imports
 
-        return tokens_;
+        // We return the result even if the scanning
+        // reported an error somewhere along the line,
+        // since the tokens could still be useful
+        // for debugging or other things.
+        return std::move(tokens_);
+    }
+
+    bool has_failed() const noexcept { return did_produce_error_; }
+
+    // Append a special symbol that tells the Parser
+    // to stop parsing. Will preserve line information.
+    static void append_eof(std::vector<Token>& tokens) {
+        tokens.emplace_back(
+            Token{
+                TokenType::eof,
+                to_lexeme(TokenType::eof),
+                tokens.empty() ? 0 : tokens.back().line,
+                {}
+            }
+        );
     }
 
 
@@ -274,6 +303,7 @@ private:
     }
 
     void report_error(ScannerError::Type type, std::string_view details = "") {
+        did_produce_error_ = true; // FIXME: find a better way?
         send_error(
             type, state_.line(), std::string(details)
         );
