@@ -16,12 +16,12 @@ TEST_CASE("init-expressions") {
 
         REQUIRE(tokens.size() == 6);
 
-        CHECK(tokens[0] == Token{ TokenType::kw_var, "var", 1 });
-        CHECK(tokens[1] == Token{ TokenType::identifier, "num", 1 });
-        CHECK(tokens[2] == Token{ TokenType::eq, "=", 1 });
-        CHECK(tokens[3] == Token{ TokenType::number, "56", 1 });
-        CHECK(tokens[4] == Token{ TokenType::semicolon, ";", 1 });
-        CHECK(tokens[5] == Token{ TokenType::eof, "?eof?", 1 });
+        CHECK(tokens[0] == Token{ TokenType::kw_var, "var", {1, 3} });
+        CHECK(tokens[1] == Token{ TokenType::identifier, "num", {1, 7 } });
+        CHECK(tokens[2] == Token{ TokenType::eq, "=", {1, 9} });
+        CHECK(tokens[3] == Token{ TokenType::number, "56", {1, 11} });
+        CHECK(tokens[4] == Token{ TokenType::semicolon, ";", {1, 12} });
+        CHECK(tokens[5] == Token{ TokenType::eof, "?eof?", {1, 13} });
     }
 
     SUBCASE("string") {
@@ -32,12 +32,12 @@ TEST_CASE("init-expressions") {
 
         REQUIRE(tokens.size() == 6);
 
-        CHECK(tokens[0] == Token{ TokenType::kw_var, "var", 1 });
-        CHECK(tokens[1] == Token{ TokenType::identifier, "str", 1 });
-        CHECK(tokens[2] == Token{ TokenType::eq, "=", 1 });
-        CHECK(tokens[3] == Token{ TokenType::string, R"("Hello, World!")", 1 });
-        CHECK(tokens[4] == Token{ TokenType::semicolon, ";", 1 });
-        CHECK(tokens[5] == Token{ TokenType::eof, "?eof?", 1 });
+        CHECK(tokens[0] == Token{ TokenType::kw_var, "var", {1, 1} });
+        CHECK(tokens[1] == Token{ TokenType::identifier, "str", {1, 1} });
+        CHECK(tokens[2] == Token{ TokenType::eq, "=", {1, 1} });
+        CHECK(tokens[3] == Token{ TokenType::string, R"("Hello, World!")", {1, 1} });
+        CHECK(tokens[4] == Token{ TokenType::semicolon, ";", {1, 1} });
+        CHECK(tokens[5] == Token{ TokenType::eof, "?eof?", {1, 1} });
     }
 
 }
@@ -61,21 +61,21 @@ TEST_CASE("multiline") {
 
         REQUIRE(tokens.size() == 15);
 
-        CHECK(tokens[0] == Token{ TokenType::kw_if, "if", 2 });
-        CHECK(tokens[1] == Token{ TokenType::lparen, "(", 2 });
-        CHECK(tokens[2] == Token{ TokenType::identifier, "a", 2 });
-        CHECK(tokens[3] == Token{ TokenType::greater, ">", 2 });
-        CHECK(tokens[4] == Token{ TokenType::number, "5", 2 });
-        CHECK(tokens[5] == Token{ TokenType::rparen, ")", 2 });
-        CHECK(tokens[6] == Token{ TokenType::lbrace, "{", 2 });
-        CHECK(tokens[7] == Token{ TokenType::identifier, "a", 4 });
-        CHECK(tokens[8] == Token{ TokenType::eq, "=", 4 });
-        CHECK(tokens[9] == Token{ TokenType::identifier, "a", 4 });
-        CHECK(tokens[10] == Token{ TokenType::slash, "/", 4 });
-        CHECK(tokens[11] == Token{ TokenType::number, "5", 4 });
-        CHECK(tokens[12] == Token{ TokenType::semicolon, ";", 4 });
-        CHECK(tokens[13] == Token{ TokenType::rbrace, "}", 5 });
-        CHECK(tokens[14] == Token{ TokenType::eof, "?eof?", 5 });
+        CHECK(tokens[0] == Token{ TokenType::kw_if, "if", {2, 1} });
+        CHECK(tokens[1] == Token{ TokenType::lparen, "(", {2, 1} });
+        CHECK(tokens[2] == Token{ TokenType::identifier, "a", {2, 1} });
+        CHECK(tokens[3] == Token{ TokenType::greater, ">", {2, 1} });
+        CHECK(tokens[4] == Token{ TokenType::number, "5", {2, 1} });
+        CHECK(tokens[5] == Token{ TokenType::rparen, ")", {2, 1} });
+        CHECK(tokens[6] == Token{ TokenType::lbrace, "{", {2, 1} });
+        CHECK(tokens[7] == Token{ TokenType::identifier, "a", {4, 1} });
+        CHECK(tokens[8] == Token{ TokenType::eq, "=", {4, 1} });
+        CHECK(tokens[9] == Token{ TokenType::identifier, "a", {4, 1} });
+        CHECK(tokens[10] == Token{ TokenType::slash, "/", {4, 1} });
+        CHECK(tokens[11] == Token{ TokenType::number, "5", {4, 1} });
+        CHECK(tokens[12] == Token{ TokenType::semicolon, ";", {4, 1} });
+        CHECK(tokens[13] == Token{ TokenType::rbrace, "}", {5, 1} });
+        CHECK(tokens[14] == Token{ TokenType::eof, "?eof?", {5, 1} });
     }
 
 
