@@ -135,15 +135,21 @@ private:
         // Try reading the file at path, abort on failure
         std::string try_read(const std::filesystem::path& path) {
 
+            // Must've skipped past the end of statement:
+            // import "file.lox";
+            //                   ^--current()
+            // So we go back 2 tokens to get the name of the file.
+            const Token& path_tok = *(state_.current() - 2);
+
             if (!std::filesystem::exists(path)) {
                 report_error_and_abort(
-                    ImporterError::Type::path_does_not_exist, path.string()
+                    ImporterError::Type::path_does_not_exist, path_tok, path.string()
                 );
             }
 
             if (!std::filesystem::is_regular_file(path)) {
                 report_error_and_abort(
-                    ImporterError::Type::not_a_regular_file, path.string()
+                    ImporterError::Type::not_a_regular_file, path_tok, path.string()
                 );
             }
 
@@ -151,7 +157,7 @@ private:
 
             if (!text.has_value()) {
                 report_error_and_abort(
-                    ImporterError::Type::failed_to_read_file, path.string()
+                    ImporterError::Type::failed_to_read_file, path_tok, path.string()
                 );
             }
 
@@ -185,6 +191,11 @@ private:
 
         void report_error_and_abort(ImporterError::Type type, std::string_view details = "") {
             report_error(type, details);
+            abort_by_exception(type);
+        }
+
+        void report_error_and_abort(ImporterError::Type type, const Token& token, std::string_view details = "") {
+            report_error(type, token, details);
             abort_by_exception(type);
         }
 
@@ -256,7 +267,7 @@ private:
         );
     }
 
-    // Marked by Importer upon reading a file.
+    // Marked by ImportResolver upon reading a file.
     void mark_imported_this_pass(const std::filesystem::path& file) {
         imported_this_pass_.emplace_back(file);
     }
