@@ -30,6 +30,12 @@ public:
         reset();
     }
 
+    void reset(iter_t beg, iter_t cur, iter_t end) noexcept {
+        beg_ = beg;
+        end_ = end;
+        cur_ = cur;
+    }
+
     bool is_end() const noexcept { return cur_ == end_; }
 
     bool is_eof() const noexcept { return cur_->type == TokenType::eof; }
