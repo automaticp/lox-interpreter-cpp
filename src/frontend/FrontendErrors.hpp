@@ -52,6 +52,56 @@ public:
 
 
 
+
+
+class ImporterError : public IError {
+public:
+    enum class Type {
+        expected_import_string,
+        missing_semicolon,
+        path_does_not_exist,
+        not_a_regular_file,
+        failed_to_read_file
+    };
+
+private:
+    inline static const boost::unordered_map<Type, std::string_view> messages_{
+        {Type::expected_import_string, "Expected import string"},
+        {Type::missing_semicolon, "Missing ';' at the end of statement"},
+        {Type::path_does_not_exist, "Imported path does not exist"},
+        {Type::not_a_regular_file, "Imported file is not a regular file"},
+        {Type::failed_to_read_file, "Failed to read file"},
+    };
+
+public:
+    Type type;
+    size_t line;
+    std::string details;
+
+    ImporterError(Type type, size_t line, std::string details) :
+        type{ type }, line{ line }, details{ std::move(details) }
+    {}
+
+    ErrorCategory category() const override {
+        return ErrorCategory::import;
+    }
+
+    std::string message() const override {
+        return fmt::format(
+            "[Error @Importer] at line {:d}\n{:s}{:s}\n",
+            line, messages_.at(type),
+            detail::details_tail(details)
+        );
+    }
+
+}; // class ImporterError;
+
+
+
+
+
+
+
 class ParserError : public IError {
 public:
     enum class Type {
