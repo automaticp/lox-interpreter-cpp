@@ -13,9 +13,6 @@
 
 class Scanner : private ErrorSender<ScannerError> {
 private:
-    std::string source_;
-    std::vector<Token> tokens_;
-
     class ScannerState {
     public:
         using iter_t = std::string::const_iterator;
@@ -27,6 +24,8 @@ private:
         size_t line_{};
 
     public:
+        ScannerState() = default;
+
         ScannerState(iter_t beg, iter_t end, size_t start_line) :
             beg_{ beg }, cur_{ beg }, end_{ end },
             line_{ start_line }
@@ -83,20 +82,42 @@ private:
 
     };
 
-    ScannerState state_{ source_.cbegin(), source_.cend(), 1 };
+    std::vector<Token> tokens_;
+    ScannerState state_;
+
+    void prepare_source(const std::string& text) {
+        state_ = { text.cbegin(), text.cend(), 1 };
+    }
 
 public:
-    Scanner(std::string_view source, ErrorReporter& err) : source_{ source }, ErrorSender{ err } {}
+    Scanner(ErrorReporter& err) : ErrorSender{ err } {}
 
-    const std::vector<Token>& scan_tokens() {
+    [[nodiscard]]
+    std::vector<Token> scan_tokens(const std::string& source_text) {
+
+        prepare_source(source_text);
 
         while (!state_.is_end()) {
             state_.new_token();
             scan_token();
         }
-        add_eof_token();
+        // Don't add eof here, add it manually
+        // after resolving imports
 
-        return tokens_;
+        return std::move(tokens_);
+    }
+
+    // Append a special symbol that tells the Parser
+    // to stop parsing. Will preserve line information.
+    static void append_eof(std::vector<Token>& tokens) {
+        tokens.emplace_back(
+            Token{
+                TokenType::eof,
+                to_lexeme(TokenType::eof),
+                tokens.empty() ? 0 : tokens.back().line,
+                {}
+            }
+        );
     }
 
 
