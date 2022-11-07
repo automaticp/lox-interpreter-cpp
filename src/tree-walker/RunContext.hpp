@@ -100,13 +100,13 @@ public:
             }
         }
 
-        // This error checking is eww, tbh
-        if (error_reporter().had_errors_of_category(ErrorCategory::scanner)) {
+        if (scanner.has_failed()) {
             return;
         }
 
         tokens = importer_.resolve_imports(tokens);
 
+        // This error checking is eww, tbh
         if (error_reporter().had_errors_of_category(ErrorCategory::import)) {
             return;
         }

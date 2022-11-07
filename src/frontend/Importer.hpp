@@ -64,11 +64,20 @@ private:
                         // These are 'flat' tokens, with imports unresolved.
                         auto new_file_tokens = scanner.scan_tokens(source);
 
+                        // Check if the scanner succeded
+                        if (scanner.has_failed()) {
+                            // Abort directly, don't send the error,
+                            // as it must've already been reported by the Scanner.
+                            // FIXME: Maybe make it's own error type?
+                            abort_by_exception(ImporterError::Type::failed_to_read_file);
+                        }
+
                         // 3.75 Mark this file as imported
                         importer_.mark_imported_this_pass(new_file);
 
                         // 4. Resolve imports for the new file (recursive)
-                        auto resolved_tokens = impres.try_resolve_imports(new_file_tokens);
+                        auto resolved_tokens =
+                            impres.try_resolve_imports(new_file_tokens);
 
                         // 5. Move-insert the result into the token vector
                         auto it = tokens.insert(

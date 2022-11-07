@@ -84,9 +84,11 @@ private:
 
     std::vector<Token> tokens_;
     ScannerState state_;
+    bool did_produce_error_{};
 
     void prepare_source(const std::string& text) {
         state_ = { text.cbegin(), text.cend(), 1 };
+        did_produce_error_ = false;
     }
 
 public:
@@ -104,8 +106,14 @@ public:
         // Don't add eof here, add it manually
         // after resolving imports
 
+        // We return the result even if the scanning
+        // reported an error somewhere along the line,
+        // since the tokens could still be useful
+        // for debugging or other things.
         return std::move(tokens_);
     }
+
+    bool has_failed() const noexcept { return did_produce_error_; }
 
     // Append a special symbol that tells the Parser
     // to stop parsing. Will preserve line information.
@@ -295,6 +303,7 @@ private:
     }
 
     void report_error(ScannerError::Type type, std::string_view details = "") {
+        did_produce_error_ = true; // FIXME: find a better way?
         send_error(
             type, state_.line(), std::string(details)
         );
