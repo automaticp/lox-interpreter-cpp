@@ -10,6 +10,7 @@
 #include "Resolver.hpp"
 #include "Builtins.hpp"
 #include "Frontend.hpp"
+#include "Importer.hpp"
 #include <string>
 #include <optional>
 #include <fstream>
@@ -21,6 +22,7 @@ private:
     bool is_debug_scanner_;
     bool is_debug_parser_;
     std::optional<std::string> filename_;
+    Importer importer_;
     Parser parser_;
     Resolver resolver_;
     Interpreter interpreter_;
@@ -29,6 +31,7 @@ public:
         bool is_debug_scanner, bool is_debug_parser,
         std::optional<std::string> filename = std::nullopt) :
         ErrorSender{ err_reporter },
+        importer_{ err_reporter },
         parser_{ err_reporter },
         resolver_{ err_reporter },
         interpreter_{ err_reporter, resolver_ },
@@ -72,8 +75,9 @@ public:
     void run_file() {
         // filename_ is guaranteed to have value if called from start_running()
         assert(filename_);
-        auto text = read_file(filename_.value());
+        auto text = Importer::read_file(filename_.value());
         if (text) {
+            importer_.mark_imported(filename_.value());
             run(text.value());
         } else {
             send_error(ContextError::Type::unable_to_open_file, filename_.value());
@@ -85,9 +89,9 @@ public:
 
         error_reporter().reset();
 
-        Scanner scanner{ text, error_reporter() };
+        Scanner scanner{ error_reporter() };
 
-        const auto& tokens = scanner.scan_tokens();
+        auto tokens = scanner.scan_tokens(text);
 
         if (is_debug_scanner_mode()) {
             std::cout << "[Debug @Scanner]:\n";
@@ -101,6 +105,13 @@ public:
             return;
         }
 
+        tokens = importer_.resolve_imports(tokens);
+
+        if (error_reporter().had_errors_of_category(ErrorCategory::import)) {
+            return;
+        }
+
+        Scanner::append_eof(tokens);
 
         auto new_stmts = parser_.parse_tokens(tokens);
         if (is_debug_parser_mode()) {
@@ -122,23 +133,6 @@ public:
 
         interpreter_.interpret(new_stmts);
     }
-
-private:
-    static std::optional<std::string> read_file(const std::string& filename) {
-
-        std::ifstream fs{ filename };
-
-        if (!fs.fail()) {
-            return std::string{
-                std::istreambuf_iterator<char>(fs),
-                std::istreambuf_iterator<char>()
-            };
-        } else {
-            return std::nullopt;
-        }
-    }
-
-
 
 };
 
