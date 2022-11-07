@@ -58,11 +58,11 @@ private:
                         // Call from this, not from impres, in order to report a correct token.
                         auto source = try_read(new_file);
 
-                        // FIXME: Scanner can fail on scan_tokens()
                         Scanner scanner{ error_reporter() };
 
                         // These are 'flat' tokens, with imports unresolved.
-                        auto new_file_tokens = scanner.scan_tokens(source);
+                        auto new_file_tokens =
+                            scanner.scan_tokens(source, new_file);
 
                         // Check if the scanner succeded
                         if (scanner.has_failed()) {
@@ -118,8 +118,8 @@ private:
                 TokenType::string, ImporterError::Type::expected_import_string
             );
 
-            assert(path_tok.literal.has_value());
-            const auto& path_ref = std::get<String>(path_tok.literal.value());
+            assert(path_tok.has_literal());
+            const auto& path_ref = std::get<String>(path_tok.literal());
             // Range init cause String is from boost.
             std::filesystem::path filepath{ path_ref.begin(), path_ref.end() };
 
@@ -181,11 +181,11 @@ private:
         }
 
         void report_error(ImporterError::Type type, std::string_view details = "") {
-            send_error(type, state_.peek().line, std::string(details));
+            send_error(type, state_.peek().location(), std::string(details));
         }
 
         void report_error(ImporterError::Type type, const Token& token, std::string_view details = "") {
-            send_error(type, token.line, std::string(details));
+            send_error(type, token.location(), std::string(details));
         }
 
 

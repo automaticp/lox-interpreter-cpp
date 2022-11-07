@@ -10,8 +10,8 @@ public:
     // Expr visitor overloads
 
     std::string operator()(const LiteralExpr& expr) const {
-        assert(expr.token.literal);
-        return to_string(expr.token.literal.value());
+        assert(expr.token.has_literal());
+        return to_string(expr.token.literal());
     }
 
     std::string operator()(const UnaryExpr& expr) const {
@@ -27,11 +27,11 @@ public:
     }
 
     std::string operator()(const VariableExpr& expr) const {
-        return expr.identifier.lexeme;
+        return expr.identifier.lexeme();
     }
 
     std::string operator()(const AssignExpr& expr) const {
-        return parenthesize(expr.identifier.lexeme, *expr.rvalue);
+        return parenthesize(expr.identifier.lexeme(), *expr.rvalue);
     }
 
     std::string operator()(const LogicalExpr& expr) const {
@@ -56,7 +56,7 @@ public:
     }
 
     std::string operator()(const VarStmt& stmt) const {
-        return fmt::format("var {:s} = {:s};", stmt.identifier.lexeme, stmt.init->accept(*this));
+        return fmt::format("var {:s} = {:s};", stmt.identifier.lexeme(), stmt.init->accept(*this));
     }
 
     std::string operator()(const BlockStmt& stmt) const {
@@ -95,9 +95,9 @@ public:
             auto it{ ts.begin() };
 
             for (; it < ts.end() - 1; ++it) {
-                result += it->lexeme + ", ";
+                result += it->lexeme() + ", ";
             }
-            result += (++it)->lexeme;
+            result += (++it)->lexeme();
 
             return result;
         };
@@ -112,7 +112,7 @@ public:
 
         return fmt::format(
             "fun {}({}) {{\n{}}}",
-            stmt.name.lexeme,
+            stmt.name.lexeme(),
             join_token_names(stmt.parameters),
             join_statements(stmt.body)
         );

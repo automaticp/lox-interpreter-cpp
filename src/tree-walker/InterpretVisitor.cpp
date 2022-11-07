@@ -30,7 +30,7 @@ Value Function::operator()<Interpreter>(Interpreter& interpreter, std::span<Valu
 
     for (size_t i{ 0 }; i < args.size(); ++i) {
         env.define(
-            declaration()->parameters[i].lexeme, std::move(args[i])
+            declaration()->parameters[i].lexeme(), std::move(args[i])
         );
     }
 
@@ -163,11 +163,11 @@ CallableValue& InterpretVisitor::get_invokable(Value& callee, std::vector<Value>
 
 
 Value InterpretVisitor::operator()(const LiteralExpr& expr) const {
-    assert(expr.token.literal.has_value());
+    assert(expr.token.has_literal());
     return {
         std::visit(
             [](auto&& arg) { return Value{ arg }; },
-            expr.token.literal.value()
+            expr.token.literal()
         )
     };
 }
@@ -278,13 +278,13 @@ Value InterpretVisitor::operator()(const VariableExpr& expr) const {
     ValueHandle handle{};
 
     if (it != depths.end()) {
-        handle = env_.get_at(it->second, expr.identifier.lexeme);
+        handle = env_.get_at(it->second, expr.identifier.lexeme());
     } else {
-        handle = interpreter_.env_.get(expr.identifier.lexeme);
+        handle = interpreter_.env_.get(expr.identifier.lexeme());
         if (!handle) {
             report_error_and_abort(
                 InterpreterError::Type::undefined_variable,
-                expr, expr.identifier.lexeme
+                expr, expr.identifier.lexeme()
             );
         }
     }
@@ -303,19 +303,21 @@ Value InterpretVisitor::operator()(const AssignExpr& expr) const {
     if (it != depths.end()) {
         ValueHandle val = env_.assign_at(
             it->second,
-            expr.identifier.lexeme,
+            expr.identifier.lexeme(),
             evaluate(*expr.rvalue)
         );
         assert(val); // This whole thing is so fragile, I hate it
         return *val;
     } else {
         ValueHandle val = interpreter_.env_.assign(
-            expr.identifier.lexeme,
+            expr.identifier.lexeme(),
             evaluate(*expr.rvalue)
         );
 
         if (!val) {
-            report_error_and_abort(InterpreterError::Type::undefined_variable, expr, expr.identifier.lexeme);
+            report_error_and_abort(
+                InterpreterError::Type::undefined_variable, expr, expr.identifier.lexeme()
+            );
         }
         return *val;
     }
@@ -327,7 +329,7 @@ Value InterpretVisitor::operator()(const AssignExpr& expr) const {
 Value InterpretVisitor::operator()(const LogicalExpr& expr) const {
     Value lhs{ evaluate(*expr.lhs) };
 
-    if (expr.op.type == TokenType::kw_or) {
+    if (expr.op.type() == TokenType::kw_or) {
         if (is_truthful(lhs)) { return lhs; }
     } else {
         if (!is_truthful(lhs)) { return lhs; }
@@ -400,7 +402,7 @@ void InterpretVisitor::operator()(const ExpressionStmt& stmt) const {
 
 
 void InterpretVisitor::operator()(const VarStmt& stmt) const {
-    env_.define(stmt.identifier.lexeme, evaluate(*stmt.init));
+    env_.define(stmt.identifier.lexeme(), evaluate(*stmt.init));
 }
 
 
@@ -465,7 +467,7 @@ void InterpretVisitor::operator()(const FunStmt& stmt) const {
 
     // Add this function to the current environment.
     ValueHandle fun_handle = env_.define(
-        stmt.name.lexeme,
+        stmt.name.lexeme(),
         Function{
             &stmt,
             std::move(closure)
@@ -476,7 +478,7 @@ void InterpretVisitor::operator()(const FunStmt& stmt) const {
     // The ValueHandle will properly decay
     // in the Environmet::get() method.
     fun_handle.unwrap_to<Function>().closure().define(
-        stmt.name.lexeme, fun_handle
+        stmt.name.lexeme(), fun_handle
     );
     // Beware: copying the Function into it's own closure
     // will leak memory. Do not copy/decay it here.

@@ -4,6 +4,7 @@
 #include "FrontendErrors.hpp"
 #include "ErrorSender.hpp"
 #include "ErrorReporter.hpp"
+#include <filesystem>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -21,14 +22,14 @@ private:
         iter_t cur_;
         iter_t token_beg_;
         iter_t end_;
-        size_t line_{};
+        SourceLocation location_{ 0, 0 };
 
     public:
         ScannerState() = default;
 
-        ScannerState(iter_t beg, iter_t end, size_t start_line) :
+        ScannerState(iter_t beg, iter_t end, SourceLocation location) :
             beg_{ beg }, cur_{ beg }, end_{ end },
-            line_{ start_line }
+            location_{ std::move(location) }
         {}
 
         bool is_end() const noexcept { return cur_ == end_; }
@@ -56,6 +57,7 @@ private:
 
         char advance() noexcept {
             assert(!is_end());
+            add_column();
             return *cur_++;
         }
 
@@ -70,8 +72,20 @@ private:
             }
         }
 
-        size_t line() const noexcept { return line_; }
-        void add_line() noexcept { ++line_; }
+        // size_t line() const noexcept { return line_; }
+        SourceLocation location() const noexcept { return location_; }
+
+
+        void add_line() noexcept {
+            ++location_.line;
+            reset_column();
+        }
+        void add_column() noexcept {
+            ++location_.column;
+        }
+        void reset_column() noexcept {
+            location_.column = 1;
+        }
 
         // Call each time before scanning the next token
         void new_token() noexcept { token_beg_ = cur_; }
@@ -86,18 +100,35 @@ private:
     ScannerState state_;
     bool did_produce_error_{};
 
-    void prepare_source(const std::string& text) {
-        state_ = { text.cbegin(), text.cend(), 1 };
+    void prepare_source(const std::string& text, const std::filesystem::path& file) {
+        state_ = {
+            text.cbegin(), text.cend(),
+            SourceLocation{
+                 1, 1,
+                 std::make_shared<std::filesystem::path>(std::filesystem::canonical(file))
+                }
+        };
         did_produce_error_ = false;
     }
+
+    void prepare_source(const std::string& text) {
+        state_ = {
+            text.cbegin(), text.cend(),
+            { 1, 1 }
+        };
+        did_produce_error_ = false;
+    }
+
 
 public:
     Scanner(ErrorReporter& err) : ErrorSender{ err } {}
 
     [[nodiscard]]
-    std::vector<Token> scan_tokens(const std::string& source_text) {
+    std::vector<Token> scan_tokens(const std::string& source_text, const std::filesystem::path& file) {
+        // It's your job to check that 'source_text' comes from 'file'.
+        // Otherwise, things can become awkward.
 
-        prepare_source(source_text);
+        prepare_source(source_text, file);
 
         while (!state_.is_end()) {
             state_.new_token();
@@ -113,16 +144,32 @@ public:
         return std::move(tokens_);
     }
 
+    [[nodiscard]]
+    std::vector<Token> scan_tokens(const std::string& source_text) {
+        prepare_source(source_text);
+        while (!state_.is_end()) {
+            state_.new_token();
+            scan_token();
+        }
+        return std::move(tokens_);
+    }
+
     bool has_failed() const noexcept { return did_produce_error_; }
 
     // Append a special symbol that tells the Parser
-    // to stop parsing. Will preserve line information.
+    // to stop parsing. Will preserve source location information.
     static void append_eof(std::vector<Token>& tokens) {
+        SourceLocation location{0, 0};
+        if (!tokens.empty()) {
+            location = tokens.back().location();
+            location.column += tokens.back().lexeme().size();
+        }
+
         tokens.emplace_back(
             Token{
                 TokenType::eof,
                 to_lexeme(TokenType::eof),
-                tokens.empty() ? 0 : tokens.back().line,
+                location,
                 {}
             }
         );
@@ -217,17 +264,12 @@ private:
 
 
     void add_token(TokenType type) {
-        tokens_.emplace_back(type, state_.lexeme(), state_.line());
+        tokens_.emplace_back(type, std::string(state_.lexeme()), state_.location());
     }
 
     void add_token(TokenType type, LiteralValue&& literal) {
-        tokens_.emplace_back(type, state_.lexeme(), state_.line(), std::move(literal));
+        tokens_.emplace_back(type, std::string(state_.lexeme()), state_.location(), std::move(literal));
     }
-
-    void add_eof_token() {
-        tokens_.emplace_back(TokenType::eof, to_lexeme(TokenType::eof), state_.line());
-    }
-
 
     void add_string_literal_token() {
         while (!state_.is_end() && state_.peek() != '"') {
@@ -305,7 +347,7 @@ private:
     void report_error(ScannerError::Type type, std::string_view details = "") {
         did_produce_error_ = true; // FIXME: find a better way?
         send_error(
-            type, state_.line(), std::string(details)
+            type, state_.location(), std::string(details)
         );
     }
 
