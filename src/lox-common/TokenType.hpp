@@ -28,7 +28,7 @@ enum class TokenType : size_t {
     // Keywords
     kw_and, kw_class, kw_else, kw_false, kw_fun, kw_for,
     kw_if, kw_nil, kw_or, kw_print, kw_return, kw_super, kw_this,
-    kw_true, kw_var, kw_while,
+    kw_true, kw_var, kw_while, kw_import,
 
     //
     eof
@@ -54,7 +54,7 @@ inline constexpr std::array token_type_names{
 
     "kw_and", "kw_class", "kw_else", "kw_false", "kw_fun", "kw_for",
     "kw_if", "kw_nil", "kw_or", "kw_print", "kw_return", "kw_super", "kw_this",
-    "kw_true", "kw_var", "kw_while",
+    "kw_true", "kw_var", "kw_while", "kw_import",
 
     "eof"
 };
@@ -76,7 +76,7 @@ inline constexpr std::array token_type_lexemes{
 
     "and", "class", "else", "false", "fun", "for",
     "if", "nil", "or", "print", "return", "super", "this",
-    "true", "var", "while",
+    "true", "var", "while", "import",
 
     "?eof?"
 };
@@ -99,6 +99,7 @@ inline const std::unordered_map<std::string, TokenType> keyword_map{
     {"true",    TokenType::kw_true},
     {"var",     TokenType::kw_var},
     {"while",   TokenType::kw_while},
+    {"import",   TokenType::kw_import},
 };
 
 } // namespace detail
