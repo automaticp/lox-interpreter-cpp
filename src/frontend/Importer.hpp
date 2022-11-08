@@ -20,7 +20,7 @@ private:
     class ImportResolver : private ErrorSender<ImporterError> {
     private:
         TokenIterator<std::vector<Token>::const_iterator> state_;
-        Importer& importer_; // To update and check the already imported files
+        Importer& importer_; // To update and check the list of already imported files
 
     public:
         ImportResolver(ErrorReporter& err, Importer& importer) :
@@ -35,7 +35,7 @@ private:
 
             // Comments here mirror the steps that I've written down
             // in my notebook when trying to wrap my head around the
-            // order of operations. Sorry if they seem too pedantic.
+            // order of operations. Sorry if they seem too redundant.
 
 
             // 1 Initialize the TokenIterator state
@@ -75,9 +75,10 @@ private:
                         // 3.75 Mark this file as imported
                         importer_.mark_imported_this_pass(new_file);
 
-                        // 4. Resolve imports for the new file (recursive)
+                        // 4. Resolve imports for the new file
+                        // (recursively calls this function)
                         auto resolved_tokens =
-                            impres.try_resolve_imports(new_file_tokens);
+                            impres.try_resolve_imports(std::move(new_file_tokens));
 
                         // 5. Move-insert the result into the token vector
                         auto it = tokens.insert(
@@ -204,8 +205,16 @@ private:
     }; // class ImportResolver
 
 
-    std::vector<std::filesystem::path> imported_this_pass_;
+    // A list of all succesfully imported files.
+    // Updated each time the call to resolve_imports() succeeds.
     std::vector<std::filesystem::path> imported_files_;
+
+    // A list of imported files during this call to resolve_imports().
+    // Reset on each invokation of resolve_imports().
+    std::vector<std::filesystem::path> imported_this_pass_;
+
+    // A flag indicating whether the last call to resolve_imports() has failed.
+    // Reset on each invokation of resolve_imports().
     bool has_failed_{};
 
 public:
@@ -226,12 +235,12 @@ public:
         }
     }
 
-    // Used by frontend to manually mark the top-level file as imported
+    // Used by frontend to manually mark the top-level file as imported.
     void mark_imported(std::filesystem::path filepath) {
         imported_files_.emplace_back(std::move(filepath));
     }
 
-    // Validate that the last call to resolve_imports() succeded
+    // Validate that the last call to resolve_imports() succeded.
     bool has_failed() const noexcept { return has_failed_; }
 
 
@@ -277,7 +286,7 @@ private:
         imported_this_pass_.emplace_back(file);
     }
 
-    // Called on each invokation of import().
+    // Called on each invokation of resolve_imports().
     // Resets the per-call state.
     void begin_new_import_pass() {
         imported_this_pass_.clear();

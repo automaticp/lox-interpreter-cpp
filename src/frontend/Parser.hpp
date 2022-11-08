@@ -35,7 +35,7 @@ public:
     parse_tokens(const std::vector<Token>& tokens) {
         prepare_tokens(tokens);
 
-        size_t num_stmts_before = statements_.size();
+        auto num_stmts_before = std::ssize(statements_);
 
         while (!state_.is_eof()) {
             try {

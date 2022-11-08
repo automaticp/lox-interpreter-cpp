@@ -72,8 +72,7 @@ private:
             }
         }
 
-        // size_t line() const noexcept { return line_; }
-        SourceLocation location() const noexcept { return location_; }
+        const SourceLocation& location() const noexcept { return location_; }
 
 
         void add_line() noexcept {
@@ -162,6 +161,10 @@ public:
         SourceLocation location{0, 0};
         if (!tokens.empty()) {
             location = tokens.back().location();
+            // FIXME: ermm, are we pointing at the beginning
+            // or the end of the token? I think it was the end...
+            // The next line is kina wrong then, but shouldn't
+            // break anything.
             location.column += tokens.back().lexeme().size();
         }
 

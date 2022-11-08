@@ -1,6 +1,6 @@
 #include "ResolveVisitor.hpp"
-#include "Resolver.hpp"
 
+#include "Resolver.hpp"
 #include "CommonVisitors.hpp"
 #include <algorithm>
 
