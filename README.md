@@ -23,7 +23,7 @@ import "path/to/code.lox";
 ```
 where the only accepted argument is a string literal designating a path to the imported file.
 
-The import resolution pass happens after scanning the tokens of the initial source, so it's slightly more robust than the `#include` macro. The files that were already `import`ed are not reimported again; the behaviour is equvalent to using `#include` with properly guarded header files. Given that lox has no declarations or the ability to form pointers/references, there's no need to break the source code into 'translation units', and so this import mechanism happens to be fully sufficient.
+The import resolution pass happens after scanning the tokens of the initial source, so it's slightly more robust than the `#include` macro: the files that were already `import`ed are not reimported again, non-global and conditional imports are forbidden. Otherwise, the behaviour is similar to using `#include` with properly guarded header files. Given that lox has no declarations or the ability to form pointers/references, there's no need to break the source code into 'translation units', and so this import mechanism happens to be fully sufficient.
 
 
 ## Closure support for stack-based functions
