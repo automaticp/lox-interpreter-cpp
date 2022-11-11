@@ -1,0 +1,19 @@
+// This is currently not possible in any form.
+// You get a simple 'Undefined variable: b' error.
+
+fun a(n) {
+    return b(n - 1);
+}
+
+fun b(n) {
+    if (n <= 1) {
+        print 1;
+        return 1;
+    }
+    print n;
+    return a(n);
+}
+
+a(4);
+
+
