@@ -40,6 +40,7 @@ public:
     void operator()(const WhileStmt& stmt) const;
     void operator()(const FunStmt& stmt) const;
     void operator()(const ReturnStmt& stmt) const;
+    void operator()(const ImportStmt& stmt) const;
 
 private:
     Value evaluate(const Expr& expr) const;

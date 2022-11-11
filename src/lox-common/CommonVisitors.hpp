@@ -125,6 +125,12 @@ public:
     }
 
 
+    std::string operator()(const ImportStmt& stmt) const {
+        return fmt::format(
+            "import {};", stmt.path.lexeme()
+        );
+    }
+
 
 private:
     template<std::derived_from<Expr> ...Es>
@@ -229,6 +235,10 @@ public:
 
     result_t operator()(const ReturnStmt&) const {
         return "Return Statement";
+    }
+
+    result_t operator()(const ImportStmt&) const {
+        return "Import Statement";
     }
 
 };

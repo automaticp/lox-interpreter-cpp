@@ -495,3 +495,9 @@ void InterpretVisitor::operator()(const ReturnStmt& stmt) const {
 }
 
 
+
+
+
+void InterpretVisitor::operator()(const ImportStmt& stmt) const {
+    return;
+}
