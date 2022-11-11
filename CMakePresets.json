@@ -13,7 +13,8 @@
             "name": "gnu-sanitizers",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_CXX_FLAGS": "-fsanitize=address -fsanitize=undefined"
+                "LOX_BUILD_WITH_ASAN": true,
+                "LOX_BUILD_WITH_UBSAN": true
             }
         },
         {
@@ -38,17 +39,7 @@
         {
             "name": "ninja-debug-gnu-sanitizers",
             "inherits": ["ninja-debug", "gnu-sanitizers"]
-        },
-        {
-            "name": "ninja-mc",
-            "inherits": ["default"],
-            "generator": "Ninja Multi-Config"
-        },
-        {
-            "name": "ninja-mc-gnu-sanitizers",
-            "inherits": ["ninja-mc", "gnu-sanitizers"]
         }
-
     ],
     "buildPresets": [
         {
@@ -64,28 +55,16 @@
             "configurePreset": "ninja"
         },
         {
+            "name": "ninja-debug",
+            "configurePreset": "ninja-debug"
+        },
+        {
+            "name": "ninja-release",
+            "configurePreset": "ninja-release"
+        },
+        {
             "name": "ninja-debug-gnu-sanitizers",
             "configurePreset": "ninja-debug-gnu-sanitizers"
-        },
-        {
-            "name": "ninja-mc",
-            "configurePreset": "ninja-mc",
-            "hidden": true
-        },
-        {
-            "name": "ninja-mc-debug",
-            "inherits": ["ninja-mc"],
-            "configuration": "Debug"
-        },
-        {
-            "name": "ninja-mc-debug-gnu-sanitizers",
-            "configurePreset": "ninja-mc-gnu-sanitizers",
-            "configuration": "Debug"
-        },
-        {
-            "name": "ninja-mc-release",
-            "inherits": ["ninja-mc"],
-            "configuration": "Release"
         }
     ]
 }
