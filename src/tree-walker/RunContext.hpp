@@ -124,16 +124,22 @@ public:
 
         // This error checking is eww, tbh
         if (error_reporter().had_errors_of_category(ErrorCategory::parser)) {
+            importer_.undo_last_successful_pass();
             return;
         }
 
         resolver_.resolve(new_stmts);
 
         if (error_reporter().had_errors_of_category(ErrorCategory::resolver)) {
+            importer_.undo_last_successful_pass();
             return;
         }
 
-        interpreter_.interpret(new_stmts);
+        bool success = interpreter_.interpret(new_stmts);
+
+        if (!success) {
+            importer_.undo_last_successful_pass();
+        }
     }
 
 };

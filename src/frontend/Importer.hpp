@@ -217,6 +217,10 @@ private:
     // Reset on each invokation of resolve_imports().
     bool has_failed_{};
 
+    // An iterator pointing to the beginning of the segment,
+    // inserted into the imported_files_ on the last pass.
+    std::vector<std::filesystem::path>::const_iterator last_insertion_point_;
+
 public:
     explicit Importer(ErrorReporter& err) : ErrorSender{ err } {}
 
@@ -243,6 +247,12 @@ public:
     // Validate that the last call to resolve_imports() succeded.
     bool has_failed() const noexcept { return has_failed_; }
 
+    // If the import pass succeeds, but later passes (Parser, Resolver, etc.) fail,
+    // this provides the mechanism to rollback the list of imported files, so that
+    // these files would be reimportable.
+    void undo_last_successful_pass() {
+        imported_files_.erase(last_insertion_point_, imported_files_.cend());
+    }
 
 
     static std::optional<std::string> read_file(const std::filesystem::path& file) {
@@ -297,7 +307,7 @@ private:
     // If the top level call to try_resolve_imports() succeeds, then append the files
     // imported during the call to the list of all imported files.
     void append_imported_this_pass_on_success() {
-        imported_files_.insert(
+        last_insertion_point_ = imported_files_.insert(
             imported_files_.end(),
             std::make_move_iterator(imported_this_pass_.begin()),
             std::make_move_iterator(imported_this_pass_.end())
