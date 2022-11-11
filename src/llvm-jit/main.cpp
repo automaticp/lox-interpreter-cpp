@@ -47,11 +47,16 @@ void run(const std::string& text) {
 
         irgen.generate(new_stmts);
 
+        irgen.builder()
+        // Doesn't execute anything, just prints the IR
+        irgen.module().print(llvm::errs(), nullptr);
+
 }
 
 
 int main(int argc, const char* argv[]) {
 
     run("print 5 + 6;");
+
 
 }

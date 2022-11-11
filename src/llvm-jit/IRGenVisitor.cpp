@@ -4,6 +4,8 @@
 #include "TokenType.hpp"
 #include <fmt/format.h>
 #include <llvm-14/llvm/ADT/StringExtras.h>
+#include <llvm-14/llvm/IR/DerivedTypes.h>
+#include <llvm-14/llvm/IR/Type.h>
 #include <llvm-14/llvm/Support/Casting.h>
 #include <llvm-14/llvm/Support/FormattedStream.h>
 #include <llvm-14/llvm/Support/raw_ostream.h>
@@ -68,8 +70,22 @@ llvm::Value* IRGenVisitor::operator()(const BinaryExpr& expr) const {
 
 void IRGenVisitor::operator()(const PrintStmt& expr) const {
     auto arg = expr.expr->accept(*this);
-    // Ehh, well, this is codegen, why do I expect a value?
-    std::cout << arg->getName().str() << '\n';
+
+    // https://stackoverflow.com/questions/35526075/llvm-how-to-implement-print-function-in-my-language
+
+    // declare i32 @printf(i8*, ...)
+    llvm::FunctionCallee fun = gen_.module_.getOrInsertFunction(
+        "printf",
+        llvm::FunctionType::get(
+            llvm::IntegerType::getInt32Ty(gen_.context_),
+            llvm::PointerType::get(llvm::Type::getInt8Ty(gen_.context_), 0),
+            true /* isVarArg */
+        )
+    );
+
+
+    gen_.builder_.CreateCall(fun, arg, "printf_call");
+
 }
 
 

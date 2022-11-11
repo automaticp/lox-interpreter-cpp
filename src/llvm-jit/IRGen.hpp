@@ -59,4 +59,9 @@ public:
         }
     }
 
+    llvm::Module& module() noexcept { return module_; }
+    const llvm::Module& module() const noexcept { return module_; }
+
+    llvm::IRBuilder<> builder() noexcept { return builder_; }
+
 };
