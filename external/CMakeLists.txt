@@ -47,7 +47,7 @@ llvm_map_components_to_libnames(llvm_libs Support Core IRReader)
 target_link_libraries(llvm-dummy
     INTERFACE
         libclang
-        ${llvm_libs}
+        LLVM
 )
 
 
