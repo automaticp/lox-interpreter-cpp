@@ -210,3 +210,15 @@ void ResolveVisitor::operator()(const ReturnStmt& stmt) const {
 
     resolve(*stmt.expr);
 }
+
+
+void ResolveVisitor::operator()(const ImportStmt& stmt) const {
+    if (!resolver_.is_in_global_scope()) {
+        resolver_.send_error(
+            ResolverError::Type::import_outside_of_global_scope,
+            stmt.path,
+            name_of(Stmt::from_alternative(stmt)),
+            ""
+        );
+    }
+}

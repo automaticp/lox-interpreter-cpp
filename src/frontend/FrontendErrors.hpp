@@ -169,6 +169,7 @@ public:
         local_variable_redeclaration,
         return_from_global_scope,
         undefined_variable,
+        import_outside_of_global_scope
     };
 
 private:
@@ -177,6 +178,7 @@ private:
         {Type::local_variable_redeclaration, "Redeclaration of a local variable"},
         {Type::return_from_global_scope, "Return from global scope"},
         {Type::undefined_variable, "Undefined variable"},
+        {Type::import_outside_of_global_scope, "Import outside of global scope"}
     };
 
 public:
