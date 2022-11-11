@@ -11,6 +11,7 @@
 #include "Builtins.hpp"
 #include "Frontend.hpp"
 #include "Importer.hpp"
+#include <filesystem>
 #include <string>
 #include <optional>
 #include <fstream>
@@ -77,7 +78,24 @@ public:
         assert(filename_);
         auto text = Importer::read_file(filename_.value());
         if (text) {
-            importer_.mark_imported(filename_.value());
+            std::filesystem::path file{
+                std::filesystem::canonical(filename_.value())
+            };
+
+            // FIXME: This is a hack to get the initial import working.
+            // Otherwise the filename_ stays relative to the starting dir,
+            // but we change directory to the parent of the file.
+            // Then the Scanner tries to make a canonical path out of
+            // filename_, but fails because it can't find the file.
+            // To remedy this, we just make the path absolute/canonical
+            // right away.
+            filename_ = file.string();
+
+            importer_.mark_imported(file);
+
+            // cd into the top-level file dir
+            std::filesystem::current_path(file.parent_path());
+
             run(text.value());
         } else {
             send_error(ContextError::Type::unable_to_open_file, filename_.value());
