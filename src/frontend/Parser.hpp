@@ -71,25 +71,23 @@ public:
 
 private:
     std::unique_ptr<Stmt> declaration() {
-        // Skip import statements
-        while (state_.match(TokenType::kw_import)) {
-            skip_import();
-        }
-
         if (state_.match(TokenType::kw_var)) {
             return var_decl();
         } else if (state_.match(TokenType::kw_fun)) {
             return fun_decl();
+        } else if (state_.match(TokenType::kw_import)) {
+            return import_stmt();
         } else {
             return statement();
         }
     }
 
-    void skip_import() {
-        bool match_succeded{ state_.match(TokenType::string) };
-        assert(match_succeded &&
-            "If this failed, then the Importer didn't do it's job");
+    std::unique_ptr<Stmt> import_stmt() {
+        auto stmt = Stmt::make_unique<ImportStmt>(
+            try_consume(TokenType::string, ParserError::Type::expected_import_string)
+        );
         try_consume_semicolon();
+        return stmt;
     }
 
     std::unique_ptr<Stmt> var_decl() {

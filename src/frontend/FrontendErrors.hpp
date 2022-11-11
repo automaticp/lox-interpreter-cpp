@@ -114,7 +114,8 @@ public:
         expected_identifier,
         invalid_assignment_target,
         missing_opening_brace,
-        missing_closing_brace
+        missing_closing_brace,
+        expected_import_string, // Shouldn't really happen but...
     };
 
 private:
@@ -127,6 +128,7 @@ private:
         {Type::invalid_assignment_target, "Invalid assignment target"},
         {Type::missing_opening_brace, "Missing opening '{'"},
         {Type::missing_closing_brace, "Missing closing '}'"},
+        {Type::expected_import_string, "Expected import string"},
     };
 
 public:
