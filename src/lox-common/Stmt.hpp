@@ -100,13 +100,19 @@ public:
 };
 
 
+struct ImportStmt : StmtBackref {
+public:
+    Token path;
 
+    ImportStmt(Token path) :
+        path{ std::move(path) } {}
+};
 
 
 
 using StmtVariant = std::variant<
     ExpressionStmt, PrintStmt, VarStmt, BlockStmt,
-    IfStmt, WhileStmt, FunStmt, ReturnStmt
+    IfStmt, WhileStmt, FunStmt, ReturnStmt, ImportStmt
 >;
 
 
