@@ -67,7 +67,7 @@ struct ValueToStringVisitor {
     std::string operator()(const Function& val) const;
     std::string operator()(const BuiltinFunction& val) const;
     std::string operator()(const String& val) const {
-        return fmt::format("\"{}\"", val);
+        return fmt::format("{}", val);
     }
     std::string operator()(const Number& val) const {
         return std::string(num_to_string(val));
