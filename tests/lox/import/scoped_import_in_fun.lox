@@ -1,0 +1,6 @@
+// Similar to scoped_import.lox, except the import is in the function body
+
+fun f() {
+    import "math.lox";
+}
+

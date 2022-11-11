@@ -1,0 +1,27 @@
+// Should fail because the import must be in global scope.
+
+{
+    import "math.lox";
+}
+
+// But failure to import should not prevent repeated imports of math.lox:
+//
+// Run in the interpreter prompt:
+//
+// > import "scoped_import.lox"
+//
+// Should produce an error: import from non-global scope.
+//
+// > print add(1, 2);
+//
+// Should produce an error: undefined symbol 'add', because the import failed.
+// Then:
+//
+// > import "math.lox";
+//
+// Should successfully import module "math.lox"
+// Finally:
+//
+// > print add(1, 2);
+//
+// Should successfully print 3.
