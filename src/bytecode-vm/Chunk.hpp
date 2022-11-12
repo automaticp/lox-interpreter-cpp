@@ -13,6 +13,10 @@ public:
         bytes_.emplace_back(to_underlying(opcode));
     }
 
+    void emit(Byte byte) {
+        bytes_.emplace_back(byte);
+    }
+
     const std::vector<Byte>& bytes() const noexcept { return bytes_; }
 };
 
