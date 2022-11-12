@@ -3,52 +3,66 @@
 #include <fmt/format.h>
 #include <string>
 #include <utility>
+#include <vector>
 
 
 class Disassembler {
 private:
     std::string repr_;
+    const Chunk* current_;
+    using iter_t = std::vector<Byte>::const_iterator;
 
 public:
     [[nodiscard]]
     std::string disassemble(const std::string& name, const Chunk& chungus) {
-        clear();
+        reset(chungus);
         add_chunk_label(name);
-        for (size_t offset{ 0 }; offset < chungus.bytes().size(); /*_*/) {
-            offset = disassemble_instruction(chungus.bytes()[offset], offset);
+        for (auto it{ bytes().begin() }; it != bytes().end(); /*_*/) {
+            it = disassemble_instruction(it);
         }
         return std::move(repr_);
     }
 
 private:
-    size_t disassemble_instruction(Byte byte, size_t offset) {
+    iter_t disassemble_instruction(iter_t it) {
+        Byte byte{ *it };
         switch(OP{ byte }) {
             case OP::RETURN:
-                add_op_line("RETURN", offset);
-                ++offset;
+                add_op_line(it, "RETURN");
+                ++it;
+                break;
+            case OP::CONSTANT:
+                add_op_line(it, fmt::format("CONSTANT {}", *(it + 1)));
+                ++it;
+                ++it; // Skip constant
                 break;
             default:
-                add_op_line(fmt::format("UNKNOWN[{:d}]", byte), offset);
-                ++offset;
+                add_op_line(it, fmt::format("UNKNOWN[{:d}]", byte));
+                ++it;
                 break;
         }
-        return offset;
+        return it;
     }
 
     void add_chunk_label(const std::string& label) {
         add_line(fmt::format(".{:s}:", label));
     }
 
-    void add_op_line(const std::string& line, size_t offset) {
-        add_line(fmt::format("{:04d} {}", offset, line));
+    void add_op_line(iter_t it, const std::string& line) {
+        add_line(fmt::format("{:04d} {}", offset(it), line));
     }
 
     void add_line(const std::string& line) {
         repr_ += line + '\n';
     }
 
-    void clear() {
+    void reset(const Chunk& chunk) {
         repr_.clear();
+        current_ = &chunk;
     }
+
+    size_t offset(iter_t it) const noexcept { return it - bytes().begin(); }
+    const Chunk& current() const noexcept { return *current_; }
+    const std::vector<Byte>& bytes() const noexcept { return current().bytes(); }
 
 };
