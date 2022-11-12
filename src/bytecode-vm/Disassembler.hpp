@@ -1,6 +1,6 @@
 #pragma once
 #include "Chunk.hpp"
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <string>
 #include <utility>
 
@@ -28,7 +28,7 @@ private:
                 ++offset;
                 break;
             default:
-                add_op_line("UNKNOWN", offset);
+                add_op_line(fmt::format("UNKNOWN[{:d}]", byte), offset);
                 ++offset;
                 break;
         }
