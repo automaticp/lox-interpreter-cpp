@@ -59,3 +59,30 @@ target_link_libraries(lox-twi
         lox::tree-walker
 )
 
+
+
+# Bytecode VM backend and executable
+file(GLOB BYTECODE_VM_SOURCES CONFIGURE_DEPENDS bytecode-vm/*.cpp)
+add_library(bytecode-vm STATIC "${BYTECODE_VM_SOURCES}")
+target_compile_features(bytecode-vm PUBLIC cxx_std_20)
+target_include_directories(bytecode-vm PUBLIC bytecode-vm/)
+
+target_link_libraries(bytecode-vm
+    PUBLIC
+        lox::frontend
+        lox::common
+)
+
+add_library(lox::bytecode-vm ALIAS bytecode-vm)
+
+
+
+add_executable(lox-bvm bytecode-vm/main.cpp)
+target_compile_features(lox-bvm PRIVATE cxx_std_20)
+
+target_link_libraries(lox-bvm
+    PRIVATE
+        lox::bytecode-vm
+)
+
+
