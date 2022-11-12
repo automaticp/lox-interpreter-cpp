@@ -1,11 +1,12 @@
 # Common utilities and primitives of lox
-file(GLOB LOX_COMMON_SOURCES CONFIGURE_DEPENDS lox-common/*.cpp)
-add_library(lox-common STATIC "${LOX_COMMON_SOURCES}")
-target_compile_features(lox-common PUBLIC cxx_std_20)
-target_include_directories(lox-common PUBLIC lox-common/)
+# file(GLOB LOX_COMMON_SOURCES CONFIGURE_DEPENDS lox-common/*.cpp)
+# add_library(lox-common STATIC "${LOX_COMMON_SOURCES}")
+add_library(lox-common INTERFACE)
+target_compile_features(lox-common INTERFACE cxx_std_20)
+target_include_directories(lox-common INTERFACE lox-common/)
 
 target_link_libraries(lox-common
-    PUBLIC
+    INTERFACE
         fmt::fmt
         Boost::boost
         Boost::container

@@ -1,9 +1,15 @@
 #pragma once
+#include "Utils.hpp"
 #include <variant>
 #include <string>
 #include <cstddef>
-#include "Utils.hpp"
-#include "ValueDecl.hpp"
+#include <boost/container/string.hpp>
+
+
+using Nil = std::monostate;
+using String = boost::container::string;
+using Number = double;
+using Boolean = bool;
 
 
 using LiteralValue = std::variant<Nil, String, Number, Boolean>;
