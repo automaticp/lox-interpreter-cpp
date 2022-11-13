@@ -31,10 +31,12 @@ private:
                 add_op_line(it, "RETURN");
                 ++it;
                 break;
-            case OP::CONSTANT:
-                add_op_line(it, fmt::format("CONSTANT {}", *(it + 1)));
-                ++it;
-                ++it; // Skip constant
+            case OP::CONSTANT: {
+                    auto index = *(it + 1);
+                    add_op_line(it, fmt::format("CONSTANT {} ({})", index, current_->constants()[index]));
+                    ++it;
+                    ++it; // Skip constant
+                }
                 break;
             default:
                 add_op_line(it, fmt::format("UNKNOWN[{:d}]", byte));
