@@ -1,21 +1,25 @@
 #include "Chunk.hpp"
 #include "Constants.hpp"
 #include "Disassembler.hpp"
+#include "VM.hpp"
 #include <iostream>
 
 int main(int argc, const char* argv[]) {
 
     Chunk chunk;
-    Constants constants;
-    chunk.emit(OP::CONSTANT);
-    chunk.emit(constants.emplace_back(6.9));
-    chunk.emit(OP::CONSTANT);
-    chunk.emit(constants.emplace_back(4.33));
+    chunk.emit_constant(6.9);
+    chunk.emit_constant(4.33);
+    // chunk.emit(45);
     chunk.emit(OP::RETURN);
-    chunk.emit(45);
+    // chunk.emit(46);
 
     Disassembler diss;
 
-    std::cout << diss.disassemble("This Chungus", chunk);
+    std::cout << diss.disassemble("this_chungus", chunk);
 
+    VM vm;
+    if (!vm.interpret(chunk)) {
+        return 1;
+    }
+    return 0;
 }
