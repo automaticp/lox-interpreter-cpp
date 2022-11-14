@@ -251,8 +251,10 @@ public:
     // If the import pass succeeds, but later passes (Parser, Resolver, etc.) fail,
     // this provides the mechanism to rollback the list of imported files, so that
     // these files would be reimportable.
+    //
+    // Repeated calls will not erase any more elements.
     void undo_last_successful_pass() {
-        imported_files_.erase(last_insertion_point_, imported_files_.cend());
+        last_insertion_point_ = imported_files_.erase(last_insertion_point_, imported_files_.cend());
     }
 
 
