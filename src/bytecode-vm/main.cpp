@@ -1,21 +1,30 @@
 #include "Chunk.hpp"
+#include "CodegenVisitor.hpp"
 #include "Constants.hpp"
 #include "Disassembler.hpp"
+#include "ErrorReporter.hpp"
+#include "Frontend.hpp"
 #include "VM.hpp"
 #include <iostream>
 
 int main(int argc, const char* argv[]) {
 
+
+    StreamErrorReporter err{ std::cerr };
+    Frontend fe{ err };
+
+    auto new_stmts = fe.pass("print 5 + 6 / -3;");
+    if (fe.has_failed()) {
+        return 1;
+    }
+
     Chunk chunk;
-    chunk.emit_constant(6.9);
-    chunk.emit_constant(4.33);
-    chunk.emit(OP::MULTIPLY);
-    chunk.emit(OP::NEGATE);
-    chunk.emit_constant(1.0);
-    chunk.emit(OP::DIVIDE);
-    // chunk.emit(45);
+    CodegenVisitor codegen{ err, chunk };
+
+    for (const auto& stmt : new_stmts) {
+        stmt->accept(codegen);
+    }
     chunk.emit(OP::RETURN);
-    // chunk.emit(46);
 
     Disassembler diss;
 
