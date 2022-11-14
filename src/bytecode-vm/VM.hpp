@@ -2,6 +2,7 @@
 #include "Chunk.hpp"
 #include "Constants.hpp"
 #include "OpCode.hpp"
+#include "ValueStack.hpp"
 #include <fmt/core.h>
 #include <type_traits>
 
@@ -12,6 +13,7 @@ private:
     const Chunk* chunk_;
     ip_t ip_;
     Constants constants_;
+    ValueStack stack_;
 
 public:
     bool interpret(const Chunk& chunk) {
@@ -27,9 +29,10 @@ private:
             Byte instruction{ read_byte() };
             switch (OP{ instruction }) {
                 case OP::RETURN:
+                    fmt::print("Returned: {}\n", stack_.pop());
                     return true;
                 case OP::CONSTANT:
-                    fmt::print("{}\n", read_constant());
+                    stack_.push(read_constant());
                     break;
                 default:
                     return false;
@@ -37,11 +40,12 @@ private:
         }
     }
 
-
+    [[nodiscard]]
     Byte read_byte() noexcept {
         return *ip_++;
     }
 
+    [[nodiscard]]
     const Value& read_constant() noexcept {
         return chunk_->constants()[*ip_++];
     }

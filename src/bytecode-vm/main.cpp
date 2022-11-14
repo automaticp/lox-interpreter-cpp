@@ -7,7 +7,7 @@
 int main(int argc, const char* argv[]) {
 
     Chunk chunk;
-    chunk.emit_constant(6.9);
+    // chunk.emit_constant(6.9);
     chunk.emit_constant(4.33);
     // chunk.emit(45);
     chunk.emit(OP::RETURN);
