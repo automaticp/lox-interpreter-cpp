@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #include <string>
 
 
@@ -41,3 +42,22 @@ public:
 
 
 
+// Dummy error that has no structural information.
+// Can be used temporarily during development.
+// Replace later with specialized error class
+// or I'll call the Design Police on you.
+class SimpleError : public IError {
+public:
+    std::string msg;
+
+    SimpleError(std::string msg) :
+        msg{ std::move(msg) } {}
+
+    ErrorCategory category() const override {
+        return ErrorCategory::other;
+    }
+
+    std::string message() const override {
+        return msg;
+    }
+};
