@@ -11,7 +11,7 @@ class VM {
 private:
     using ip_t = std::vector<Byte>::const_iterator;
 
-    const Chunk* chunk_;
+    const Chunk* chunk_{};
     ip_t ip_;
     Constants constants_;
     ValueStack stack_;
