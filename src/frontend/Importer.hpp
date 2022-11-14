@@ -9,6 +9,7 @@
 #include <fstream>
 #include <algorithm>
 #include <filesystem>
+#include <ios>
 #include <iterator>
 #include <vector>
 #include <utility>
@@ -260,13 +261,16 @@ public:
         std::ifstream fs{ file };
 
         if (!fs.fail()) {
-            return std::string{
-                std::istreambuf_iterator<char>(fs),
-                std::istreambuf_iterator<char>()
-            };
-        } else {
-            return {};
+            try {
+                return std::string{
+                    std::istreambuf_iterator<char>(fs),
+                    std::istreambuf_iterator<char>()
+                };
+            } catch (std::ios_base::failure& e) {
+                // return nullopt;
+            }
         }
+        return {};
     }
 
 
