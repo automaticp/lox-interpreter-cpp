@@ -34,6 +34,9 @@ private:
                 case OP::CONSTANT:
                     stack_.push(read_constant());
                     break;
+                case OP::NEGATE:
+                    stack_.back() = -stack_.back();
+                    break;
                 default:
                     return false;
             }

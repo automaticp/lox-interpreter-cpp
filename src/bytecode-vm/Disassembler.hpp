@@ -38,6 +38,10 @@ private:
                     ++it; // Skip constant
                 }
                 break;
+            case OP::NEGATE:
+                add_op_line(it, "NEGATE");
+                ++it;
+                break;
             default:
                 add_op_line(it, fmt::format("UNKNOWN[{:d}]", byte));
                 ++it;
@@ -47,7 +51,7 @@ private:
     }
 
     void add_chunk_label(const std::string& label) {
-        add_line(fmt::format(".{:s}:", label));
+        add_line(fmt::format("{:s}:", label));
     }
 
     void add_op_line(iter_t it, const std::string& line) {

@@ -8,5 +8,6 @@ using Byte = unsigned char;
 enum class OP : Byte {
     RETURN,
     CONSTANT,
+    NEGATE,
 };
 

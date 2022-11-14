@@ -29,5 +29,13 @@ public:
         return *(stack_.rbegin() + idx);
     }
 
+    const Value& peek(size_t idx) const noexcept {
+        assert(stack_.rbegin() + idx < stack_.rend() && "Peek access out of bounds");
+        return *(stack_.rbegin() + idx);
+    }
+
+
+    Value& back() noexcept { return stack_.back(); }
+    const Value& back() const noexcept { return stack_.back(); }
 
 };
