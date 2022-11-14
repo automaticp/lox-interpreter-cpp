@@ -19,6 +19,7 @@ struct CLIArgs {
     bool show_help{};
     bool debug_scanner{};
     bool debug_parser{};
+    bool debug_bytecode{};
 };
 
 class CLIArgsError : public IError {
@@ -51,7 +52,7 @@ public:
         ("h,help", "Show help and exit")
         (
             "debug", "Run in debug mode.",
-            cxxopts::value<std::vector<std::string>>()->implicit_value("scanner,parser")
+            cxxopts::value<std::vector<std::string>>()->implicit_value("scanner,parser,bytecode")
         )
         ("file", "Input file to be parsed", cxxopts::value<std::string>());
 
@@ -60,7 +61,7 @@ public:
     }
 
 
-    CLIArgs parse(int argc, char* argv[]) { // NOLINT
+    CLIArgs parse(int argc, const char* argv[]) { // NOLINT
         CLIArgs args{};
 
         try {
@@ -80,7 +81,7 @@ public:
 
         args.filename =
             std::invoke(
-                [&args]() -> std::optional<std::string> {
+                [&args]() -> std::optional<std::filesystem::path> {
 
                     if (args.result.count("file")) {
                         return args.result["file"].as<std::string>();
@@ -108,6 +109,8 @@ private:
                     args.debug_scanner = true;
                 } else if (arg == "parser") {
                     args.debug_parser = true;
+                } else if (arg == "bytecode") {
+                    args.debug_bytecode = true;
                 } else {
                     send_error(
                         fmt::format("Unknown debug option: '{:s}'", arg)
