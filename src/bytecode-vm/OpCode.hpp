@@ -9,5 +9,9 @@ enum class OP : Byte {
     RETURN,
     CONSTANT,
     NEGATE,
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
 };
 

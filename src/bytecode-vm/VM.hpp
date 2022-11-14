@@ -37,11 +37,38 @@ private:
                 case OP::NEGATE:
                     stack_.back() = -stack_.back();
                     break;
+                case OP::ADD: binary_op(OP::ADD); break;
+                case OP::SUBTRACT: binary_op(OP::SUBTRACT); break;
+                case OP::MULTIPLY: binary_op(OP::MULTIPLY); break;
+                case OP::DIVIDE: binary_op(OP::DIVIDE); break;
                 default:
                     return false;
             }
         }
     }
+
+    void binary_op(OP opcode) {
+        Value lhs = stack_.pop();
+        Value rhs = stack_.pop();
+        switch (opcode) {
+            case OP::ADD:
+                stack_.push(lhs + rhs);
+                break;
+            case OP::SUBTRACT:
+                stack_.push(lhs - rhs);
+                break;
+            case OP::MULTIPLY:
+                stack_.push(lhs * rhs);
+                break;
+            case OP::DIVIDE:
+                stack_.push(lhs / rhs);
+                break;
+            default:
+                assert(false && "Unknown binary op");
+                break;
+        }
+    }
+
 
     [[nodiscard]]
     Byte read_byte() noexcept {

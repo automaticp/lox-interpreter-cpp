@@ -42,6 +42,22 @@ private:
                 add_op_line(it, "NEGATE");
                 ++it;
                 break;
+            case OP::ADD:
+                add_op_line(it, "ADD");
+                ++it;
+                break;
+            case OP::SUBTRACT:
+                add_op_line(it, "SUBTRACT");
+                ++it;
+                break;
+            case OP::MULTIPLY:
+                add_op_line(it, "MULTIPLY");
+                ++it;
+                break;
+            case OP::DIVIDE:
+                add_op_line(it, "DIVIDE");
+                ++it;
+                break;
             default:
                 add_op_line(it, fmt::format("UNKNOWN[{:d}]", byte));
                 ++it;
