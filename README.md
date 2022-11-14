@@ -2,14 +2,15 @@
 
 An interpreter implementation for the lox language, written with the help of the wonderful book by Robert Nystrom - [Crafting Interpreters](https://craftinginterpreters.com/).
 
-The source code itself is carefully separated into three components:
+The source code itself is carefully separated into four components:
 - `src/lox-common` - Various helpers and primitives of the lox language;
 - `src/frontend` - The frontend pieces of the interpreter (Scanner, Importer, Parser, Resolver);
-- `src/tree-walker` - The backend in the form of a tree-walk interpreter that supports expressions, statements, control flow, and functions with closures.
+- `src/tree-walker` - The backend in the form of a tree-walk interpreter that supports expressions, statements, control flow, and functions with closures;
+- `src/bytecode-vm` - The backend in the form of a bytecode virtual machine. WIP, so far supports only a handful of basic features.
 
 This separation should enable you to simply extend the implementation with another backend of your choosing. All you'd need to do is define your own AST visitor (interpreter/codegen), your own error class (optional), and some kind of a `Runner` class or a `run` function that puts the frontend and backend together.
 
-The language itself is relatively simple as it was created purely for the book, and is missing some, in my opinion, *vital* features, such as IO and modularization. This leaves plenty of opportunity for playing around with various extensions.
+The language itself is relatively simple as it was created purely for the book, and is therefore missing some, in my opinion, *vital* features, such as IO and modularization. This leaves plenty of opportunity for playing around with various extensions.
 
 # Notable features and extensions
 
