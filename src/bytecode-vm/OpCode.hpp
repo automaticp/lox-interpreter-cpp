@@ -13,5 +13,6 @@ enum class OP : Byte {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
+    PRINT,
 };
 

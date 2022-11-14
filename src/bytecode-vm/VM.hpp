@@ -2,6 +2,7 @@
 #include "Chunk.hpp"
 #include "Constants.hpp"
 #include "OpCode.hpp"
+#include "Utils.hpp"
 #include "ValueStack.hpp"
 #include <fmt/core.h>
 #include <type_traits>
@@ -29,7 +30,6 @@ private:
             Byte instruction{ read_byte() };
             switch (OP{ instruction }) {
                 case OP::RETURN:
-                    fmt::print("Returned: {}\n", stack_.pop());
                     return true;
                 case OP::CONSTANT:
                     stack_.push(read_constant());
@@ -41,6 +41,9 @@ private:
                 case OP::SUBTRACT: binary_op(OP::SUBTRACT); break;
                 case OP::MULTIPLY: binary_op(OP::MULTIPLY); break;
                 case OP::DIVIDE: binary_op(OP::DIVIDE); break;
+                case OP::PRINT:
+                    fmt::print("{}\n", to_string(stack_.pop()));
+                    break;
                 default:
                     return false;
             }

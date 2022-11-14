@@ -58,6 +58,10 @@ private:
                 add_op_line(it, "DIVIDE");
                 ++it;
                 break;
+            case OP::PRINT:
+                add_op_line(it, "PRINT");
+                ++it;
+                break;
             default:
                 add_op_line(it, fmt::format("UNKNOWN[{:d}]", byte));
                 ++it;
