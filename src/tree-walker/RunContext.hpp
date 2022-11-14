@@ -20,27 +20,29 @@
 
 class RunContext : private ErrorSender<ContextError> {
 private:
-    bool is_debug_scanner_;
-    bool is_debug_parser_;
-    std::optional<std::string> filename_;
-    Importer importer_;
-    Parser parser_;
-    Resolver resolver_;
+    std::optional<std::filesystem::path> filename_;
+
+    Frontend frontend_;
     Interpreter interpreter_;
 public:
-    RunContext(ErrorReporter& err_reporter,
-        bool is_debug_scanner, bool is_debug_parser,
-        std::optional<std::string> filename = std::nullopt) :
+    RunContext(
+        ErrorReporter& err_reporter,
+        bool debug_scanner, bool debug_parser,
+        std::optional<std::filesystem::path> filename = {}
+    ) :
         ErrorSender{ err_reporter },
-        importer_{ err_reporter },
-        parser_{ err_reporter },
-        resolver_{ err_reporter },
-        interpreter_{ err_reporter, resolver_ },
-        filename_{ std::move(filename) },
-        is_debug_scanner_{ is_debug_scanner }, is_debug_parser_{ is_debug_parser }
+        frontend_{ err_reporter, { debug_scanner, debug_parser } },
+        interpreter_{ err_reporter, frontend_.resolver() },
+        filename_{ std::move(filename) }
     {
-        setup_builtins(interpreter_.get_global_environment(),  resolver_);
+        setup_builtins(
+            interpreter_.get_global_environment(),
+            frontend_.resolver()
+        );
     }
+
+    Frontend& frontend() noexcept { return frontend_; }
+    const Frontend& frontend() const noexcept { return frontend_; }
 
     void start_running() {
         if (is_prompt_mode()) {
@@ -50,10 +52,21 @@ public:
         }
     }
 
-    bool is_debug_scanner_mode() const noexcept { return is_debug_scanner_; }
-    bool is_debug_parser_mode() const noexcept { return is_debug_parser_; }
-    bool is_prompt_mode() const noexcept { return !filename_.has_value(); }
-    bool is_file_mode() const noexcept { return filename_.has_value(); }
+    bool is_debug_scanner_mode() const noexcept {
+        return frontend().config().debug_scanner;
+    }
+
+    bool is_debug_parser_mode() const noexcept {
+        return frontend().config().debug_parser;
+    }
+
+    bool is_prompt_mode() const noexcept {
+        return !filename_.has_value();
+    }
+
+    bool is_file_mode() const noexcept {
+        return filename_.has_value();
+    }
 
     void run_prompt() {
 
@@ -78,24 +91,7 @@ public:
         assert(filename_);
         auto text = Importer::read_file(filename_.value());
         if (text) {
-            std::filesystem::path file{
-                std::filesystem::canonical(filename_.value())
-            };
-
-            // FIXME: This is a hack to get the initial import working.
-            // Otherwise the filename_ stays relative to the starting dir,
-            // but we change directory to the parent of the file.
-            // Then the Scanner tries to make a canonical path out of
-            // filename_, but fails because it can't find the file.
-            // To remedy this, we just make the path absolute/canonical
-            // right away.
-            filename_ = file.string();
-
-            importer_.mark_imported(file);
-
-            // cd into the top-level file dir
-            std::filesystem::current_path(file.parent_path());
-
+            // The data flow here is awkward, tbh
             run(text.value());
         } else {
             send_error(ContextError::Type::unable_to_open_file, filename_.value());
@@ -105,58 +101,12 @@ public:
 
     void run(const std::string& text) {
 
-        error_reporter().reset();
-
-        Scanner scanner{ error_reporter() };
-
-        auto tokens = is_file_mode() ?
-            scanner.scan_tokens(text, filename_.value()) :
-            scanner.scan_tokens(text);
-
-        if (is_debug_scanner_mode()) {
-            std::cout << "[Debug @Scanner]:\n";
-            for (const auto& token : tokens) {
-                std::cout << token.info() << '\n';
-            }
-        }
-
-        if (scanner.has_failed()) {
-            return;
-        }
-
-        tokens = importer_.resolve_imports(tokens);
-
-        if (importer_.has_failed()) {
-            return;
-        }
-
-        Scanner::append_eof(tokens);
-
-        auto new_stmts = parser_.parse_tokens(tokens);
-        if (is_debug_parser_mode()) {
-            std::cout << "[Debug @Parser]:\n";
-            for (const auto& stmt: new_stmts) {
-                std::cout << stmt->accept(ASTPrintVisitor{}) << '\n';
-            }
-        }
-
-        // This error checking is eww, tbh
-        if (error_reporter().had_errors_of_category(ErrorCategory::parser)) {
-            importer_.undo_last_successful_pass();
-            return;
-        }
-
-        resolver_.resolve(new_stmts);
-
-        if (error_reporter().had_errors_of_category(ErrorCategory::resolver)) {
-            importer_.undo_last_successful_pass();
-            return;
-        }
+        auto new_stmts = frontend().pass(text, filename_);
 
         bool success = interpreter_.interpret(new_stmts);
 
         if (!success) {
-            importer_.undo_last_successful_pass();
+            frontend().importer().undo_last_successful_pass();
         }
     }
 
