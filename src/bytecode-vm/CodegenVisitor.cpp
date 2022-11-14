@@ -9,7 +9,7 @@
 void CodegenVisitor::not_implemented(const Expr& expr) const {
     send_error(
         fmt::format(
-            "[Error @Codegen]: Not implemented - {}",
+            "[Error @Codegen]: Not implemented - {}\n",
             expr.accept(UserFriendlyNameVisitor{})
         )
     );
@@ -18,7 +18,7 @@ void CodegenVisitor::not_implemented(const Expr& expr) const {
 void CodegenVisitor::not_implemented(const Stmt& stmt) const {
     send_error(
         fmt::format(
-            "[Error @Codegen]: Not implemented - {}",
+            "[Error @Codegen]: Not implemented - {}\n",
             stmt.accept(UserFriendlyNameVisitor{})
         )
     );
